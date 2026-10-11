@@ -23,28 +23,39 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          sdk-platform-version: 34
-          sdk-build-tools-version: 34.0.0
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.5'
+      - name: Setup Android SDK (using pre-installed)
+        run: |
+          # Ubuntu GitHub runner has Android SDK pre-installed
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $ANDROID_HOME
+          # Accept all SDK licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          # Verify platform 34 and build-tools are installed
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed 2>/dev/null || \
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list 2>/dev/null | head -30
+          # Install necessary components
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" || true
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          cat local.properties
+
       - name: Run unit tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test --no-daemon --stacktrace
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: List built APKs
         run: |
@@ -56,14 +67,14 @@ jobs:
       - name: Upload Debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: moghayerat-gir-debug
+          name: moghayerat-gir-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 90
 
       - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: moghayerat-gir-release
+          name: moghayerat-gir-release-apk
           path: app/build/outputs/apk/release/*.apk
           retention-days: 90
 
