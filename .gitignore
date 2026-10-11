@@ -12,3 +12,11 @@ local.properties
 *.aab
 *.keystore
 !debug.keystore
+
+# IDE files
+scripts/
+skills/
+upload/
+tools/
+.env
+*.log
