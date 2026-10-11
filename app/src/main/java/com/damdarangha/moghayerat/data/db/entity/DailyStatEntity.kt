@@ -37,8 +37,10 @@ data class DailyStatEntity(
     val morningLoadingTotal: Int,
     val actualMorningStockTotal: Int?,  // null اگر کاربر وارد نکرده باشد
     val receiptTotal: Int,
+    val returnsTotal: Int,              // برگشت به انبار (به موجودی اضافه می‌شود)
     val giftsTotal: Int,
     val wasteTotal: Int,
+    val midDayLoadingTotal: Int,        // بارگیری میان روز (از موجودی کم می‌شود)
     val nightLoadingTotal: Int,
     val currentStockTotal: Int,
     // مقادیر محاسبه‌شده

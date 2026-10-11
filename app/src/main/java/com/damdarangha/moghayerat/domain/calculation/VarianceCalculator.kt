@@ -12,9 +12,9 @@ import com.damdarangha.moghayerat.domain.model.VarianceResult
  * هیچ عدد اعشاری استفاده نمی‌شود تا خطای گرد کردن رخ ندهد.
  *
  * قوانین محاسبه:
- * 1. رسید به موجودی اضافه می‌شود.
- * 2. بارگیری صبح، بارگیری شب، هدایا و ضایعات از موجودی کم می‌شوند.
- * 3. موجودی مورد انتظار پایان روز = مانده شب گذشته + رسید - بارگیری صبح - بارگیری شب - هدایا - ضایعات
+ * 1. رسید و برگشت به انبار به موجودی اضافه می‌شوند.
+ * 2. بارگیری صبح، بارگیری میان روز، بارگیری شب، هدایا و ضایعات از موجودی کم می‌شوند.
+ * 3. موجودی مورد انتظار پایان روز = مانده شب گذشته + رسید + برگشت به انبار - بارگیری صبح - بارگیری میان روز - بارگیری شب - هدایا - ضایعات
  * 4. مغایرت پایان روز = موجودی مورد انتظار - مانده واقعی پایان روز
  *    - صفر = مطابقت
  *    - مثبت = کسری (موجودی واقعی کمتر است)
@@ -116,8 +116,10 @@ object VarianceCalculator {
         val openingStockTotal = toTotalUnits(input.openingStock, product)
         val morningLoadingTotal = toTotalUnits(input.morningLoading, product)
         val receiptTotal = toTotalUnits(input.receipt, product)
+        val returnsTotal = toTotalUnits(input.returns, product)
         val giftsTotal = toTotalUnits(input.gifts, product)
         val wasteTotal = toTotalUnits(input.waste, product)
+        val midDayLoadingTotal = toTotalUnits(input.midDayLoading, product)
         val nightLoadingTotal = toTotalUnits(input.nightLoading, product)
         val currentStockTotal = toTotalUnits(input.currentStock, product)
 
@@ -133,9 +135,11 @@ object VarianceCalculator {
         }
 
         // موجودی مورد انتظار پایان روز
-        // = مانده شب گذشته + رسید - بارگیری صبح - بارگیری شب - هدایا - ضایعات
+        // = مانده شب گذشته + رسید + برگشت به انبار - بارگیری صبح - بارگیری میان روز - بارگیری شب - هدایا - ضایعات
         val expectedClosingStockTotal = safeAdd(openingStockTotal, receiptTotal)
+            .let { safeAdd(it, returnsTotal) }
             .let { safeSubtract(it, morningLoadingTotal) }
+            .let { safeSubtract(it, midDayLoadingTotal) }
             .let { safeSubtract(it, nightLoadingTotal) }
             .let { safeSubtract(it, giftsTotal) }
             .let { safeSubtract(it, wasteTotal) }
@@ -147,8 +151,10 @@ object VarianceCalculator {
             openingStockTotal = openingStockTotal,
             morningLoadingTotal = morningLoadingTotal,
             receiptTotal = receiptTotal,
+            returnsTotal = returnsTotal,
             giftsTotal = giftsTotal,
             wasteTotal = wasteTotal,
+            midDayLoadingTotal = midDayLoadingTotal,
             nightLoadingTotal = nightLoadingTotal,
             expectedMorningStockTotal = expectedMorningStockTotal,
             actualMorningStockTotal = actualMorningStockTotal,

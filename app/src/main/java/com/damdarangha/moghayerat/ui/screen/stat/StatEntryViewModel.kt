@@ -31,8 +31,10 @@ data class StatEntryUiState(
     val actualMorningStock: BoxAndUnits? = null, // null = فیلد خالی
     val hasActualMorningStock: Boolean = false,  // آیا کاربر این فیلد را پر کرده است
     val receipt: BoxAndUnits = BoxAndUnits.ZERO,
+    val returns: BoxAndUnits = BoxAndUnits.ZERO,         // برگشت به انبار
     val gifts: BoxAndUnits = BoxAndUnits.ZERO,
     val waste: BoxAndUnits = BoxAndUnits.ZERO,
+    val midDayLoading: BoxAndUnits = BoxAndUnits.ZERO,    // بارگیری میان روز
     val nightLoading: BoxAndUnits = BoxAndUnits.ZERO,
     val currentStock: BoxAndUnits = BoxAndUnits.ZERO,
     val notes: String = "",
@@ -57,8 +59,10 @@ data class StatEntryUiState(
                 morningLoading = morningLoading,
                 actualMorningStock = actualMorning,
                 receipt = receipt,
+                returns = returns,
                 gifts = gifts,
                 waste = waste,
+                midDayLoading = midDayLoading,
                 nightLoading = nightLoading,
                 currentStock = currentStock,
                 notes = notes
@@ -117,8 +121,10 @@ class StatEntryViewModel(
                         },
                         hasActualMorningStock = existingStat.actualMorningStockTotal != null,
                         receipt = VarianceCalculator.fromTotalUnits(existingStat.receiptTotal, product),
+                        returns = VarianceCalculator.fromTotalUnits(existingStat.returnsTotal, product),
                         gifts = VarianceCalculator.fromTotalUnits(existingStat.giftsTotal, product),
                         waste = VarianceCalculator.fromTotalUnits(existingStat.wasteTotal, product),
+                        midDayLoading = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product),
                         nightLoading = VarianceCalculator.fromTotalUnits(existingStat.nightLoadingTotal, product),
                         currentStock = VarianceCalculator.fromTotalUnits(existingStat.currentStockTotal, product),
                         notes = existingStat.notes,
@@ -173,6 +179,11 @@ class StatEntryViewModel(
         validateAndUpdate()
     }
 
+    fun updateReturns(value: BoxAndUnits) {
+        _uiState.update { it.copy(returns = value) }
+        validateAndUpdate()
+    }
+
     fun updateGifts(value: BoxAndUnits) {
         _uiState.update { it.copy(gifts = value) }
         validateAndUpdate()
@@ -180,6 +191,11 @@ class StatEntryViewModel(
 
     fun updateWaste(value: BoxAndUnits) {
         _uiState.update { it.copy(waste = value) }
+        validateAndUpdate()
+    }
+
+    fun updateMidDayLoading(value: BoxAndUnits) {
+        _uiState.update { it.copy(midDayLoading = value) }
         validateAndUpdate()
     }
 
@@ -249,8 +265,10 @@ class StatEntryViewModel(
             morningLoading = state.morningLoading,
             actualMorningStock = actualMorning,
             receipt = state.receipt,
+            returns = state.returns,
             gifts = state.gifts,
             waste = state.waste,
+            midDayLoading = state.midDayLoading,
             nightLoading = state.nightLoading,
             currentStock = state.currentStock,
             notes = state.notes
@@ -297,8 +315,10 @@ class StatEntryViewModel(
                     morningLoading = state.morningLoading,
                     actualMorningStock = actualMorning,
                     receipt = state.receipt,
+                    returns = state.returns,
                     gifts = state.gifts,
                     waste = state.waste,
+                    midDayLoading = state.midDayLoading,
                     nightLoading = state.nightLoading,
                     currentStock = state.currentStock,
                     notes = state.notes

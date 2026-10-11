@@ -94,15 +94,17 @@ object ReportExporter {
         // ساخت جدول
         val columnWidths = floatArrayOf(
             100f, // نام محصول
-            60f,  // مانده شب گذشته
-            60f,  // بارگیری صبح
+            55f,  // مانده شب گذشته
+            55f,  // بارگیری صبح
             50f,  // رسید
-            60f,  // بارگیری شب
+            50f,  // برگشت به انبار
+            55f,  // بارگیری میان روز
+            55f,  // بارگیری شب
             50f,  // هدایا
             50f,  // ضایعات
-            70f,  // مانده مورد انتظار
-            70f,  // مانده واقعی
-            70f   // مغایرت
+            65f,  // مانده مورد انتظار
+            65f,  // مانده واقعی
+            65f   // مغایرت
         )
         val table = Table(UnitValue.createPercentArray(columnWidths.size))
         table.setWidth(UnitValue.createPercentValue(100f))
@@ -114,6 +116,8 @@ object ReportExporter {
             "مانده شب گذشته",
             "بارگیری صبح",
             "رسید",
+            "برگشت به انبار",
+            "میان روز",
             "بارگیری شب",
             "هدایا",
             "ضایعات",
@@ -148,6 +152,8 @@ object ReportExporter {
                 stat.openingStockTotal.toString(),
                 stat.morningLoadingTotal.toString(),
                 stat.receiptTotal.toString(),
+                stat.returnsTotal.toString(),
+                stat.midDayLoadingTotal.toString(),
                 stat.nightLoadingTotal.toString(),
                 stat.giftsTotal.toString(),
                 stat.wasteTotal.toString(),
@@ -205,7 +211,7 @@ object ReportExporter {
         writer.write("\uFEFF")
 
         // هدر
-        writer.write("نام محصول,مانده شب گذشته,بارگیری صبح,رسید,بارگیری شب,هدایا,ضایعات,مانده مورد انتظار,مانده واقعی,مغایرت\n")
+        writer.write("نام محصول,مانده شب گذشته,بارگیری صبح,رسید,برگشت به انبار,میان روز,بارگیری شب,هدایا,ضایعات,مانده مورد انتظار,مانده واقعی,مغایرت\n")
 
         // ردیف‌ها
         for (stat in stats) {
@@ -218,7 +224,8 @@ object ReportExporter {
             }
             writer.write(
                 "$productName,${stat.openingStockTotal},${stat.morningLoadingTotal}," +
-                "${stat.receiptTotal},${stat.nightLoadingTotal},${stat.giftsTotal}," +
+                "${stat.receiptTotal},${stat.returnsTotal},${stat.midDayLoadingTotal}," +
+                "${stat.nightLoadingTotal},${stat.giftsTotal}," +
                 "${stat.wasteTotal},${stat.expectedClosingStockTotal}," +
                 "${stat.currentStockTotal},$varianceText\n"
             )

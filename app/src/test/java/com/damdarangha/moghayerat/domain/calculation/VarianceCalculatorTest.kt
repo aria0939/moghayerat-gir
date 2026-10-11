@@ -108,8 +108,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 22, units = 0),  // ۲۲×۲۷ = ۵۹۴
             actualMorningStock = BoxAndUnits(boxes = 24, units = 4), // ۲۴×۲۷+۴ = ۶۵۲
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 8, units = 2),     // ۸×۲۷+۲ = ۲۱۸
             currentStock = BoxAndUnits(boxes = 16, units = 2)     // ۱۶×۲۷+۲ = ۴۳۴
         )
@@ -149,8 +151,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 22, units = 0),
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 8, units = 2),
             currentStock = BoxAndUnits(boxes = 15, units = 2) // ۱۵×۲۷+۲ = ۴۰۷
         )
@@ -179,8 +183,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 22, units = 0),
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 8, units = 2),
             currentStock = BoxAndUnits(boxes = 16, units = 5) // ۱۶×۲۷+۵ = ۴۳۷ = ۴۳۴+۳
         )
@@ -208,8 +214,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 2, units = 0),  // ۵۴
             actualMorningStock = null,
             receipt = BoxAndUnits(boxes = 5, units = 0),         // ۱۳۵ رسید
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 3, units = 0),     // ۸۱
             currentStock = BoxAndUnits(boxes = 10, units = 0)     // ۲۷۰ واقعی
         )
@@ -234,8 +242,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits.ZERO,
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits(boxes = 1, units = 5),            // ۳۲ = ۱×۲۷+۵
             waste = BoxAndUnits(boxes = 0, units = 10),           // ۱۰
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 8, units = 10)      // ۲۲۶ واقعی = ۸×۲۷+۱۰
         )
@@ -305,8 +315,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 2, units = 0), // ۵۴
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndPairs(),
             waste = BoxAndPairs(),
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 0, units = 0),
             currentStock = BoxAndUnits(boxes = 8, units = 2) // ۲۱۸
         )
@@ -333,8 +345,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits.ZERO,
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 10, units = 0) // ۲۷۰
         )
@@ -357,8 +371,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 1000, units = 0), // ۲۷۰۰۰
             actualMorningStock = null,
             receipt = BoxAndUnits(boxes = 500, units = 0),         // ۱۳۵۰۰
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 2000, units = 0),   // ۵۴۰۰۰
             currentStock = BoxAndUnits(boxes = 9300, units = 26)  // ۲۵۱۱۲۶
         )
@@ -390,8 +406,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 5, units = 0),
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 5, units = 0) // ۱۳۵ واقعی
         )
@@ -421,8 +439,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 2, units = 0),   // ۵۴
             actualMorningStock = BoxAndUnits(boxes = 7, units = 20), // ۲۰۹ واقعی = ۷×۲۷+۲۰ = ۲۰۹
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 7, units = 20)
         )
@@ -444,8 +464,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits(boxes = 2, units = 0),
             actualMorningStock = null, // عدم ورود
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 8, units = 0)
         )
@@ -466,8 +488,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits.ZERO,
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 10, units = 0)
         )
@@ -486,8 +510,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits.ZERO,
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 9, units = 0) // کسری ۲۷
         )
@@ -506,8 +532,10 @@ class VarianceCalculatorTest {
             morningLoading = BoxAndUnits.ZERO,
             actualMorningStock = null,
             receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 11, units = 0) // اضافه ۲۷
         )
@@ -515,6 +543,138 @@ class VarianceCalculatorTest {
         assertThat(result.closingStatusType).isEqualTo(
             com.damdarangha.moghayerat.domain.model.StatusType.SURPLUS
         )
+    }
+
+    // ===================== تست‌های فیلدهای جدید: برگشت به انبار و میان روز =====================
+
+    /**
+     * تست سناریوی کاربر برای فیلد «برگشت به انبار»:
+     * - دیشب ۱۰ باکس داشته
+     * - امروز ۲ باکس برگشت به انبار شده
+     * - شب ۳ باکس بارگیری رفته
+     * - نتیجه مورد انتظار: ۹ باکس در پایان روز
+     *
+     * فرمول: ۱۰ + ۲ (برگشت) - ۳ (بارگیری شب) = ۹
+     */
+    @Test
+    fun `سناریو کاربر - برگشت به انبار با مغایرت صفر`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 10, units = 0),    // ۲۷۰
+            morningLoading = BoxAndUnits.ZERO,
+            actualMorningStock = null,
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits(boxes = 2, units = 0),          // ۵۴ برگشت به انبار
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 3, units = 0),     // ۸۱ بارگیری شب
+            currentStock = BoxAndUnits(boxes = 9, units = 0)       // ۲۴۳ واقعی
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        // محاسبه: ۲۷۰ + ۵۴ - ۸۱ = ۲۴۳ = ۹ باکس
+        assertThat(result.openingStockTotal).isEqualTo(270)
+        assertThat(result.returnsTotal).isEqualTo(54)
+        assertThat(result.nightLoadingTotal).isEqualTo(81)
+        assertThat(result.expectedClosingStockTotal).isEqualTo(243)
+        assertThat(result.currentStockTotal).isEqualTo(243)
+        assertThat(result.closingVariance).isEqualTo(0) // مغایرت صفر
+    }
+
+    /**
+     * تست «برگشت به انبار» با مغایرت غیر صفر.
+     * اگر واقعی ۸ باکس باشد به‌جای ۹، باید کسری ۱ باکس = ۲۷ واحد باشد.
+     */
+    @Test
+    fun `برگشت به انبار با کسری یک باکس`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 10, units = 0),
+            morningLoading = BoxAndUnits.ZERO,
+            actualMorningStock = null,
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits(boxes = 2, units = 0),
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 3, units = 0),
+            currentStock = BoxAndUnits(boxes = 8, units = 0)  // کمتر از مورد انتظار
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+        // ۲۷۰ + ۵۴ - ۸۱ = ۲۴۳، واقعی ۲۱۶، کسری ۲۷
+        assertThat(result.expectedClosingStockTotal).isEqualTo(243)
+        assertThat(result.currentStockTotal).isEqualTo(216)
+        assertThat(result.closingVariance).isEqualTo(27) // کسری یک باکس
+    }
+
+    /**
+     * تست فیلد «میان روز» - باید مثل بارگیری صبح و شب از موجودی کم شود.
+     *
+     * سناریو: مانده ۱۰ باکس، بارگیری صبح ۲ باکس، بارگیری میان روز ۳ باکس،
+     * بارگیری شب ۱ باکس. واقعی: ۴ باکس.
+     * مورد انتظار: ۱۰ - ۲ - ۳ - ۱ = ۴ باکس = ۱۰۸ عدد. مغایرت صفر.
+     */
+    @Test
+    fun `میان روز مانند بارگیری از موجودی کم می‌شود`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 10, units = 0),     // ۲۷۰
+            morningLoading = BoxAndUnits(boxes = 2, units = 0),     // ۵۴
+            actualMorningStock = null,
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits(boxes = 3, units = 0),      // ۸۱ بارگیری میان روز
+            nightLoading = BoxAndUnits(boxes = 1, units = 0),        // ۲۷ بارگیری شب
+            currentStock = BoxAndUnits(boxes = 4, units = 0)         // ۱۰۸ واقعی
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        // ۲۷۰ - ۵۴ - ۸۱ - ۲۷ = ۱۰۸ = ۴ باکس
+        assertThat(result.midDayLoadingTotal).isEqualTo(81)
+        assertThat(result.expectedClosingStockTotal).isEqualTo(108)
+        assertThat(result.currentStockTotal).isEqualTo(108)
+        assertThat(result.closingVariance).isEqualTo(0)
+    }
+
+    /**
+     * تست ترکیبی: همه فیلدها با هم.
+     */
+    @Test
+    fun `تست ترکیبی با تمام فیلدها`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 20, units = 0),     // ۵۴۰
+            morningLoading = BoxAndUnits(boxes = 5, units = 0),     // ۱۳۵
+            actualMorningStock = null,
+            receipt = BoxAndUnits(boxes = 2, units = 0),             // ۵۴ رسید
+            returns = BoxAndUnits(boxes = 1, units = 0),            // ۲۷ برگشت
+            gifts = BoxAndUnits(boxes = 1, units = 0),              // ۲۷ هدیه
+            waste = BoxAndUnits(boxes = 0, units = 5),              // ۵ ضایعات
+            midDayLoading = BoxAndUnits(boxes = 2, units = 0),      // ۵۴ بارگیری میان روز
+            nightLoading = BoxAndUnits(boxes = 3, units = 0),        // ۸۱ بارگیری شب
+            currentStock = BoxAndUnits(boxes = 11, units = 19)       // ۳۱۶ واقعی
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        // مورد انتظار = ۵۴۰ + ۵۴ + ۲۷ - ۱۳۵ - ۵۴ - ۸۱ - ۲۷ - ۵ = ۳۱۹
+        // واقعی = ۱۱×۲۷ + ۱۹ = ۲۹۷ + ۱۹ = ۳۱۶
+        // مغایرت = ۳۱۹ - ۳۱۶ = ۳ (کسری ۳ عدد)
+        assertThat(result.returnsTotal).isEqualTo(27)
+        assertThat(result.midDayLoadingTotal).isEqualTo(54)
+        assertThat(result.expectedClosingStockTotal).isEqualTo(319)
+        assertThat(result.currentStockTotal).isEqualTo(316)
+        assertThat(result.closingVariance).isEqualTo(3)
     }
 }
 

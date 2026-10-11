@@ -233,7 +233,23 @@ fun StatEntryScreen(
             )
 
             BoxUnitInput(
-                label = "۶. هدایا",
+                label = "۶. برگشت به انبار",
+                value = state.returns,
+                product = product,
+                onValueChange = viewModel::updateReturns,
+                enabled = !state.isFinalized
+            )
+
+            BoxUnitInput(
+                label = "۷. میان روز",
+                value = state.midDayLoading,
+                product = product,
+                onValueChange = viewModel::updateMidDayLoading,
+                enabled = !state.isFinalized
+            )
+
+            BoxUnitInput(
+                label = "۸. هدایا",
                 value = state.gifts,
                 product = product,
                 onValueChange = viewModel::updateGifts,
@@ -241,7 +257,7 @@ fun StatEntryScreen(
             )
 
             BoxUnitInput(
-                label = "۷. ضایعات",
+                label = "۹. ضایعات",
                 value = state.waste,
                 product = product,
                 onValueChange = viewModel::updateWaste,
@@ -252,7 +268,7 @@ fun StatEntryScreen(
             SectionHeader(title = "بخش ۳: موجودی پایان روز")
 
             BoxUnitInput(
-                label = "۸. مانده واقعی حال حاضر",
+                label = "۱۰. مانده واقعی حال حاضر",
                 value = state.currentStock,
                 product = product,
                 onValueChange = viewModel::updateCurrentStock,

@@ -15,7 +15,7 @@ import com.damdarangha.moghayerat.data.db.entity.StatHistoryEntity
         DailyStatEntity::class,
         StatHistoryEntity::class
     ],
-    version = 1,
+    version = 2,  // افزایش نسخه به دلیل اضافه شدن فیلدهای returns و midDayLoading
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

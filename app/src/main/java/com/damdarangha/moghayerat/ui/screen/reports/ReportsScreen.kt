@@ -250,9 +250,18 @@ private fun ReportItemCard(stat: DailyStatEntity, productName: String) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                ReportValueItem("برگشت به انبار", stat.returnsTotal)
+                ReportValueItem("میان روز", stat.midDayLoadingTotal)
                 ReportValueItem("بارگیری شب", stat.nightLoadingTotal)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 ReportValueItem("هدایا", stat.giftsTotal)
                 ReportValueItem("ضایعات", stat.wasteTotal)
+                ReportValueItem("مورد انتظار", stat.expectedClosingStockTotal)
             }
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
@@ -261,7 +270,6 @@ private fun ReportItemCard(stat: DailyStatEntity, productName: String) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                ReportValueItem("مورد انتظار", stat.expectedClosingStockTotal)
                 ReportValueItem("واقعی", stat.currentStockTotal)
                 ReportValueItem("مغایرت", stat.closingVariance)
             }
