@@ -39,9 +39,9 @@ fun GroupSelectionCard(
     modifier: Modifier = Modifier
 ) {
     val (icon, color) = when (group) {
-        ProductGroup.STERILE -> Icons.Default.WaterDrop to Color(0xFF2E7D32)
-        ProductGroup.TUB -> Icons.Default.Inventory2 to Color(0xFF1565C0)
-        ProductGroup.DATE -> Icons.Default.Spa to Color(0xFF6A1B9A)
+        ProductGroup.STERILE -> Icons.Default.WaterDrop to Color(0xFF5566E5)  // آبی روشن (روی تیره)
+        ProductGroup.TUB -> Icons.Default.Inventory2 to Color(0xFFFF5252)     // قرمز روشن
+        ProductGroup.DATE -> Icons.Default.Spa to Color(0xFFB388FF)            // بنفش روشن
     }
 
     Card(

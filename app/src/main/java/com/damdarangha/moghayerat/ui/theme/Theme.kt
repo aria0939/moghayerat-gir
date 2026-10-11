@@ -12,20 +12,21 @@ import androidx.compose.ui.unit.LayoutDirection
 /**
  * تم اصلی برنامه - با رنگ‌های برند دامداران
  *
- * پالت رنگ:
- * - آبی اصلی: #011FAE (از لوگو)
- * - قرمز: #FA0403 (از لوگو)
- * - پس‌زمینه: #F3F3F3 (از لوگو)
+ * پالت رنگ (از لوگوی جدید):
+ * - آبی اصلی: #0020AC
+ * - قرمز: #F70808
+ * - پس‌زمینه تیره: #0F0F1A (تم پیش‌فرض)
  *
  * ویژگی‌ها:
- * - پشتیبانی از تم روشن و تاریک
+ * - تم تاریک به‌عنوان پیش‌فرض
  * - چیدمان RTL (راست‌چین)
- * - رنگ‌بندی بر اساس لوگوی دامداران
- * - حالت تاریک چشم‌آسایش (آبی کم‌رنگ‌تر)
+ * - فونت Vazirmatn فارسی
+ * - پشتیبانی از حالت روشن (اگر کاربر انتخاب کند)
  */
 @Composable
 fun MoghayeratTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    // دیفالت: تاریک (مطابق درخواست کاربر)
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) {
@@ -86,30 +87,16 @@ fun MoghayeratTheme(
  */
 @Composable
 fun statusColors(): StatusColors {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    return if (isDark) {
-        StatusColors(
-            success = DarkPrimary,
-            successBg = DarkPrimary.copy(alpha = 0.2f),
-            deficit = DarkTertiary,
-            deficitBg = DarkTertiary.copy(alpha = 0.2f),
-            surplus = SurplusGreen,
-            surplusBg = SurplusGreen.copy(alpha = 0.2f),
-            warning = WarningOrange,
-            warningBg = WarningOrange.copy(alpha = 0.2f)
-        )
-    } else {
-        StatusColors(
-            success = SuccessBlue,
-            successBg = SuccessBlueLight,
-            deficit = DeficitRed,
-            deficitBg = DeficitRedLight,
-            surplus = SurplusGreen,
-            surplusBg = SurplusGreenLight,
-            warning = WarningOrange,
-            warningBg = WarningOrangeLight
-        )
-    }
+    return StatusColors(
+        success = DarkPrimary,
+        successBg = DarkPrimary.copy(alpha = 0.2f),
+        deficit = DarkTertiary,
+        deficitBg = DarkTertiary.copy(alpha = 0.2f),
+        surplus = SurplusGreen,
+        surplusBg = SurplusGreen.copy(alpha = 0.2f),
+        warning = WarningOrange,
+        warningBg = WarningOrange.copy(alpha = 0.2f)
+    )
 }
 
 data class StatusColors(

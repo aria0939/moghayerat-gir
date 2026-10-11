@@ -86,7 +86,7 @@ fun SettingsScreen(
                     FilterChip(
                         selected = state.themeMode == ThemeMode.DARK,
                         onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
-                        label = { Text("تاریک") }
+                        label = { Text("تاریک (پیش‌فرض)") }
                     )
                     FilterChip(
                         selected = state.themeMode == ThemeMode.SYSTEM,

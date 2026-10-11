@@ -2,8 +2,11 @@ package com.damdarangha.moghayerat.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -19,10 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import com.damdarangha.moghayerat.domain.model.StatusType
+import com.damdarangha.moghayerat.ui.theme.statusColors
 
 /**
  * کامپوننت چیپ وضعیت - برای نمایش وضعیت مغایرت.
@@ -31,6 +32,7 @@ import com.damdarangha.moghayerat.domain.model.StatusType
  * - رنگ‌بندی متفاوت برای هر وضعیت
  * - آیکون و متن همزمان (رنگ تنها معیار نیست)
  * - شکل گرد و خوانا
+ * - سازگار با تم روشن و تاریک
  */
 @Composable
 fun StatusChip(
@@ -38,29 +40,29 @@ fun StatusChip(
     modifier: Modifier = Modifier,
     label: String? = null
 ) {
-    val triple: Triple<Color, Color, ImageVector> = when (statusType) {
+    val statusColors = statusColors()
+    val (bgColor: Color, fgColor: Color, icon: ImageVector) = when (statusType) {
         StatusType.ZERO -> Triple(
-            com.damdarangha.moghayerat.ui.theme.SuccessBlueLight,
-            com.damdarangha.moghayerat.ui.theme.SuccessBlue,
+            statusColors.successBg,
+            statusColors.success,
             Icons.Filled.CheckCircle
         )
         StatusType.DEFICIT -> Triple(
-            com.damdarangha.moghayerat.ui.theme.DeficitRedLight,
-            com.damdarangha.moghayerat.ui.theme.DeficitRed,
+            statusColors.deficitBg,
+            statusColors.deficit,
             Icons.Filled.ArrowDownward
         )
         StatusType.SURPLUS -> Triple(
-            com.damdarangha.moghayerat.ui.theme.SurplusGreenLight,
-            com.damdarangha.moghayerat.ui.theme.SurplusGreen,
+            statusColors.surplusBg,
+            statusColors.surplus,
             Icons.Filled.ArrowUpward
         )
         StatusType.INCOMPLETE -> Triple(
-            com.damdarangha.moghayerat.ui.theme.WarningOrangeLight,
-            com.damdarangha.moghayerat.ui.theme.WarningOrange,
+            statusColors.warningBg,
+            statusColors.warning,
             Icons.Filled.Warning
         )
     }
-    val (bgColor, fgColor, icon) = triple
 
     val displayLabel = label ?: statusType.label
 

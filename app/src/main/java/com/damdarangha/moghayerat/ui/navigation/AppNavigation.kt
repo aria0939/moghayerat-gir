@@ -14,11 +14,13 @@ import com.damdarangha.moghayerat.ui.screen.reports.ReportsScreen
 import com.damdarangha.moghayerat.ui.screen.settings.SettingsScreen
 import com.damdarangha.moghayerat.ui.screen.stat.StatEntryScreen
 import com.damdarangha.moghayerat.ui.screen.backup.BackupScreen
+import com.damdarangha.moghayerat.ui.screen.welcome.WelcomeScreen
 
 /**
  * مسیرهای صفحه‌های برنامه
  */
 object Routes {
+    const val WELCOME = "welcome"
     const val HOME = "home"
     const val PRODUCT_LIST = "product_list/{group}"
     const val STAT_ENTRY = "stat_entry/{productId}/{isoDate}"
@@ -36,7 +38,17 @@ object Routes {
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    NavHost(navController = navController, startDestination = Routes.WELCOME) {
+
+        composable(Routes.WELCOME) {
+            WelcomeScreen(
+                onEnterApp = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.WELCOME) { inclusive = true }
+                    }
+                }
+            )
+        }
 
         composable(Routes.HOME) {
             HomeScreen(

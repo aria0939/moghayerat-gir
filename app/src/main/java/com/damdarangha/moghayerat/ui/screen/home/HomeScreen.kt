@@ -96,7 +96,7 @@ fun HomeScreen(
                     painter = painterResource(id = R.drawable.ic_logo),
                     contentDescription = "لوگوی دامداران",
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(100.dp)
                         .padding(4.dp),
                     contentScale = ContentScale.Fit
                 )

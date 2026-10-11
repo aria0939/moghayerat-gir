@@ -4,21 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.damdarangha.moghayerat.data.datastore.ThemeMode
 import com.damdarangha.moghayerat.ui.navigation.AppNavigation
 import com.damdarangha.moghayerat.ui.theme.MoghayeratTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,14 +39,15 @@ class MainActivity : ComponentActivity() {
             val app = application as MoghayeratApplication
 
             // خواندن تنظیمات تم از DataStore به‌صورت StateFlow
-            val themeMode by app.settingsDataStore.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
-            val systemDark = isSystemInDarkTheme()
+            // دیفالت: DARK (اگر کاربر چیزی انتخاب نکرده باشد)
+            val themeMode by app.settingsDataStore.themeMode.collectAsState(initial = ThemeMode.DARK)
 
             // تعیین اینکه آیا تم تاریک باید فعال باشد
+            // SYSTEM → در حالت پیش‌فرض، تاریک در نظر گرفته می‌شود (طبق درخواست کاربر)
             val darkTheme = when (themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
-                ThemeMode.SYSTEM -> systemDark
+                ThemeMode.SYSTEM -> true  // پیش‌فرض: تاریک
             }
 
             MoghayeratTheme(darkTheme = darkTheme) {

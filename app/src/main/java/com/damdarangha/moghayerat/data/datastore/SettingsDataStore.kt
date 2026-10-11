@@ -26,10 +26,10 @@ class SettingsDataStore(private val context: Context) {
     private val keyCarryOverConfirmed = booleanPreferencesKey("carry_over_confirmed")
 
     val themeMode: Flow<ThemeMode> = context.settingsDataStore.data.map { prefs ->
-        when (prefs[keyTheme] ?: "SYSTEM") {
+        when (prefs[keyTheme] ?: "DARK") {  // دیفالت: DARK
             "LIGHT" -> ThemeMode.LIGHT
             "DARK" -> ThemeMode.DARK
-            else -> ThemeMode.SYSTEM
+            else -> ThemeMode.DARK  // SYSTEM هم به DARK تبدیل می‌شود
         }
     }
 

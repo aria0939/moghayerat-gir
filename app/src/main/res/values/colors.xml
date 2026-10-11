@@ -1,11 +1,15 @@
 <resources>
-    <!-- رنگ‌های اصلی بر اساس لوگوی دامداران -->
-    <color name="brand_primary_blue">#011FAE</color>
-    <color name="brand_accent_red">#FA0403</color>
+    <!-- رنگ‌های اصلی بر اساس لوگوی جدید دامداران -->
+    <color name="brand_primary_blue">#0020AC</color>
+    <color name="brand_accent_red">#F70808</color>
     <color name="brand_background">#F3F3F3</color>
 
     <!-- رنگ پس‌زمینه آیکون لانچر -->
-    <color name="launcher_background">#F3F3F3</color>
+    <color name="launcher_background">#0020AC</color>
+
+    <!-- رنگ‌های گرادیان splash screen (تیره) -->
+    <color name="splash_gradient_start">#0020AC</color>
+    <color name="splash_gradient_end">#001A8C</color>
 
     <!-- رنگ‌های قدیمی برای سازگاری -->
     <color name="green_primary">#011FAE</color>
