@@ -1,0 +1,12 @@
+# نمونه فایل local.properties
+# این فایل را در ریشه پروژه (همراه build.gradle.kts) قرار دهید
+# و مسیر SDK را با مسیر واقعی سیستم خود جایگزین کنید
+
+# ویندوز:
+# sdk.dir=C\:\\Users\\YourName\\AppData\\Local\\Android\\Sdk
+
+# لینوکس:
+# sdk.dir=/home/yourname/Android/Sdk
+
+# macOS:
+# sdk.dir=/Users/yourname/Library/Android/sdk

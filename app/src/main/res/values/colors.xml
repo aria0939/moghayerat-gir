@@ -1,0 +1,9 @@
+<resources>
+    <color name="green_primary">#1F5F3A</color>
+    <color name="green_light">#E8F5EC</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray_bg">#F5F6F7</color>
+    <color name="green_success">#2E7D32</color>
+    <color name="red_deficit">#C62828</color>
+    <color name="orange_warning">#EF6C00</color>
+</resources>
