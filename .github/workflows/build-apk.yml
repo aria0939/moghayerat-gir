@@ -8,6 +8,11 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# مجوزهای مورد نیاز برای ساخت Release
+permissions:
+  contents: write
+  packages: read
+
 jobs:
   build:
     name: Build APK
