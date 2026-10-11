@@ -94,8 +94,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Persian date
-    implementation("com.github.mfathi91:jalalimdatetime:2.2.0")
+    // Persian date - using custom JalaliDateConverter (no external dependency needed)
 
     // PDF generation
     implementation("com.itextpdf:itext7-core:7.2.5")

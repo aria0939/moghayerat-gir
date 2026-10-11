@@ -5,6 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,28 +38,29 @@ fun StatusChip(
     modifier: Modifier = Modifier,
     label: String? = null
 ) {
-    val (bgColor, fgColor, icon) = when (statusType) {
+    val triple: Triple<Color, Color, ImageVector> = when (statusType) {
         StatusType.ZERO -> Triple(
             com.damdarangha.moghayerat.ui.theme.SuccessGreenLight,
             com.damdarangha.moghayerat.ui.theme.SuccessGreen,
-            androidx.compose.material.icons.Icons.Default.CheckCircle
+            Icons.Filled.CheckCircle
         )
         StatusType.DEFICIT -> Triple(
             com.damdarangha.moghayerat.ui.theme.DeficitRedLight,
             com.damdarangha.moghayerat.ui.theme.DeficitRed,
-            androidx.compose.material.icons.Icons.Default.ArrowDownward
+            Icons.Filled.ArrowDownward
         )
         StatusType.SURPLUS -> Triple(
             com.damdarangha.moghayerat.ui.theme.SurplusBlueLight,
             com.damdarangha.moghayerat.ui.theme.SurplusBlue,
-            androidx.compose.material.icons.Icons.Default.ArrowUpward
+            Icons.Filled.ArrowUpward
         )
         StatusType.INCOMPLETE -> Triple(
             com.damdarangha.moghayerat.ui.theme.WarningOrangeLight,
             com.damdarangha.moghayerat.ui.theme.WarningOrange,
-            androidx.compose.material.icons.Icons.Default.Warning
+            Icons.Filled.Warning
         )
     }
+    val (bgColor, fgColor, icon) = triple
 
     val displayLabel = label ?: statusType.label
 

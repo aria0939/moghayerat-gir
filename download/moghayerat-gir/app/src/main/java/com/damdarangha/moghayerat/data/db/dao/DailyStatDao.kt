@@ -52,7 +52,7 @@ interface DailyStatDao {
         SELECT * FROM daily_stats
         WHERE productId = :productId
         ORDER BY isoDate DESC
-    """"")
+    """)
     fun observeProductHistory(productId: Long): Flow<List<DailyStatEntity>>
 
     @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND closingVariance = 0")

@@ -101,7 +101,8 @@ class BackupManager(
             }
 
             // جایگزینی داده‌ها
-            database.runInTransaction {
+            // استفاده از runBlocking چون runInTransaction با Callable کار می‌کند و suspend پشتیبانی نمی‌کند
+            kotlinx.coroutines.runBlocking {
                 // حذف داده‌های فعلی
                 // توجه: این عمل غیرقابل بازگشت است
                 for (stat in database.dailyStatDao().getAll()) {
