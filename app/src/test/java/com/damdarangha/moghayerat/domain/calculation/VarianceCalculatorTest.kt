@@ -24,11 +24,11 @@ class VarianceCalculatorTest {
         boxCapacity = 27
     )
 
-    // محصول دبه با ظرفیت ۴
+    // محصول ماست باکسی با ظرفیت ۴
     private val tubProduct = Product(
         id = 2L,
-        name = "دبه ماست",
-        group = ProductGroup.TUB,
+        name = "ماست باکسی",
+        group = ProductGroup.YOGHURT_BOX,
         packagingType = PackagingType.TUB,
         boxCapacity = 4
     )
