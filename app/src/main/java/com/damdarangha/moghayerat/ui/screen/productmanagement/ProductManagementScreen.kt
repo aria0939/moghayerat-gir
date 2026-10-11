@@ -2,6 +2,8 @@ package com.damdarangha.moghayerat.ui.screen.productmanagement
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -232,7 +236,7 @@ private fun ProductItemCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ProductFormDialog(
     product: Product?,
@@ -247,7 +251,7 @@ private fun ProductFormDialog(
         mutableStateOf(product?.packagingType ?: PackagingType.STERILE)
     }
     var boxCapacity by remember(product) {
-        mutableStateOf(product?.boxCapacity?.toString() ?: "27")
+        mutableStateOf(product?.boxCapacity?.toString() ?: "10")
     }
     var displayOrder by remember(product) {
         mutableStateOf(product?.displayOrder?.toString() ?: "1")
@@ -255,21 +259,39 @@ private fun ProductFormDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (product == null) "افزودن محصول جدید" else "ویرایش محصول") },
+        title = {
+            Text(
+                text = if (product == null) "افزودن محصول جدید" else "ویرایش محصول",
+                fontWeight = FontWeight.Bold
+            )
+        },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // فیلد نام محصول
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("نام محصول") },
+                    placeholder = { Text("مثلاً: شیر کم چرب ۹۰۰cc") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text("گروه محصول", style = MaterialTheme.typography.labelMedium)
-                Row(
+
+                // بخش گروه محصول
+                Text(
+                    text = "گروه محصول",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     ProductGroup.entries.forEach { group ->
                         FilterChip(
@@ -313,11 +335,17 @@ private fun ProductFormDialog(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text("نوع بسته‌بندی", style = MaterialTheme.typography.labelMedium)
-                Row(
+
+                // بخش نوع بسته‌بندی
+                Text(
+                    text = "نوع بسته‌بندی",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     PackagingType.entries.forEach { type ->
                         FilterChip(
@@ -327,17 +355,24 @@ private fun ProductFormDialog(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.padding(8.dp))
+
+                // فیلد ظرفیت باکس
                 OutlinedTextField(
                     value = boxCapacity,
                     onValueChange = { boxCapacity = it.filter { c -> c.isDigit() } },
-                    label = { Text("ظرفیت باکس") },
+                    label = { Text("ظرفیت باکس (تعداد واحد در هر باکس)") },
+                    supportingText = {
+                        if (selectedPackaging == PackagingType.ROUND_BOX) {
+                            Text("برای باکس رند، این مقدار نادیده گرفته می‌شود")
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     enabled = selectedPackaging != PackagingType.ROUND_BOX,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.padding(8.dp))
+
+                // فیلد ترتیب نمایش
                 OutlinedTextField(
                     value = displayOrder,
                     onValueChange = { displayOrder = it.filter { c -> c.isDigit() } },
