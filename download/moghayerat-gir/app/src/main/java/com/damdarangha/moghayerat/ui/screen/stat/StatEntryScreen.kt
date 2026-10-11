@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -120,7 +122,8 @@ fun StatEntryScreen(
                             Icon(Icons.Default.LockOpen, contentDescription = "لغو نهایی")
                         }
                     }
-                }
+                },
+                windowInsets = WindowInsets.statusBars
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -172,6 +175,14 @@ fun StatEntryScreen(
                 enabled = !state.isFinalized
             )
 
+            BoxUnitInput(
+                label = "۳. بارگیری شب",
+                value = state.nightLoading,
+                product = product,
+                onValueChange = viewModel::updateNightLoading,
+                enabled = !state.isFinalized
+            )
+
             // فیلد اختیاری: مانده واقعی بعد از بارگیری صبح
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -200,7 +211,7 @@ fun StatEntryScreen(
                     if (state.hasActualMorningStock) {
                         Spacer(modifier = Modifier.height(8.dp))
                         BoxUnitInput(
-                            label = "۳. مانده واقعی بعد از بارگیری صبح",
+                            label = "۴. مانده واقعی بعد از بارگیری صبح",
                             value = state.actualMorningStock ?: BoxAndUnits.ZERO,
                             product = product,
                             onValueChange = viewModel::updateActualMorningStock,
@@ -214,7 +225,7 @@ fun StatEntryScreen(
             SectionHeader(title = "بخش ۲: عملیات روزانه")
 
             BoxUnitInput(
-                label = "۴. رسید انبار",
+                label = "۵. رسید انبار",
                 value = state.receipt,
                 product = product,
                 onValueChange = viewModel::updateReceipt,
@@ -222,7 +233,7 @@ fun StatEntryScreen(
             )
 
             BoxUnitInput(
-                label = "۵. هدایا",
+                label = "۶. هدایا",
                 value = state.gifts,
                 product = product,
                 onValueChange = viewModel::updateGifts,
@@ -230,18 +241,10 @@ fun StatEntryScreen(
             )
 
             BoxUnitInput(
-                label = "۶. ضایعات",
+                label = "۷. ضایعات",
                 value = state.waste,
                 product = product,
                 onValueChange = viewModel::updateWaste,
-                enabled = !state.isFinalized
-            )
-
-            BoxUnitInput(
-                label = "۷. بارگیری شب",
-                value = state.nightLoading,
-                product = product,
-                onValueChange = viewModel::updateNightLoading,
                 enabled = !state.isFinalized
             )
 

@@ -4,25 +4,32 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.damdarangha.moghayerat.data.datastore.ThemeMode
 import com.damdarangha.moghayerat.ui.navigation.AppNavigation
 import com.damdarangha.moghayerat.ui.theme.MoghayeratTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // فعال‌سازی edge-to-edge برای پشتیبانی از notch و status bar
         enableEdgeToEdge()
 
         // مقداردهی اولیه محصولات پیش‌فرض
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val app = application as MoghayeratApplication
-                // ابتدا بررسی می‌کنیم که آیا محصولی وجود دارد یا نه
                 val count = app.productRepository.countActiveByGroup("STERILE")
                 if (count == 0) {
                     app.productRepository.seedDefaultProductsIfEmpty()
@@ -33,7 +40,20 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MoghayeratTheme {
+            val app = application as MoghayeratApplication
+
+            // خواندن تنظیمات تم از DataStore به‌صورت StateFlow
+            val themeMode by app.settingsDataStore.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+            val systemDark = isSystemInDarkTheme()
+
+            // تعیین اینکه آیا تم تاریک باید فعال باشد
+            val darkTheme = when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> systemDark
+            }
+
+            MoghayeratTheme(darkTheme = darkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavigation()
                 }

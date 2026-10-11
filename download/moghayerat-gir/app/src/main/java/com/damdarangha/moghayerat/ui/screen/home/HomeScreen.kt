@@ -1,5 +1,6 @@
 package com.damdarangha.moghayerat.ui.screen.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,12 +32,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
+import com.damdarangha.moghayerat.R
 import com.damdarangha.moghayerat.domain.model.ProductGroup
 import com.damdarangha.moghayerat.ui.components.GroupSelectionCard
+import com.damdarangha.moghayerat.ui.components.statusBarsPadding
 
 /**
  * صفحه اصلی برنامه.
@@ -66,6 +72,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()  // جلوگیری از overlap با notification bar
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
@@ -84,12 +91,14 @@ fun HomeScreen(
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // آیکون لوگو
-                Icon(
-                    imageVector = Icons.Default.Inventory,
-                    contentDescription = "لوگو",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(56.dp)
+                // لوگوی دامداران
+                Image(
+                    painter = painterResource(id = R.drawable.ic_logo),
+                    contentDescription = "لوگوی دامداران",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(4.dp),
+                    contentScale = ContentScale.Fit
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

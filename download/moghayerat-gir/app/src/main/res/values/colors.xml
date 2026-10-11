@@ -1,9 +1,22 @@
 <resources>
-    <color name="green_primary">#1F5F3A</color>
-    <color name="green_light">#E8F5EC</color>
+    <!-- رنگ‌های اصلی بر اساس لوگوی دامداران -->
+    <color name="brand_primary_blue">#011FAE</color>
+    <color name="brand_accent_red">#FA0403</color>
+    <color name="brand_background">#F3F3F3</color>
+
+    <!-- رنگ پس‌زمینه آیکون لانچر -->
+    <color name="launcher_background">#F3F3F3</color>
+
+    <!-- رنگ‌های قدیمی برای سازگاری -->
+    <color name="green_primary">#011FAE</color>
+    <color name="green_light">#E8F0FF</color>
     <color name="white">#FFFFFFFF</color>
     <color name="gray_bg">#F5F6F7</color>
-    <color name="green_success">#2E7D32</color>
-    <color name="red_deficit">#C62828</color>
+    <color name="green_success">#011FAE</color>
+    <color name="red_deficit">#FA0403</color>
     <color name="orange_warning">#EF6C00</color>
+
+    <!-- رنگ‌های حالت تاریک -->
+    <color name="dark_background">#1A1A2E</color>
+    <color name="dark_surface">#252544</color>
 </resources>

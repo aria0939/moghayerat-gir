@@ -40,8 +40,8 @@ fun StatusChip(
 ) {
     val triple: Triple<Color, Color, ImageVector> = when (statusType) {
         StatusType.ZERO -> Triple(
-            com.damdarangha.moghayerat.ui.theme.SuccessGreenLight,
-            com.damdarangha.moghayerat.ui.theme.SuccessGreen,
+            com.damdarangha.moghayerat.ui.theme.SuccessBlueLight,
+            com.damdarangha.moghayerat.ui.theme.SuccessBlue,
             Icons.Filled.CheckCircle
         )
         StatusType.DEFICIT -> Triple(
@@ -50,8 +50,8 @@ fun StatusChip(
             Icons.Filled.ArrowDownward
         )
         StatusType.SURPLUS -> Triple(
-            com.damdarangha.moghayerat.ui.theme.SurplusBlueLight,
-            com.damdarangha.moghayerat.ui.theme.SurplusBlue,
+            com.damdarangha.moghayerat.ui.theme.SurplusGreenLight,
+            com.damdarangha.moghayerat.ui.theme.SurplusGreen,
             Icons.Filled.ArrowUpward
         )
         StatusType.INCOMPLETE -> Triple(
