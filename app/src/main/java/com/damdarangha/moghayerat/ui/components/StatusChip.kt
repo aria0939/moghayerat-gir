@@ -38,7 +38,7 @@ fun StatusChip(
     modifier: Modifier = Modifier,
     label: String? = null
 ) {
-    val (bgColor, fgColor, icon): Triple<Color, Color, ImageVector> = when (statusType) {
+    val triple: Triple<Color, Color, ImageVector> = when (statusType) {
         StatusType.ZERO -> Triple(
             com.damdarangha.moghayerat.ui.theme.SuccessGreenLight,
             com.damdarangha.moghayerat.ui.theme.SuccessGreen,
@@ -60,6 +60,7 @@ fun StatusChip(
             Icons.Filled.Warning
         )
     }
+    val (bgColor, fgColor, icon) = triple
 
     val displayLabel = label ?: statusType.label
 
