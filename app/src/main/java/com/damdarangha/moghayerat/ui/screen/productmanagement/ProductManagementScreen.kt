@@ -21,7 +21,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistantChip
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -193,9 +193,9 @@ private fun ProductItemCard(
                     )
                     Spacer(modifier = Modifier.padding(2.dp))
                     Row {
-                        AssistantChip(onClick = {}, label = { Text(product.group.displayName) })
+                        SuggestionChip(onClick = {}, label = { Text(product.group.displayName) })
                         Spacer(modifier = Modifier.width(4.dp))
-                        AssistantChip(
+                        SuggestionChip(
                             onClick = {},
                             label = {
                                 Text(if (product.isRoundBox) "باکس رند"
@@ -204,7 +204,7 @@ private fun ProductItemCard(
                         )
                         if (!product.isActive) {
                             Spacer(modifier = Modifier.width(4.dp))
-                            AssistantChip(onClick = {}, label = { Text("غیرفعال") })
+                            SuggestionChip(onClick = {}, label = { Text("غیرفعال") })
                         }
                     }
                 }
