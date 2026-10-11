@@ -2,14 +2,16 @@ package com.damdarangha.moghayerat.domain.model
 
 /**
  * نوع بسته‌بندی محصول
- * - STERILE: ظرفیت باکس ثابت (مانند ۲۷ برای استریل)
+ * - STERILE: ظرفیت باکس ثابت (مانند ۱۰ برای استریل)
  * - TUB: ظرفیت باکس ۴ (دبه)
  * - ROUND_BOX: باکس رند، فقط تعداد باکس ثبت می‌شود (خرما)
+ * - STANDARD_BOX: باکس استاندارد با ظرفیت متغیر (شیر، ماست باکسی، دونات و کیک)
  */
 enum class PackagingType(val displayName: String) {
     STERILE("باکس استاندارد"),
     TUB("باکس ۴ عددی"),
-    ROUND_BOX("باکس رند")
+    ROUND_BOX("باکس رند"),
+    STANDARD_BOX("باکس استاندارد")
 }
 
 /**
@@ -17,8 +19,10 @@ enum class PackagingType(val displayName: String) {
  */
 enum class ProductGroup(val displayName: String) {
     STERILE("استریل"),
-    TUB("دبه"),
-    DATE("خرما")
+    MILK("شیر"),
+    YOGHURT_BOX("ماست باکسی"),
+    DATE("خرما"),
+    DONUT_CAKE("دونات و کیک")
 }
 
 /**

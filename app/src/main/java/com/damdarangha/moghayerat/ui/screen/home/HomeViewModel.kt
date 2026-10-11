@@ -16,8 +16,10 @@ data class HomeUiState(
     val todayJalali: String = "",
     val todayIso: String = "",
     val sterileCount: Int = 0,
-    val tubCount: Int = 0,
+    val milkCount: Int = 0,
+    val yoghurtBoxCount: Int = 0,
     val dateCount: Int = 0,
+    val donutCakeCount: Int = 0,
     val todayStatsCount: Int = 0,
     val todayVarianceCount: Int = 0,
     val isLoading: Boolean = true
@@ -40,8 +42,10 @@ class HomeViewModel(
             val todayIso = JalaliDateConverter.todayIso()
 
             val sterileCount = app.productRepository.countActiveByGroup(ProductGroup.STERILE.name)
-            val tubCount = app.productRepository.countActiveByGroup(ProductGroup.TUB.name)
+            val milkCount = app.productRepository.countActiveByGroup(ProductGroup.MILK.name)
+            val yoghurtBoxCount = app.productRepository.countActiveByGroup(ProductGroup.YOGHURT_BOX.name)
             val dateCount = app.productRepository.countActiveByGroup(ProductGroup.DATE.name)
+            val donutCakeCount = app.productRepository.countActiveByGroup(ProductGroup.DONUT_CAKE.name)
 
             val todayStatsCount = app.dailyStatRepository.countStatsForDate(todayIso)
             val todayVarianceCount = app.dailyStatRepository.countVarianceStatsForDate(todayIso)
@@ -51,8 +55,10 @@ class HomeViewModel(
                     todayJalali = today.toFullDisplayString(),
                     todayIso = todayIso,
                     sterileCount = sterileCount,
-                    tubCount = tubCount,
+                    milkCount = milkCount,
+                    yoghurtBoxCount = yoghurtBoxCount,
                     dateCount = dateCount,
+                    donutCakeCount = donutCakeCount,
                     todayStatsCount = todayStatsCount,
                     todayVarianceCount = todayVarianceCount,
                     isLoading = false

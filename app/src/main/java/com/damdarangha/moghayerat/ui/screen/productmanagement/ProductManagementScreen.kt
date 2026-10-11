@@ -282,16 +282,30 @@ private fun ProductFormDialog(
                                         selectedPackaging = PackagingType.STERILE
                                         if (boxCapacity.toIntOrNull() == null ||
                                             boxCapacity.toInt() !in 1..1000) {
-                                            boxCapacity = "27"
+                                            boxCapacity = "10"
                                         }
                                     }
-                                    ProductGroup.TUB -> {
+                                    ProductGroup.MILK -> {
+                                        selectedPackaging = PackagingType.STANDARD_BOX
+                                        if (boxCapacity.toIntOrNull() == null ||
+                                            boxCapacity.toInt() !in 1..1000) {
+                                            boxCapacity = "6"
+                                        }
+                                    }
+                                    ProductGroup.YOGHURT_BOX -> {
                                         selectedPackaging = PackagingType.TUB
                                         boxCapacity = "4"
                                     }
                                     ProductGroup.DATE -> {
                                         selectedPackaging = PackagingType.ROUND_BOX
                                         boxCapacity = "1"
+                                    }
+                                    ProductGroup.DONUT_CAKE -> {
+                                        selectedPackaging = PackagingType.STANDARD_BOX
+                                        if (boxCapacity.toIntOrNull() == null ||
+                                            boxCapacity.toInt() !in 1..1000) {
+                                            boxCapacity = "20"
+                                        }
                                     }
                                 }
                             },

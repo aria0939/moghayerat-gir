@@ -79,86 +79,125 @@ class ProductRepository(private val productDao: ProductDao) {
 
     private fun getDefaultProducts(): List<Product> {
         return listOf(
-            // استریل - ظرفیت باکس ۲۷
+            // ===================== استریل (ظرفیت باکس ۱۰ عددی) =====================
             Product(
-                name = "شیر استریل ۲۰۰",
+                name = "شیر استریل پرچرب ۱۰۰۰cc",
                 group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                boxCapacity = 10,
                 displayOrder = 1
             ),
             Product(
-                name = "شیر کاکائو استریل ۲۰۰",
+                name = "شیر استریل کم چرب ۱۰۰۰cc",
                 group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                boxCapacity = 10,
                 displayOrder = 2
             ),
             Product(
-                name = "خامه استریل ۲۰۰",
+                name = "شیر کاکائو استریل ۱۰۰۰cc",
                 group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                boxCapacity = 10,
                 displayOrder = 3
             ),
             Product(
-                name = "شیر قهوه استریل ۲۰۰",
+                name = "شیر موز استریل ۱۰۰۰cc",
                 group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                boxCapacity = 10,
+                displayOrder = 4
+            ),
+
+            // ===================== شیر (باکس ۶ و ۱۲ عددی) =====================
+            Product(
+                name = "شیر کم چرب ۹۰۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 6,
+                displayOrder = 1
+            ),
+            Product(
+                name = "شیر پرچرب ۹۰۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 6,
+                displayOrder = 2
+            ),
+            Product(
+                name = "شیر لاکتوز ۹۰۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 6,
+                displayOrder = 3
+            ),
+            Product(
+                name = "شیر کاکائو ۹۰۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 6,
                 displayOrder = 4
             ),
             Product(
-                name = "شیر موز استریل ۲۰۰",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
-                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                name = "شیر ESL پرچرب ۹۰۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 6,
                 displayOrder = 5
             ),
             Product(
-                name = "شیر قهوه ۱۲۵",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
-                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                name = "شیر ESL کم چرب ۹۰۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 6,
                 displayOrder = 6
             ),
             Product(
-                name = "شیر کاکائو ۱۲۵",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
-                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                name = "شیر کاکائو ۲۳۰cc",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 12,
                 displayOrder = 7
             ),
             Product(
-                name = "شیر کم چرب ۱۲۵",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
-                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
+                name = "شیر کم چرب کوچیک",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.MILK,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 12,
                 displayOrder = 8
             ),
+
+            // ===================== ماست باکسی (باکس ۴ عددی) =====================
             Product(
-                name = "شیر نیم چرب ۱۲۵",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.STERILE,
-                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STERILE,
-                boxCapacity = 27,
-                displayOrder = 9
-            ),
-            // دبه - ظرفیت باکس ۴
-            Product(
-                name = "ماست ۹۰۰ گرمی",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.TUB,
+                name = "ماست ۲۰۰۰ کم چرب ساده",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.YOGHURT_BOX,
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.TUB,
                 boxCapacity = 4,
                 displayOrder = 1
             ),
             Product(
-                name = "ماست ۱۸۰۰ گرمی",
-                group = com.damdarangha.moghayerat.domain.model.ProductGroup.TUB,
+                name = "ماست ۲۰۰۰ پر چرب ساده",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.YOGHURT_BOX,
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.TUB,
                 boxCapacity = 4,
                 displayOrder = 2
             ),
-            // خرما - باکس رند
+            Product(
+                name = "ماست ۲۰۰۰ پرچرب پلاس +",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.YOGHURT_BOX,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.TUB,
+                boxCapacity = 4,
+                displayOrder = 3
+            ),
+            Product(
+                name = "ماست ۲۰۰۰ کم چرب پلاس +",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.YOGHURT_BOX,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.TUB,
+                boxCapacity = 4,
+                displayOrder = 4
+            ),
+
+            // ===================== خرما (باکس رند) =====================
             Product(
                 name = "خرما کبک",
                 group = com.damdarangha.moghayerat.domain.model.ProductGroup.DATE,
@@ -172,6 +211,29 @@ class ProductRepository(private val productDao: ProductDao) {
                 packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.ROUND_BOX,
                 boxCapacity = 1,
                 displayOrder = 2
+            ),
+
+            // ===================== دونات و کیک =====================
+            Product(
+                name = "دونات رضوی",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.DONUT_CAKE,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 20,
+                displayOrder = 1
+            ),
+            Product(
+                name = "کیک دو قلو",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.DONUT_CAKE,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 20,
+                displayOrder = 2
+            ),
+            Product(
+                name = "پیراشکی",
+                group = com.damdarangha.moghayerat.domain.model.ProductGroup.DONUT_CAKE,
+                packagingType = com.damdarangha.moghayerat.domain.model.PackagingType.STANDARD_BOX,
+                boxCapacity = 24,
+                displayOrder = 3
             )
         )
     }

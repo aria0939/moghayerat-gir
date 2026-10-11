@@ -152,10 +152,17 @@ fun HomeScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         GroupSelectionCard(
-            group = ProductGroup.TUB,
-            activeProductCount = state.tubCount,
+            group = ProductGroup.MILK,
+            activeProductCount = state.milkCount,
             lastStatStatus = null,
-            onClick = { onGroupClick(ProductGroup.TUB) }
+            onClick = { onGroupClick(ProductGroup.MILK) }
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        GroupSelectionCard(
+            group = ProductGroup.YOGHURT_BOX,
+            activeProductCount = state.yoghurtBoxCount,
+            lastStatStatus = null,
+            onClick = { onGroupClick(ProductGroup.YOGHURT_BOX) }
         )
         Spacer(modifier = Modifier.height(12.dp))
         GroupSelectionCard(
@@ -163,6 +170,13 @@ fun HomeScreen(
             activeProductCount = state.dateCount,
             lastStatStatus = null,
             onClick = { onGroupClick(ProductGroup.DATE) }
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        GroupSelectionCard(
+            group = ProductGroup.DONUT_CAKE,
+            activeProductCount = state.donutCakeCount,
+            lastStatStatus = null,
+            onClick = { onGroupClick(ProductGroup.DONUT_CAKE) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))

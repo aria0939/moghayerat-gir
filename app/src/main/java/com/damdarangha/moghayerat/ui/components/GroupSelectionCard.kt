@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.filled.LocalDrink
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -39,9 +41,11 @@ fun GroupSelectionCard(
     modifier: Modifier = Modifier
 ) {
     val (icon, color) = when (group) {
-        ProductGroup.STERILE -> Icons.Default.WaterDrop to Color(0xFF5566E5)  // آبی روشن (روی تیره)
-        ProductGroup.TUB -> Icons.Default.Inventory2 to Color(0xFFFF5252)     // قرمز روشن
-        ProductGroup.DATE -> Icons.Default.Spa to Color(0xFFB388FF)            // بنفش روشن
+        ProductGroup.STERILE -> Icons.Default.WaterDrop to Color(0xFF5566E5)       // آبی روشن
+        ProductGroup.MILK -> Icons.Default.LocalDrink to Color(0xFF82B1FF)        // آبی روشن‌تر
+        ProductGroup.YOGHURT_BOX -> Icons.Default.Inventory2 to Color(0xFFFF8A80)  // قرمز روشن
+        ProductGroup.DATE -> Icons.Default.Spa to Color(0xFFB388FF)                 // بنفش روشن
+        ProductGroup.DONUT_CAKE -> Icons.Default.Cake to Color(0xFFFFD180)          // نارنجی روشن
     }
 
     Card(
