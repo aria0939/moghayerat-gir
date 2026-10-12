@@ -66,7 +66,7 @@ fun ReportsScreen(
     var showMissingWarning by remember { mutableStateOf(false) }
 
     // به‌روزرسانی گزارش وقتی کاربر از صفحه ثبت آمار برمی‌گردد
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
