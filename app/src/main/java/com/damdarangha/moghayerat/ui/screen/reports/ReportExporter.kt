@@ -226,13 +226,14 @@ object ReportExporter {
 
                 // رنگ ردیف متناوب
                 if (rowIndex % 2 == 0) {
-                    cell.backgroundColor = ROW_ALT_BG
+                    cell.setBackgroundColor(ROW_ALT_BG)
                 }
                 // رنگ خاص برای ستون مغایرت آخر کار
                 if (idx == 12 && stat != null && stat.closingVariance != 0) {
-                    cell.backgroundColor = if (stat.closingVariance > 0)
+                    val varianceBg = if (stat.closingVariance > 0)
                         DeviceRgb(255, 235, 235)  // کسری - قرمز روشن
                     else DeviceRgb(235, 255, 235)  // اضافه - سبز روشن
+                    cell.setBackgroundColor(varianceBg)
                 }
                 table.addCell(cell)
             }

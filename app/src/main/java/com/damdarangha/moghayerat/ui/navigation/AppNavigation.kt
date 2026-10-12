@@ -69,7 +69,7 @@ fun AppNavigation() {
             ) { padding ->
                 Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                     HomeScreen(
-                        onWorkflowClick = { workflow ->
+                        onWorkflowClick = { workflow: com.damdarangha.moghayerat.domain.model.Workflow ->
                             navController.navigate(Routes.productList(workflow.id))
                         },
                         onReportsClick = { navController.navigate(Routes.REPORTS) },
