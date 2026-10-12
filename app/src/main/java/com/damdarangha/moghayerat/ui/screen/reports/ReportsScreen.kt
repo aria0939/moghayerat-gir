@@ -65,6 +65,20 @@ fun ReportsScreen(
     var showPdfDialog by remember { mutableStateOf(false) }
     var showMissingWarning by remember { mutableStateOf(false) }
 
+    // به‌روزرسانی گزارش وقتی کاربر از صفحه ثبت آمار برمی‌گردد
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshReport()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     LaunchedEffect(state.message) {
         state.message?.let {
             snackbarHostState.showSnackbar(it)

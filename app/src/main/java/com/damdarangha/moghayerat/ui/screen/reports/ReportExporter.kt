@@ -66,12 +66,12 @@ object ReportExporter {
         val reportDir = File(context.cacheDir, "shared").apply { if (!exists()) mkdirs() }
         val jalaliDate = JalaliDateConverter.gregorianToJalaliString(isoDate)
         val safeName = workflowName.replace(" ", "_").replace("/", "-")
+            .replace("\\", "-").replace(":", "-")
         val fileName = "گزارش_${safeName}_$jalaliDate.pdf"
         val pdfFile = File(reportDir, fileName)
 
         val writer = PdfWriter(pdfFile)
         val pdfDoc = PdfDocument(writer)
-        // صفحه افقی A4 برای جا دادن ۱۳ ستون
         pdfDoc.defaultPageSize = PageSize.A4.rotate()
         val doc = Document(pdfDoc, pdfDoc.defaultPageSize)
         doc.setMargins(28f, 28f, 40f, 28f)
@@ -112,6 +112,18 @@ object ReportExporter {
 
         // خط جداکننده
         doc.add(LineSeparator(SolidLine()).setMarginBottom(10f))
+
+        // اگر هیچ محصولی وجود ندارد، پیام مناسب نمایش بده
+        if (products.isEmpty()) {
+            val emptyPara = Paragraph("هیچ محصولی در این گردش کار ثبت نشده است.")
+                .setFontSize(12f)
+                .setFontColor(TEXT_MUTED)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(40f)
+            doc.add(emptyPara)
+            doc.close()
+            return pdfFile
+        }
 
         // ===================== جدول =====================
         val numColumns = 13

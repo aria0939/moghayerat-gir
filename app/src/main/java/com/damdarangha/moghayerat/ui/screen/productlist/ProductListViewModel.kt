@@ -72,6 +72,32 @@ class ProductListViewModel(
     private fun loadStatStatuses() {
         viewModelScope.launch {
             val today = JalaliDateConverter.todayIso()
+            // گوش دادن به تغییرات آمار روزانه برای به‌روزرسانی خودکار وضعیت‌ها
+            app.dailyStatRepository.observeStatsForDate(today).collect { _ ->
+                val products = app.productRepository.observeActiveProductsByWorkflow(workflowId)
+                products.collect { productList ->
+                    val statuses = mutableMapOf<Long, StatStatus>()
+                    productList.forEach { product ->
+                        val stat = app.dailyStatRepository.getStat(product.id, today)
+                        statuses[product.id] = when {
+                            stat == null -> StatStatus.NOT_REGISTERED
+                            stat.isFinalized -> StatStatus.FINALIZED
+                            stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
+                            else -> StatStatus.REGISTERED
+                        }
+                    }
+                    _statStatuses.value = statuses
+                }
+            }
+        }
+    }
+
+    /**
+     * به‌روزرسانی دستی وضعیت‌ها - وقتی کاربر از صفحه ثبت آمار برمی‌گردد صدا زده می‌شود.
+     */
+    fun refreshStatStatuses() {
+        viewModelScope.launch {
+            val today = JalaliDateConverter.todayIso()
             val products = app.productRepository.observeActiveProductsByWorkflow(workflowId)
             products.collect { productList ->
                 val statuses = mutableMapOf<Long, StatStatus>()
@@ -85,6 +111,7 @@ class ProductListViewModel(
                     }
                 }
                 _statStatuses.value = statuses
+                return@collect
             }
         }
     }

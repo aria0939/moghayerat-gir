@@ -277,10 +277,11 @@ class StatEntryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             try {
-                app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+                val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = false)
                 _uiState.update {
                     it.copy(
                         isSaving = false,
+                        statId = savedId,  // به‌روزرسانی statId برای جلوگیری از رکورد تکراری
                         saveMessage = "آمار با موفقیت ذخیره شد"
                     )
                 }
@@ -297,11 +298,12 @@ class StatEntryViewModel(
 
     /**
      * نهایی کردن آمار.
+     * ابتدا اطلاعات را ذخیره می‌کند، سپس آن را نهایی می‌کند.
+     * اگر statId وجود نداشته باشد، ابتدا یک آمار جدید می‌سازد.
      */
     fun finalizeStat() {
         val state = _uiState.value
         val product = state.product ?: return
-        val statId = state.statId ?: return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
@@ -323,11 +325,12 @@ class StatEntryViewModel(
                     currentStock = state.currentStock,
                     notes = state.notes
                 )
-                app.dailyStatRepository.saveStat(input, product, isFinalized = true)
+                val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = true)
                 _uiState.update {
                     it.copy(
                         isSaving = false,
                         isFinalized = true,
+                        statId = savedId,  // به‌روزرسانی statId برای جلوگیری از رکورد تکراری
                         saveMessage = "آمار نهایی شد"
                     )
                 }
