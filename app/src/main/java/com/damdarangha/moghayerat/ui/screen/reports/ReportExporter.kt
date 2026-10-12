@@ -327,23 +327,37 @@ object ReportExporter {
         doc.add(signTable)
 
         // ===================== صفحه‌بندی واقعی =====================
-        // بستن سند برای قطعی شدن صفحه‌بندی
-        doc.close()
+        // استفاده از event handler برای اضافه‌کردن شماره صفحه به هر صفحه
+        // این روش قبل از بسته شدن سند اجرا می‌شود و خطای "Document was closed" نمی‌دهد
+        pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, PageNumberEventHandler(fontRegular))
 
-        // اضافه‌کردن شماره صفحه به هر صفحه بعد از بستن سند
-        val pageCount = pdfDoc.numberOfPages
-        for (i in 1..pageCount) {
-            val page = pdfDoc.getPage(i)
+        doc.close()
+        return pdfFile
+    }
+
+    /**
+     * Event handler برای اضافه‌کردن شماره صفحه به هر صفحه.
+     * این handler قبل از بسته شدن سند اجرا می‌شود.
+     */
+    private class PageNumberEventHandler(private val font: PdfFont) : IEventHandler {
+        override fun handleEvent(event: Event) {
+            val docEvent = event as PdfDocumentEvent
+            val pdfDoc = docEvent.document
+            val page = docEvent.page
+            val pageNum = pdfDoc.pageNumber
+
             val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
             canvas.setFillColor(TEXT_MUTED)
             canvas.beginText()
-            canvas.setFontAndSize(fontRegular, 8f)
-            val text = "صفحه $i از $pageCount"
-            canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 50.0, 20.0)
+            canvas.setFontAndSize(font, 8f)
+            // در زمان END_PAGE، تعداد کل صفحات هنوز مشخص نیست
+            // پس فقط شماره صفحه فعلی را نشان می‌دهیم
+            val text = "صفحه $pageNum"
+            canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 30.0, 20.0)
             canvas.showText(text)
             canvas.endText()
+            canvas.release()
         }
-        return pdfFile
     }
 
     /**
