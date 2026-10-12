@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 // رنگ‌های اصلی برند
 val BrandPrimaryBlue = Color(0xFF123DA8)       // آبی اصلی
 val BrandPrimaryBlueLight = Color(0xFF4F7DF3) // آبی روشن
+val BrandAccentRed = Color(0xFFFA727D)         // قرمز مرجانی (compat)
 val BrandBackground = Color(0xFFFFFFFF)        // پس‌زمینه سفید
 val BrandSurfaceWhite = Color(0xFFFFFFFF)      // سفید کارت‌ها
 
