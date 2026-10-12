@@ -10,6 +10,7 @@ import com.damdarangha.moghayerat.domain.model.Workflow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
@@ -47,7 +48,7 @@ class ReportsViewModel(
         viewModelScope.launch {
             app.workflowRepository.observeActiveWorkflows().collect { workflows ->
                 _uiState.update { it.copy(workflows = workflows) }
-                if (state().selectedWorkflow == null && workflows.isNotEmpty()) {
+                if (_uiState.value.selectedWorkflow == null && workflows.isNotEmpty()) {
                     selectWorkflow(workflows.first())
                 }
             }
@@ -60,20 +61,17 @@ class ReportsViewModel(
         _uiState.update { it.copy(isoDate = today, jalaliDate = jalali) }
     }
 
-    private fun state() = _uiState.value
-
+    /**
+     * انتخاب گردش کار و بارگذاری آمار آن.
+     * با استفاده از first() به‌جای collect، اطمینان حاصل می‌کنیم که فقط اولین مقدار را می‌گیریم.
+     */
     fun selectWorkflow(workflow: Workflow) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedWorkflow = workflow, isLoading = true) }
             val today = _uiState.value.isoDate
 
-            // گرفتن محصولات گردش کار انتخاب شده
-            val products = mutableListOf<Product>()
-            app.productRepository.observeActiveProductsByWorkflow(workflow.id).collect { productList ->
-                products.clear()
-                products.addAll(productList)
-                return@collect
-            }
+            // گرفتن محصولات گردش کار انتخاب شده با first() (فقط اولین مقدار)
+            val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
             val productIds = products.map { it.id }.toSet()
 
             // گرفتن آمار امروز برای محصولات این گردش کار
@@ -114,22 +112,27 @@ class ReportsViewModel(
                 }
                 val ctx = app.applicationContext
 
-                // اگر هیچ محصولی وجود ندارد، هشدار بده
-                if (state.products.isEmpty()) {
+                // گرفتن محصولات و آمار به‌صورت تازه از دیتابیس
+                val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
+                if (products.isEmpty()) {
                     _uiState.update { it.copy(message = "هیچ محصولی در این گردش کار وجود ندارد") }
                     return@launch
                 }
 
+                val productIds = products.map { it.id }.toSet()
+                val allStats = app.dailyStatRepository.getStatsForDate(state.isoDate)
+                val workflowStats = allStats.filter { it.productId in productIds }
+
                 // فیلتر محصولات بر اساس نوع گزارش
                 val (statsToExport, productsToExport) = when (reportType) {
-                    ReportType.FULL -> state.stats to state.products
+                    ReportType.FULL -> workflowStats to products
                     ReportType.REGISTERED_ONLY -> {
-                        val filtered = state.stats.filter { s -> s.closingVariance == 0 }
-                        filtered to state.products.filter { p -> filtered.any { it.productId == p.id } }
+                        val filtered = workflowStats.filter { s -> s.closingVariance == 0 }
+                        filtered to products.filter { p -> filtered.any { it.productId == p.id } }
                     }
                     ReportType.VARIANCE_ONLY -> {
-                        val filtered = state.stats.filter { s -> s.closingVariance != 0 }
-                        filtered to state.products.filter { p -> filtered.any { it.productId == p.id } }
+                        val filtered = workflowStats.filter { s -> s.closingVariance != 0 }
+                        filtered to products.filter { p -> filtered.any { it.productId == p.id } }
                     }
                 }
 

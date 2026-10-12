@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.damdarangha.moghayerat.MoghayeratApplication
-import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.domain.model.StatStatus
 import com.damdarangha.moghayerat.util.JalaliDateConverter
@@ -13,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -69,27 +69,36 @@ class ProductListViewModel(
         }
     }
 
+    /**
+     * بارگذاری وضعیت آمار محصولات.
+     * با استفاده از first() اطمینان حاصل می‌کنیم که فقط اولین مقدار را می‌گیریم
+     * و سپس با observeStatsForDate به‌صورت reactive به تغییرات گوش می‌دهیم.
+     */
     private fun loadStatStatuses() {
         viewModelScope.launch {
             val today = JalaliDateConverter.todayIso()
-            // گوش دادن به تغییرات آمار روزانه برای به‌روزرسانی خودکار وضعیت‌ها
+            // به‌روزرسانی اولیه
+            refreshStatuses(today)
+            // گوش دادن به تغییرات آمار روزانه برای به‌روزرسانی خودکار
             app.dailyStatRepository.observeStatsForDate(today).collect { _ ->
-                val products = app.productRepository.observeActiveProductsByWorkflow(workflowId)
-                products.collect { productList ->
-                    val statuses = mutableMapOf<Long, StatStatus>()
-                    productList.forEach { product ->
-                        val stat = app.dailyStatRepository.getStat(product.id, today)
-                        statuses[product.id] = when {
-                            stat == null -> StatStatus.NOT_REGISTERED
-                            stat.isFinalized -> StatStatus.FINALIZED
-                            stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
-                            else -> StatStatus.REGISTERED
-                        }
-                    }
-                    _statStatuses.value = statuses
-                }
+                refreshStatuses(today)
             }
         }
+    }
+
+    private suspend fun refreshStatuses(today: String) {
+        val products = app.productRepository.observeActiveProductsByWorkflow(workflowId).first()
+        val statuses = mutableMapOf<Long, StatStatus>()
+        products.forEach { product ->
+            val stat = app.dailyStatRepository.getStat(product.id, today)
+            statuses[product.id] = when {
+                stat == null -> StatStatus.NOT_REGISTERED
+                stat.isFinalized -> StatStatus.FINALIZED
+                stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
+                else -> StatStatus.REGISTERED
+            }
+        }
+        _statStatuses.value = statuses
     }
 
     /**
@@ -98,21 +107,7 @@ class ProductListViewModel(
     fun refreshStatStatuses() {
         viewModelScope.launch {
             val today = JalaliDateConverter.todayIso()
-            val products = app.productRepository.observeActiveProductsByWorkflow(workflowId)
-            products.collect { productList ->
-                val statuses = mutableMapOf<Long, StatStatus>()
-                productList.forEach { product ->
-                    val stat = app.dailyStatRepository.getStat(product.id, today)
-                    statuses[product.id] = when {
-                        stat == null -> StatStatus.NOT_REGISTERED
-                        stat.isFinalized -> StatStatus.FINALIZED
-                        stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
-                        else -> StatStatus.REGISTERED
-                    }
-                }
-                _statStatuses.value = statuses
-                return@collect
-            }
+            refreshStatuses(today)
         }
     }
 

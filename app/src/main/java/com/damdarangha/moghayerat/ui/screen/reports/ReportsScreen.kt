@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -199,11 +200,45 @@ fun ReportsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // فهرست آمار
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.stats, key = { it.id }) { stat ->
-                    val productName = state.products.find { it.id == stat.productId }?.name ?: "نامشخص"
-                    ReportItemCard(stat, productName)
+            // فهرست آمار یا پیام خالی
+            if (state.stats.isEmpty()) {
+                // پیام مناسب وقتی آماری ثبت نشده
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PictureAsPdf,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = if (state.selectedWorkflow != null && state.products.isNotEmpty())
+                            "هنوز آماری برای امروز ثبت نشده است"
+                        else "هنوز گردش کاری انتخاب نشده است",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "با ثبت آمار محصولات، گزارش در اینجا نمایش داده می‌شود",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(state.stats, key = { it.id }) { stat ->
+                        val productName = state.products.find { it.id == stat.productId }?.name ?: "نامشخص"
+                        ReportItemCard(stat, productName)
+                    }
                 }
             }
         }

@@ -139,9 +139,10 @@ object JalaliDateConverter {
 
     /**
      * تاریخ امروز به میلادی در فرمت yyyy-MM-dd
+     * از منطقه زمانی دستگاه استفاده می‌کند تا تاریخ صحیح روز نمایش داده شود.
      */
     fun todayIso(): String {
-        val cal = Calendar.getInstance()
+        val cal = Calendar.getInstance()  // از منطقه زمانی پیش‌فرض دستگاه استفاده می‌کند
         val year = cal.get(Calendar.YEAR)
         val month = cal.get(Calendar.MONTH) + 1
         val day = cal.get(Calendar.DAY_OF_MONTH)
@@ -149,10 +150,10 @@ object JalaliDateConverter {
     }
 
     /**
-     * تاریخ امروز شمسی
+     * تاریخ امروز شمسی با استفاده از منطقه زمانی دستگاه.
      */
     fun todayJalali(): JalaliDate {
-        val cal = Calendar.getInstance()
+        val cal = Calendar.getInstance()  // از منطقه زمانی پیش‌فرض دستگاه استفاده می‌کند
         return gregorianToJalali(
             cal.get(Calendar.YEAR),
             cal.get(Calendar.MONTH) + 1,
