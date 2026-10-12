@@ -34,7 +34,7 @@ import java.io.IOException
  * 6. متفرقه / هدایا (gifts)
  * 7. میان روز (midDayLoading)
  * 8. برگشت به انبار (returns)
- * 9. موجودی کل (opening + receipt + returns)
+ * 9. موجودی کل (opening + morningLoading + returns)
  * 10. تعداد بارگیری شده (morning + midDay + night)
  * 11. مانده (expectedClosing)
  * 12. توضیحات (notes)
@@ -265,8 +265,9 @@ object ReportExporter {
                 val giftsTotal = stat?.giftsTotal ?: 0
                 val wasteTotal = stat?.wasteTotal ?: 0
 
-                // موجودی کل = مانده شب گذشته + رسید + برگشت به انبار
-                val totalInventory = openingTotal + receiptTotal + returnsTotal
+                // موجودی کل = مانده + تحویل روز + برگشت به انبار
+                // مانده = openingStockTotal, تحویل روز = morningLoadingTotal, برگشت = returnsTotal
+                val totalInventory = openingTotal + morningTotal + returnsTotal
                 // تعداد بارگیری شده = بارگیری روز + میان روز + بارگیری شب
                 val totalLoaded = morningTotal + midDayTotal + nightTotal
 
