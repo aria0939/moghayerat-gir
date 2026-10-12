@@ -464,7 +464,13 @@ object ReportExporter {
                 context.packageName
             )
             if (fontResId != 0) {
-                Typeface.createFromResource(context.resources, fontResId)
+                Typeface.createFromFile(File(context.filesDir, fontFileName).also { f ->
+                    if (!f.exists()) {
+                        context.resources.openRawResource(fontResId).use { input ->
+                            f.outputStream().use { output -> input.copyTo(output) }
+                        }
+                    }
+                })
             } else {
                 Typeface.DEFAULT
             }
