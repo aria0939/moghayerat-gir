@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.TableChart
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,20 +27,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
@@ -57,19 +62,14 @@ fun ReportsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showPdfDialog by remember { mutableStateOf(false) }
+    var showMissingWarning by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearMessage()
         }
-    }
-
-    val filteredStats = when (state.filterType) {
-        ReportFilter.ALL -> state.stats
-        ReportFilter.ZERO -> state.stats.filter { it.closingVariance == 0 }
-        ReportFilter.DEFICIT -> state.stats.filter { it.closingVariance > 0 }
-        ReportFilter.SURPLUS -> state.stats.filter { it.closingVariance < 0 }
     }
 
     Scaffold(
@@ -80,8 +80,7 @@ fun ReportsScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
                     }
-                },
-                windowInsets = WindowInsets.statusBars
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -92,27 +91,52 @@ fun ReportsScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // کارت خلاصه
+            // انتخاب گردش کار
+            if (state.workflows.isNotEmpty()) {
+                Text(
+                    text = "انتخاب گردش کار:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    state.workflows.forEach { workflow ->
+                        FilterChip(
+                            selected = state.selectedWorkflow?.id == workflow.id,
+                            onClick = { viewModel.selectWorkflow(workflow) },
+                            label = { Text(workflow.name) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // کارت آمار
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Text(
                         text = "گزارش روزانه - ${state.jalaliDate}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        SummaryItem("تعداد بررسی‌شده", state.stats.size)
+                        SummaryItem("کل محصولات", state.products.size)
+                        SummaryItem("ثبت‌شده", state.stats.size)
                         SummaryItem("مغایرت صفر", state.zeroVarianceCount)
                         SummaryItem("کسری", state.deficitCount)
                         SummaryItem("اضافه", state.surplusCount)
@@ -122,66 +146,122 @@ fun ReportsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // دکمه‌های خروجی
-            Row(
+            // دکمه خروجی PDF آمارگیری
+            Button(
+                onClick = {
+                    val missing = state.products.size - state.stats.size
+                    if (missing > 0) {
+                        showMissingWarning = true
+                    } else {
+                        showPdfDialog = true
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                OutlinedButton(
-                    onClick = { viewModel.exportToPdf() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.PictureAsPdf, contentDescription = null)
-                    Spacer(modifier = Modifier.padding(end = 4.dp))
-                    Text("PDF")
-                }
-                OutlinedButton(
-                    onClick = { viewModel.exportToCsv() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.TableChart, contentDescription = null)
-                    Spacer(modifier = Modifier.padding(end = 4.dp))
-                    Text("CSV")
-                }
+                Icon(Icons.Default.PictureAsPdf, contentDescription = null)
+                Spacer(modifier = Modifier.padding(end = 6.dp))
+                Text("خروجی PDF آمارگیری")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // دکمه اشتراک‌گذاری (اگر فایل ساخته شده)
+            if (state.reportFile != null) {
                 OutlinedButton(
                     onClick = { viewModel.shareReport() },
-                    modifier = Modifier.weight(1f),
-                    enabled = state.reportFile != null
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null)
-                    Spacer(modifier = Modifier.padding(end = 4.dp))
-                    Text("اشتراک")
+                    Spacer(modifier = Modifier.padding(end = 6.dp))
+                    Text("اشتراک‌گذاری PDF")
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // فیلترها
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ReportFilter.entries.forEach { filter ->
-                    FilterChip(
-                        selected = state.filterType == filter,
-                        onClick = { viewModel.setFilter(filter) },
-                        label = { Text(filter.label) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // فهرست آمار
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(filteredStats, key = { it.id }) { stat ->
-                    ReportItemCard(
-                        stat = stat,
-                        productName = state.products[stat.productId]?.name ?: "نامشخص"
-                    )
+                items(state.stats, key = { it.id }) { stat ->
+                    val productName = state.products.find { it.id == stat.productId }?.name ?: "نامشخص"
+                    ReportItemCard(stat, productName)
                 }
             }
         }
+    }
+
+    // دیالوگ انتخاب نوع گزارش PDF
+    if (showPdfDialog) {
+        var selectedReportType by remember { mutableStateOf(ReportType.FULL) }
+        AlertDialog(
+            onDismissRequest = { showPdfDialog = false },
+            title = { Text("نوع گزارش PDF") },
+            text = {
+                Column {
+                    ReportType.entries.forEach { type ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = selectedReportType == type,
+                                onClick = { selectedReportType = type }
+                            )
+                            Text(
+                                text = type.label,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPdfDialog = false
+                        viewModel.exportToPdf(selectedReportType)
+                    }
+                ) { Text("ساخت PDF") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPdfDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
+
+    // هشدار محصولات ثبت‌نشده
+    if (showMissingWarning) {
+        val missing = state.products.size - state.stats.size
+        AlertDialog(
+            onDismissRequest = { showMissingWarning = false },
+            title = { Text("هشدار: محصولات ثبت‌نشده") },
+            text = {
+                Text(
+                    "$missing محصول هنوز ثبت نشده است.\n\n" +
+                    "می‌توانید گزارش موقت تهیه کنید یا به تکمیل محصولات برگردید."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showMissingWarning = false
+                        showPdfDialog = true
+                    }
+                ) { Text("گزارش موقت") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMissingWarning = false }) {
+                    Text("بازگشت")
+                }
+            }
+        )
     }
 }
 
@@ -189,15 +269,16 @@ fun ReportsScreen(
 private fun SummaryItem(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
             text = value.toPersian(),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 10.sp
         )
     }
 }

@@ -23,14 +23,11 @@ class MainActivity : ComponentActivity() {
         // فعال‌سازی edge-to-edge برای پشتیبانی از notch و status bar
         enableEdgeToEdge()
 
-        // مقداردهی اولیه محصولات پیش‌فرض
+        // مقداردهی اولیه گردش کارهای پیش‌فرض
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val app = application as MoghayeratApplication
-                val count = app.productRepository.countActiveByGroup("STERILE")
-                if (count == 0) {
-                    app.productRepository.seedDefaultProductsIfEmpty()
-                }
+                app.workflowRepository.seedDefaultWorkflowsIfEmpty(app.productRepository)
             } catch (_: Exception) {
                 // در صورت بروز خطا، فقط لاگ می‌کنیم
             }

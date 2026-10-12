@@ -5,10 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -25,36 +21,27 @@ import com.damdarangha.moghayerat.ui.screen.reports.ReportsScreen
 import com.damdarangha.moghayerat.ui.screen.settings.SettingsScreen
 import com.damdarangha.moghayerat.ui.screen.stat.StatEntryScreen
 import com.damdarangha.moghayerat.ui.screen.welcome.WelcomeScreen
+import com.damdarangha.moghayerat.ui.screen.workflowmanagement.WorkflowManagementScreen
 
-/**
- * مسیرهای صفحه‌های برنامه
- */
 object Routes {
     const val WELCOME = "welcome"
     const val HOME = "home"
-    const val PRODUCT_LIST = "product_list/{group}"
+    const val PRODUCT_LIST = "product_list/{workflowId}"
     const val STAT_ENTRY = "stat_entry/{productId}/{isoDate}"
     const val REPORTS = "reports"
     const val HISTORY = "history"
     const val SETTINGS = "settings"
     const val PRODUCT_MANAGEMENT = "product_management"
+    const val WORKFLOW_MANAGEMENT = "workflow_management"
     const val BACKUP = "backup"
 
-    fun productList(group: String) = "product_list/$group"
+    fun productList(workflowId: Long) = "product_list/$workflowId"
     fun statEntry(productId: Long, isoDate: String) = "stat_entry/$productId/$isoDate"
 }
-
-/**
- * صفحاتی که دارای نوار ناوبری پایین هستند
- */
-val bottomNavRoutes = setOf(
-    Routes.HOME, Routes.REPORTS, Routes.PRODUCT_MANAGEMENT, Routes.SETTINGS
-)
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    var currentRoute by remember { mutableStateOf(Routes.WELCOME) }
 
     NavHost(navController = navController, startDestination = Routes.WELCOME) {
 
@@ -73,31 +60,22 @@ fun AppNavigation() {
                 currentRoute = Routes.HOME,
                 onNavigate = { route ->
                     when (route) {
-                        Routes.HOME -> { /* همین صفحه */ }
-                        Routes.REPORTS -> navController.navigate(Routes.REPORTS) {
-                            popUpTo(Routes.HOME) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                        Routes.PRODUCT_MANAGEMENT -> navController.navigate(Routes.PRODUCT_MANAGEMENT) {
-                            popUpTo(Routes.HOME) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                        Routes.SETTINGS -> navController.navigate(Routes.SETTINGS) {
-                            popUpTo(Routes.HOME) { inclusive = false }
-                            launchSingleTop = true
-                        }
+                        Routes.HOME -> { }
+                        Routes.REPORTS -> navController.navigate(Routes.REPORTS) { launchSingleTop = true }
+                        Routes.PRODUCT_MANAGEMENT -> navController.navigate(Routes.PRODUCT_MANAGEMENT) { launchSingleTop = true }
+                        Routes.SETTINGS -> navController.navigate(Routes.SETTINGS) { launchSingleTop = true }
                     }
                 }
             ) { padding ->
                 Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                     HomeScreen(
-                        onGroupClick = { group ->
-                            navController.navigate(Routes.productList(group.name))
+                        onWorkflowClick = { workflow ->
+                            navController.navigate(Routes.productList(workflow.id))
                         },
                         onReportsClick = { navController.navigate(Routes.REPORTS) },
                         onHistoryClick = { navController.navigate(Routes.HISTORY) },
                         onSettingsClick = { navController.navigate(Routes.SETTINGS) },
-                        onProductManagementClick = { navController.navigate(Routes.PRODUCT_MANAGEMENT) },
+                        onWorkflowManagementClick = { navController.navigate(Routes.WORKFLOW_MANAGEMENT) },
                         onBackupClick = { navController.navigate(Routes.BACKUP) }
                     )
                 }
@@ -106,12 +84,11 @@ fun AppNavigation() {
 
         composable(
             route = Routes.PRODUCT_LIST,
-            arguments = listOf(navArgument("group") { type = NavType.StringType })
+            arguments = listOf(navArgument("workflowId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val groupName = backStackEntry.arguments?.getString("group") ?: "STERILE"
-            val group = com.damdarangha.moghayerat.domain.model.ProductGroup.valueOf(groupName)
+            val workflowId = backStackEntry.arguments?.getLong("workflowId") ?: 0L
             ProductListScreen(
-                group = group,
+                workflowId = workflowId,
                 onProductClick = { product ->
                     val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
                     navController.navigate(Routes.statEntry(product.id, today))
@@ -141,19 +118,10 @@ fun AppNavigation() {
                 currentRoute = Routes.REPORTS,
                 onNavigate = { route ->
                     when (route) {
-                        Routes.HOME -> navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.REPORTS) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.REPORTS -> { /* همین صفحه */ }
-                        Routes.PRODUCT_MANAGEMENT -> navController.navigate(Routes.PRODUCT_MANAGEMENT) {
-                            popUpTo(Routes.REPORTS) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.SETTINGS -> navController.navigate(Routes.SETTINGS) {
-                            popUpTo(Routes.REPORTS) { inclusive = true }
-                            launchSingleTop = true
-                        }
+                        Routes.HOME -> navController.navigate(Routes.HOME) { popUpTo(Routes.REPORTS) { inclusive = true } }
+                        Routes.REPORTS -> { }
+                        Routes.PRODUCT_MANAGEMENT -> navController.navigate(Routes.PRODUCT_MANAGEMENT) { popUpTo(Routes.REPORTS) { inclusive = true } }
+                        Routes.SETTINGS -> navController.navigate(Routes.SETTINGS) { popUpTo(Routes.REPORTS) { inclusive = true } }
                     }
                 }
             ) { padding ->
@@ -177,19 +145,10 @@ fun AppNavigation() {
                 currentRoute = Routes.SETTINGS,
                 onNavigate = { route ->
                     when (route) {
-                        Routes.HOME -> navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.SETTINGS) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.REPORTS -> navController.navigate(Routes.REPORTS) {
-                            popUpTo(Routes.SETTINGS) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.PRODUCT_MANAGEMENT -> navController.navigate(Routes.PRODUCT_MANAGEMENT) {
-                            popUpTo(Routes.SETTINGS) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.SETTINGS -> { /* همین صفحه */ }
+                        Routes.HOME -> navController.navigate(Routes.HOME) { popUpTo(Routes.SETTINGS) { inclusive = true } }
+                        Routes.REPORTS -> navController.navigate(Routes.REPORTS) { popUpTo(Routes.SETTINGS) { inclusive = true } }
+                        Routes.PRODUCT_MANAGEMENT -> navController.navigate(Routes.PRODUCT_MANAGEMENT) { popUpTo(Routes.SETTINGS) { inclusive = true } }
+                        Routes.SETTINGS -> { }
                     }
                 }
             ) { padding ->
@@ -204,19 +163,10 @@ fun AppNavigation() {
                 currentRoute = Routes.PRODUCT_MANAGEMENT,
                 onNavigate = { route ->
                     when (route) {
-                        Routes.HOME -> navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.PRODUCT_MANAGEMENT) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.REPORTS -> navController.navigate(Routes.REPORTS) {
-                            popUpTo(Routes.PRODUCT_MANAGEMENT) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        Routes.PRODUCT_MANAGEMENT -> { /* همین صفحه */ }
-                        Routes.SETTINGS -> navController.navigate(Routes.SETTINGS) {
-                            popUpTo(Routes.PRODUCT_MANAGEMENT) { inclusive = true }
-                            launchSingleTop = true
-                        }
+                        Routes.HOME -> navController.navigate(Routes.HOME) { popUpTo(Routes.PRODUCT_MANAGEMENT) { inclusive = true } }
+                        Routes.REPORTS -> navController.navigate(Routes.REPORTS) { popUpTo(Routes.PRODUCT_MANAGEMENT) { inclusive = true } }
+                        Routes.PRODUCT_MANAGEMENT -> { }
+                        Routes.SETTINGS -> navController.navigate(Routes.SETTINGS) { popUpTo(Routes.PRODUCT_MANAGEMENT) { inclusive = true } }
                     }
                 }
             ) { padding ->
@@ -226,15 +176,16 @@ fun AppNavigation() {
             }
         }
 
+        composable(Routes.WORKFLOW_MANAGEMENT) {
+            WorkflowManagementScreen(onBack = { navController.popBackStack() })
+        }
+
         composable(Routes.BACKUP) {
             BackupScreen(onBack = { navController.popBackStack() })
         }
     }
 }
 
-/**
- * Scaffold با نوار ناوبری پایین برای صفحات اصلی
- */
 @Composable
 private fun ScaffoldWithBottomNav(
     currentRoute: String,

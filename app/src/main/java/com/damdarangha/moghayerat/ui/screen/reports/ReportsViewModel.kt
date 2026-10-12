@@ -6,34 +6,30 @@ import androidx.lifecycle.viewModelScope
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.domain.model.Product
+import com.damdarangha.moghayerat.domain.model.Workflow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 data class ReportsUiState(
+    val workflows: List<Workflow> = emptyList(),
+    val selectedWorkflow: Workflow? = null,
     val isoDate: String = "",
     val jalaliDate: String = "",
     val stats: List<DailyStatEntity> = emptyList(),
-    val products: Map<Long, Product> = emptyMap(),
+    val products: List<Product> = emptyList(),
     val zeroVarianceCount: Int = 0,
     val deficitCount: Int = 0,
     val surplusCount: Int = 0,
     val totalDeficit: Int = 0,
     val totalSurplus: Int = 0,
     val isLoading: Boolean = true,
-    val filterType: ReportFilter = ReportFilter.ALL,
-    val reportFile: java.io.File? = null,
+    val reportFile: File? = null,
     val message: String? = null
 )
-
-enum class ReportFilter(val label: String) {
-    ALL("همه"),
-    ZERO("مغایرت صفر"),
-    DEFICIT("کسری"),
-    SURPLUS("اضافه")
-}
 
 class ReportsViewModel(
     private val app: MoghayeratApplication
@@ -43,24 +39,49 @@ class ReportsViewModel(
     val uiState: StateFlow<ReportsUiState> = _uiState.asStateFlow()
 
     init {
-        loadReports(com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso())
+        loadWorkflows()
+        loadToday()
     }
 
-    fun loadReports(isoDate: String) {
+    private fun loadWorkflows() {
         viewModelScope.launch {
-            val jalaliDate = com.damdarangha.moghayerat.util.JalaliDateConverter.gregorianToJalaliString(isoDate)
-            val stats = app.dailyStatRepository.getStatsForDate(isoDate)
-            val productsList = app.productRepository.observeAllProducts()
-            // برای سادگی، از DAO مستقیم استفاده می‌کنیم
-            val allProducts = app.database.productDao().getAllProducts().map { it.toDomain() }
-            val productsMap = allProducts.associateBy { it.id }
+            app.workflowRepository.observeActiveWorkflows().collect { workflows ->
+                _uiState.update { it.copy(workflows = workflows) }
+                if (state().selectedWorkflow == null && workflows.isNotEmpty()) {
+                    selectWorkflow(workflows.first())
+                }
+            }
+        }
+    }
+
+    private fun loadToday() {
+        val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
+        val jalali = com.damdarangha.moghayerat.util.JalaliDateConverter.gregorianToJalaliString(today)
+        _uiState.update { it.copy(isoDate = today, jalaliDate = jalali) }
+    }
+
+    private fun state() = _uiState.value
+
+    fun selectWorkflow(workflow: Workflow) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(selectedWorkflow = workflow, isLoading = true) }
+            val today = _uiState.value.isoDate
+            val stats = app.dailyStatRepository.getStatsForDate(today)
+            val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id)
+                .let { flow ->
+                    val list = mutableListOf<Product>()
+                    flow.collect { productList ->
+                        list.clear()
+                        list.addAll(productList)
+                        return@collect
+                    }
+                    list
+                }
 
             _uiState.update {
                 it.copy(
-                    isoDate = isoDate,
-                    jalaliDate = jalaliDate,
-                    stats = stats,
-                    products = productsMap,
+                    stats = stats.filter { s -> products.any { p -> p.id == s.productId } },
+                    products = products,
                     zeroVarianceCount = stats.count { s -> s.closingVariance == 0 },
                     deficitCount = stats.count { s -> s.closingVariance > 0 },
                     surplusCount = stats.count { s -> s.closingVariance < 0 },
@@ -72,18 +93,28 @@ class ReportsViewModel(
         }
     }
 
-    fun setFilter(filter: ReportFilter) {
-        _uiState.update { it.copy(filterType = filter) }
-    }
-
-    fun exportToPdf() {
+    fun exportToPdf(reportType: ReportType) {
         viewModelScope.launch {
             try {
                 val state = _uiState.value
+                val workflow = state.selectedWorkflow ?: return@launch
                 val ctx = app.applicationContext
-                val productsList = state.products.values.toList()
-                val pdfFile = ReportExporter.exportDailyReportToPdf(
-                    ctx, state.stats, productsList, state.isoDate
+
+                // فیلتر محصولات بر اساس نوع گزارش
+                val (statsToExport, productsToExport) = when (reportType) {
+                    ReportType.FULL -> state.stats to state.products
+                    ReportType.REGISTERED_ONLY -> {
+                        val filtered = state.stats.filter { s -> s.closingVariance == 0 }
+                        filtered to state.products.filter { p -> filtered.any { it.productId == p.id } }
+                    }
+                    ReportType.VARIANCE_ONLY -> {
+                        val filtered = state.stats.filter { s -> s.closingVariance != 0 }
+                        filtered to state.products.filter { p -> filtered.any { it.productId == p.id } }
+                    }
+                }
+
+                val pdfFile = ReportExporter.exportWorkflowReportToPdf(
+                    ctx, workflow.name, statsToExport, productsToExport, state.isoDate
                 )
                 _uiState.update { it.copy(reportFile = pdfFile, message = "گزارش PDF ساخته شد") }
             } catch (e: Exception) {
@@ -92,28 +123,11 @@ class ReportsViewModel(
         }
     }
 
-    fun exportToCsv() {
-        viewModelScope.launch {
-            try {
-                val state = _uiState.value
-                val ctx = app.applicationContext
-                val productsList = state.products.values.toList()
-                val csvFile = ReportExporter.exportDailyReportToCsv(
-                    ctx, state.stats, productsList, state.isoDate
-                )
-                _uiState.update { it.copy(reportFile = csvFile, message = "گزارش CSV ساخته شد") }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(message = "خطا در ساخت CSV: ${e.message}") }
-            }
-        }
-    }
-
     fun shareReport() {
         val file = _uiState.value.reportFile ?: return
         try {
             val ctx = app.applicationContext
-            val mimeType = if (file.name.endsWith(".pdf")) "application/pdf" else "text/csv"
-            ReportExporter.shareFile(ctx, file, mimeType)
+            ReportExporter.shareFile(ctx, file, "application/pdf")
         } catch (e: Exception) {
             _uiState.update { it.copy(message = "خطا در اشتراک‌گذاری: ${e.message}") }
         }
@@ -132,4 +146,10 @@ class ReportsViewModel(
                 }
             }
     }
+}
+
+enum class ReportType(val label: String) {
+    FULL("گزارش کامل گردش کار"),
+    REGISTERED_ONLY("فقط محصولات ثبت‌شده"),
+    VARIANCE_ONLY("فقط محصولات دارای مغایرت")
 }

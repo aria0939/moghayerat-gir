@@ -4,18 +4,19 @@ import android.app.Application
 import androidx.room.Room
 import com.damdarangha.moghayerat.data.db.AppDatabase
 import com.damdarangha.moghayerat.data.datastore.SettingsDataStore
+import com.damdarangha.moghayerat.data.backup.BackupManager
 import com.damdarangha.moghayerat.data.repository.DailyStatRepository
 import com.damdarangha.moghayerat.data.repository.ProductRepository
-import com.damdarangha.moghayerat.data.backup.BackupManager
+import com.damdarangha.moghayerat.data.repository.WorkflowRepository
 import com.google.gson.Gson
 
 /**
  * کلاس Application برنامه.
- * مسئولیت: مقداردهی اولیه پایگاه داده و Repositoryها.
  */
 class MoghayeratApplication : Application() {
 
     lateinit var database: AppDatabase
+    lateinit var workflowRepository: WorkflowRepository
     lateinit var productRepository: ProductRepository
     lateinit var dailyStatRepository: DailyStatRepository
     lateinit var settingsDataStore: SettingsDataStore
@@ -34,6 +35,7 @@ class MoghayeratApplication : Application() {
             .build()
 
         val gson = Gson()
+        workflowRepository = WorkflowRepository(database.workflowDao())
         productRepository = ProductRepository(database.productDao())
         dailyStatRepository = DailyStatRepository(
             database.dailyStatDao(),

@@ -5,20 +5,24 @@ import androidx.room.RoomDatabase
 import com.damdarangha.moghayerat.data.db.dao.DailyStatDao
 import com.damdarangha.moghayerat.data.db.dao.ProductDao
 import com.damdarangha.moghayerat.data.db.dao.StatHistoryDao
+import com.damdarangha.moghayerat.data.db.dao.WorkflowDao
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.data.db.entity.ProductEntity
 import com.damdarangha.moghayerat.data.db.entity.StatHistoryEntity
+import com.damdarangha.moghayerat.data.db.entity.WorkflowEntity
 
 @Database(
     entities = [
+        WorkflowEntity::class,
         ProductEntity::class,
         DailyStatEntity::class,
         StatHistoryEntity::class
     ],
-    version = 3,  // افزایش نسخه به دلیل بازنویسی کامل لیست محصولات
+    version = 4,  // افزایش نسخه به دلیل اضافه شدن WorkflowEntity و فیلد workflowId
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun workflowDao(): WorkflowDao
     abstract fun productDao(): ProductDao
     abstract fun dailyStatDao(): DailyStatDao
     abstract fun statHistoryDao(): StatHistoryDao

@@ -30,6 +30,7 @@ enum class ProductGroup(val displayName: String) {
  */
 data class Product(
     val id: Long = 0L,
+    val workflowId: Long = 0L,   // شناسه گردش کار
     val name: String,
     val group: ProductGroup,
     val packagingType: PackagingType,

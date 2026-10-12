@@ -24,14 +24,12 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material.icons.filled.LocalDrink
-import androidx.compose.material.icons.filled.Spa
-import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,51 +40,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.R
-import com.damdarangha.moghayerat.domain.model.ProductGroup
-import com.damdarangha.moghayerat.ui.theme.CategoryCardShape
-import com.damdarangha.moghayerat.ui.theme.DatePillShape
 import com.damdarangha.moghayerat.ui.theme.GroupDateBg
 import com.damdarangha.moghayerat.ui.theme.GroupDateColor
-import com.damdarangha.moghayerat.ui.theme.GroupDonutBg
-import com.damdarangha.moghayerat.ui.theme.GroupDonutColor
 import com.damdarangha.moghayerat.ui.theme.GroupMilkBg
 import com.damdarangha.moghayerat.ui.theme.GroupMilkColor
 import com.damdarangha.moghayerat.ui.theme.GroupSterileBg
 import com.damdarangha.moghayerat.ui.theme.GroupSterileColor
 import com.damdarangha.moghayerat.ui.theme.GroupYoghurtBg
 import com.damdarangha.moghayerat.ui.theme.GroupYoghurtColor
-import com.damdarangha.moghayerat.ui.theme.HeroCardShape
 import com.damdarangha.moghayerat.ui.theme.HeroGradientEnd
 import com.damdarangha.moghayerat.ui.theme.HeroGradientStart
-import com.damdarangha.moghayerat.ui.theme.QuickAccessShape
 
 /**
- * صفحه اصلی برنامه - داشبورد با کارت Hero و شبکه‌ای از گروه‌های محصول
- *
- * طراحی مطابق تصویر مرجع:
- * - هدر تمیز با لوگو و آیکون اعلان ظریف
- * - کارت Hero با گرادیان آبی روشن + لوگو + تاریخ شمسی در کپسول سفید
- * - ۵ کارت گروه محصول در شبکه ۲ ستونی (آخرین کارت تمام عرض)
- * - بخش دسترسی سریع (۴ کارت در شبکه ۲×۲) با آیکون‌های بزرگ‌تر
- * - نوار ناوبری پایین با ۴ تب
+ * صفحه اصلی برنامه - داشبورد با کارت‌های گردش کار
  */
 @Composable
 fun HomeScreen(
-    onGroupClick: (ProductGroup) -> Unit,
+    onWorkflowClick: (Workflow) -> Unit,
     onReportsClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onProductManagementClick: () -> Unit,
+    onWorkflowManagementClick: () -> Unit,
     onBackupClick: () -> Unit,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.factory(MoghayeratApplication.instance)
@@ -103,24 +85,19 @@ fun HomeScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ===== هدر بالای صفحه: لوگو + آیکون اعلان ظریف =====
+        // ===== هدر: لوگو + آیکون اعلان =====
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // لوگوی دامداران (تنها لوگو در صفحه)
-            // استفاده از height با aspectRatio برای حفظ کیفیت و نسبت تصویر
             Image(
                 painter = painterResource(id = R.drawable.ic_logo),
                 contentDescription = "لوگوی دامداران",
-                modifier = Modifier
-                    .height(48.dp)
-                    .aspectRatio(1f),  // حفظ نسبت تصویر 1:1
+                modifier = Modifier.height(48.dp).aspectRatio(1f),
                 contentScale = ContentScale.Fit,
                 alignment = Alignment.Center
             )
-            // آیکون اعلان ظریف (بدون دایره بزرگ)
             IconButton(
                 onClick = { /* برای آینده */ },
                 modifier = Modifier.size(36.dp)
@@ -136,7 +113,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ===== کارت Hero با گرادیان + لوگو + تاریخ شمسی =====
+        // ===== کارت Hero =====
         HeroCard(
             title = "مغایرت‌گیر دامداران",
             subtitle = "مدیریت هوشمند موجودی و کنترل دقیق مغایرت محصولات",
@@ -145,30 +122,55 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ===== عنوان بخش گروه‌های محصول =====
-        SectionHeader(title = "انتخاب گروه محصول")
+        // ===== بخش گردش کارها =====
+        Text(
+            text = "گردش کارهای آمارگیر",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 18.sp
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ===== شبکه ۲ ستونی کارت‌های گروه محصول =====
-        ProductGroupGrid(
-            state = state,
-            onGroupClick = onGroupClick
-        )
+        // کارت‌های گردش کار
+        state.workflows.forEach { workflow ->
+            WorkflowCard(
+                workflowName = workflow.name,
+                workflowId = workflow.id,
+                totalProducts = workflow.totalProducts,
+                registeredCount = workflow.registeredToday,
+                onClick = {
+                    // ساخت Workflow موقت برای پاس دادن (فقط id و name نیاز است)
+                    onWorkflowClick(
+                        com.damdarangha.moghayerat.domain.model.Workflow(
+                            id = workflow.id,
+                            name = workflow.name
+                        )
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ===== عنوان بخش دسترسی سریع =====
-        SectionHeader(title = "دسترسی سریع")
+        // ===== بخش دسترسی سریع =====
+        Text(
+            text = "دسترسی سریع",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 18.sp
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ===== شبکه ۲×۲ دسترسی سریع =====
         QuickAccessGrid(
             onReportsClick = onReportsClick,
             onHistoryClick = onHistoryClick,
             onBackupClick = onBackupClick,
-            onProductManagementClick = onProductManagementClick
+            onWorkflowManagementClick = onWorkflowManagementClick
         )
 
         // فضای خالی برای نوار پایین
@@ -177,21 +179,7 @@ fun HomeScreen(
 }
 
 /**
- * عنوان بخش - راست‌چین، پررنگ، با فاصله مناسب
- */
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground,
-        fontSize = 18.sp
-    )
-}
-
-/**
- * کارت Hero - کارت معرفی بزرگ با گرادیان آبی، لوگو و تاریخ شمسی در کپسول سفید
+ * کارت Hero - کارت معرفی بزرگ با گرادیان آبی
  */
 @Composable
 private fun HeroCard(
@@ -201,7 +189,7 @@ private fun HeroCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = HeroCardShape,
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -220,7 +208,6 @@ private fun HeroCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // متن عنوان و زیرعنوان و تاریخ
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
@@ -241,7 +228,7 @@ private fun HeroCard(
                     // کپسول سفید تاریخ شمسی
                     Row(
                         modifier = Modifier
-                            .clip(DatePillShape)
+                            .clip(RoundedCornerShape(20.dp))
                             .background(Color.White)
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -265,13 +252,10 @@ private fun HeroCard(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                // لوگو در سمت چپ کارت - حفظ نسبت و کیفیت
                 Image(
                     painter = painterResource(id = R.drawable.ic_logo),
                     contentDescription = "لوگو",
-                    modifier = Modifier
-                        .height(72.dp)
-                        .aspectRatio(1f),  // حفظ نسبت تصویر
+                    modifier = Modifier.height(72.dp).aspectRatio(1f),
                     contentScale = ContentScale.Fit,
                     alignment = Alignment.Center
                 )
@@ -281,137 +265,148 @@ private fun HeroCard(
 }
 
 /**
- * شبکه ۲ ستونی کارت‌های گروه محصول
- * آخرین کارت تمام عرض ردیف را اشغال می‌کند
+ * کارت گردش کار - نمایش نام، تعداد محصولات، ثبت‌شده، باقی‌مانده و درصد پیشرفت
  */
 @Composable
-private fun ProductGroupGrid(
-    state: HomeUiState,
-    onGroupClick: (ProductGroup) -> Unit
-) {
-    val groups = listOf(
-        GroupCardData(ProductGroup.STERILE, "استریل", state.sterileCount, Icons.Default.WaterDrop, GroupSterileColor, GroupSterileBg),
-        GroupCardData(ProductGroup.MILK, "شیر", state.milkCount, Icons.Default.LocalDrink, GroupMilkColor, GroupMilkBg),
-        GroupCardData(ProductGroup.YOGHURT_BOX, "ماست پاکتی", state.yoghurtBoxCount, Icons.Default.Inventory2, GroupYoghurtColor, GroupYoghurtBg),
-        GroupCardData(ProductGroup.DATE, "خرما", state.dateCount, Icons.Default.Spa, GroupDateColor, GroupDateBg),
-        GroupCardData(ProductGroup.DONUT_CAKE, "دونات و کیک", state.donutCakeCount, Icons.Default.Cake, GroupDonutColor, GroupDonutBg)
-    )
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // ردیف اول: ۲ کارت
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            GroupCard(groups[0], modifier = Modifier.weight(1f)) { onGroupClick(groups[0].group) }
-            GroupCard(groups[1], modifier = Modifier.weight(1f)) { onGroupClick(groups[1].group) }
-        }
-        // ردیف دوم: ۲ کارت
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            GroupCard(groups[2], modifier = Modifier.weight(1f)) { onGroupClick(groups[2].group) }
-            GroupCard(groups[3], modifier = Modifier.weight(1f)) { onGroupClick(groups[3].group) }
-        }
-        // ردیف سوم: ۱ کارت تمام عرض
-        GroupCard(groups[4], modifier = Modifier.fillMaxWidth()) { onGroupClick(groups[4].group) }
-    }
-}
-
-private data class GroupCardData(
-    val group: ProductGroup,
-    val title: String,
-    val activeCount: Int,
-    val icon: ImageVector,
-    val iconColor: Color,
-    val cardBg: Color
-)
-
-/**
- * کارت گروه محصول - مطابق تصویر مرجع
- * دایره آیکون کوچک‌تر (40dp)، فلش ظریف، فاصله‌گذاری هماهنگ
- */
-@Composable
-private fun GroupCard(
-    data: GroupCardData,
-    modifier: Modifier = Modifier,
+private fun WorkflowCard(
+    workflowName: String,
+    workflowId: Long,
+    totalProducts: Int,
+    registeredCount: Int,
     onClick: () -> Unit
 ) {
+    val totalCount = totalProducts
+    val remainingCount = (totalCount - registeredCount).coerceAtLeast(0)
+    val progress = if (totalCount > 0) registeredCount.toFloat() / totalCount else 0f
+
+    // رنگ کارت بر اساس نام گردش کار
+    val (cardBg, accentColor) = when (workflowName) {
+        "استریل" -> GroupSterileBg to GroupSterileColor
+        "دبه و خرما" -> GroupYoghurtBg to GroupYoghurtColor
+        else -> GroupMilkBg to GroupMilkColor
+    }
+
     Card(
-        modifier = modifier,
-        shape = CategoryCardShape,
-        colors = CardDefaults.cardColors(containerColor = data.cardBg),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         onClick = onClick
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            // دایره آیکون - اندازه 40dp (مطابق مرجع)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(data.iconColor),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // دایره آیکون
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(accentColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = workflowName,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // نام و آمار
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = workflowName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        StatItem("کل محصولات", totalCount)
+                        StatItem("ثبت‌شده", registeredCount)
+                        StatItem("باقی‌مانده", remainingCount)
+                    }
+                }
+
                 Icon(
-                    imageVector = data.icon,
-                    contentDescription = data.title,
-                    tint = Color.White,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "باز کردن",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // عنوان و زیرعنوان
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = data.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 15.sp
-                )
-                Text(
-                    text = "${data.activeCount.toPersian()} محصول فعال",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp
-                )
-            }
+            // نوار پیشرفت
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = accentColor,
+                trackColor = accentColor.copy(alpha = 0.2f)
+            )
 
-            // فلش ظریف به سمت چپ
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "باز کردن",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier.size(18.dp)
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "پیشرفت: ${(progress * 100).toInt().toPersian()}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp
             )
         }
     }
 }
 
+@Composable
+private fun StatItem(label: String, value: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value.toPersian(),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 14.sp
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 10.sp
+        )
+    }
+}
+
 /**
- * شبکه ۲×۲ دسترسی سریع - آیکون‌های بزرگ‌تر و برجسته‌تر
+ * شبکه ۲×۲ دسترسی سریع
  */
 @Composable
 private fun QuickAccessGrid(
     onReportsClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onBackupClick: () -> Unit,
-    onProductManagementClick: () -> Unit
+    onWorkflowManagementClick: () -> Unit
 ) {
     val items = listOf(
         QuickAccessItem("تاریخچه", Icons.Default.History, GroupSterileColor, GroupSterileBg, onHistoryClick),
         QuickAccessItem("گزارش‌ها", Icons.Default.Assessment, GroupDateColor, GroupDateBg, onReportsClick),
         QuickAccessItem("پشتیبان", Icons.Default.Backup, GroupMilkColor, GroupMilkBg, onBackupClick),
-        QuickAccessItem("محصولات", Icons.Default.Inventory2, GroupYoghurtColor, GroupYoghurtBg, onProductManagementClick)
+        QuickAccessItem("مدیریت گردش کار", Icons.Default.Inventory2, GroupYoghurtColor, GroupYoghurtBg, onWorkflowManagementClick)
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -419,30 +414,27 @@ private fun QuickAccessGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuickAccessCard(items[0], modifier = Modifier.weight(1f))
-            QuickAccessCard(items[1], modifier = Modifier.weight(1f))
+            QuickAccessCard(items[0], Modifier.weight(1f))
+            QuickAccessCard(items[1], Modifier.weight(1f))
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuickAccessCard(items[2], modifier = Modifier.weight(1f))
-            QuickAccessCard(items[3], modifier = Modifier.weight(1f))
+            QuickAccessCard(items[2], Modifier.weight(1f))
+            QuickAccessCard(items[3], Modifier.weight(1f))
         }
     }
 }
 
 private data class QuickAccessItem(
     val title: String,
-    val icon: ImageVector,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val iconColor: Color,
     val bgColor: Color,
     val onClick: () -> Unit
 )
 
-/**
- * کارت دسترسی سریع - آیکون بزرگ‌تر (56dp) و برجسته‌تر
- */
 @Composable
 private fun QuickAccessCard(
     item: QuickAccessItem,
@@ -450,19 +442,16 @@ private fun QuickAccessCard(
 ) {
     Card(
         modifier = modifier,
-        shape = QuickAccessShape,
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = item.bgColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         onClick = item.onClick
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // دایره آیکون بزرگ‌تر - 56dp (مطابق مرجع)
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -488,10 +477,13 @@ private fun QuickAccessCard(
     }
 }
 
-// تابع کمکی برای تبدیل اعداد فارسی
+// تابع کمکی برای اعداد فارسی
 private fun Int.toPersian(): String {
     val persianDigits = arrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
     return this.toString().map { c ->
         if (c.isDigit()) persianDigits[c - '0'] else c
     }.joinToString("")
 }
+
+// برای aspectRatio
+import androidx.compose.foundation.layout.aspectRatio

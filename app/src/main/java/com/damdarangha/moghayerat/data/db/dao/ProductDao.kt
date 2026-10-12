@@ -18,8 +18,11 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY displayOrder ASC, name ASC")
     fun observeAllProducts(): Flow<List<ProductEntity>>
 
-    @Query("SELECT * FROM products ORDER BY displayOrder ASC, name ASC")
-    suspend fun getAllProducts(): List<ProductEntity>
+    @Query("SELECT * FROM products WHERE workflowId = :workflowId AND isActive = 1 ORDER BY displayOrder ASC, name ASC")
+    fun observeActiveProductsByWorkflow(workflowId: Long): Flow<List<ProductEntity>>
+
+    @Query("SELECT * FROM products WHERE workflowId = :workflowId ORDER BY displayOrder ASC, name ASC")
+    fun observeAllProductsByWorkflow(workflowId: Long): Flow<List<ProductEntity>>
 
     @Query("SELECT * FROM products WHERE `group` = :group AND isActive = 1 ORDER BY displayOrder ASC, name ASC")
     fun observeActiveProductsByGroup(group: String): Flow<List<ProductEntity>>
@@ -33,10 +36,13 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE name LIKE '%' || :query || '%' ORDER BY displayOrder ASC, name ASC")
     fun search(query: String): Flow<List<ProductEntity>>
 
+    @Query("SELECT COUNT(*) FROM products WHERE isActive = 1 AND workflowId = :workflowId")
+    suspend fun countActiveByWorkflow(workflowId: Long): Int
+
     @Query("SELECT COUNT(*) FROM products WHERE isActive = 1 AND `group` = :group")
     suspend fun countActiveByGroup(group: String): Int
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(product: ProductEntity): Long
 
     @Update
@@ -56,4 +62,7 @@ interface ProductDao {
 
     @Query("SELECT COUNT(*) FROM daily_stats WHERE productId = :productId")
     suspend fun countStatsForProduct(productId: Long): Int
+
+    @Query("SELECT * FROM products ORDER BY displayOrder ASC, name ASC")
+    suspend fun getAllProducts(): List<ProductEntity>
 }
