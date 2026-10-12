@@ -333,12 +333,12 @@ object ReportExporter {
             val pageSize = page.pageSize
             val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
             canvas.beginText()
-            canvas.setFontAndSize(fontRegular, 8.0)
-            canvas.setColor(TEXT_MUTED, 0.8)
+            canvas.setFontAndSize(fontRegular, 8f)
+            canvas.setColor(TEXT_MUTED, 0.8f)
             val text = "صفحه $i از $pageCount    |    تولید شده توسط برنامه مغایرت‌گیر دامداران"
             canvas.moveText(
-                (pageSize.width / 2.0 - 100.0),
-                20.0
+                (pageSize.width / 2f - 100f),
+                20f
             )
             canvas.showText(text)
             canvas.endText()
@@ -369,7 +369,11 @@ object ReportExporter {
                         }
                     }
                 }
-                PdfFontFactory.createFont(tempFile.absolutePath, PdfEncodings.IDENTITY_H, com.itextpdf.io.font.PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED)
+                com.itextpdf.io.font.PdfFontFactory.createFont(
+                    tempFile.absolutePath,
+                    PdfEncodings.IDENTITY_H,
+                    com.itextpdf.io.font.PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                )
             } else {
                 // fallback به فونت پیش‌فرض
                 PdfFontFactory.createFont()
