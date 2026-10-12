@@ -61,20 +61,14 @@ class ReportsViewModel(
         _uiState.update { it.copy(isoDate = today, jalaliDate = jalali) }
     }
 
-    /**
-     * انتخاب گردش کار و بارگذاری آمار آن.
-     * با استفاده از first() به‌جای collect، اطمینان حاصل می‌کنیم که فقط اولین مقدار را می‌گیریم.
-     */
     fun selectWorkflow(workflow: Workflow) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedWorkflow = workflow, isLoading = true) }
             val today = _uiState.value.isoDate
 
-            // گرفتن محصولات گردش کار انتخاب شده با first() (فقط اولین مقدار)
             val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
             val productIds = products.map { it.id }.toSet()
 
-            // گرفتن آمار امروز برای محصولات این گردش کار
             val allStats = app.dailyStatRepository.getStatsForDate(today)
             val workflowStats = allStats.filter { it.productId in productIds }
 
@@ -93,9 +87,6 @@ class ReportsViewModel(
         }
     }
 
-    /**
-     * به‌روزرسانی گزارش وقتی کاربر از صفحه ثبت آمار برمی‌گردد.
-     */
     fun refreshReport() {
         val workflow = _uiState.value.selectedWorkflow ?: return
         selectWorkflow(workflow)
@@ -112,7 +103,6 @@ class ReportsViewModel(
                 }
                 val ctx = app.applicationContext
 
-                // گرفتن محصولات و آمار به‌صورت تازه از دیتابیس
                 val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
                 if (products.isEmpty()) {
                     _uiState.update { it.copy(message = "هیچ محصولی در این گردش کار وجود ندارد") }
@@ -123,7 +113,6 @@ class ReportsViewModel(
                 val allStats = app.dailyStatRepository.getStatsForDate(state.isoDate)
                 val workflowStats = allStats.filter { it.productId in productIds }
 
-                // فیلتر محصولات بر اساس نوع گزارش
                 val (statsToExport, productsToExport) = when (reportType) {
                     ReportType.FULL -> workflowStats to products
                     ReportType.REGISTERED_ONLY -> {
@@ -151,13 +140,28 @@ class ReportsViewModel(
         }
     }
 
-    fun shareReport() {
-        val file = _uiState.value.reportFile ?: return
-        try {
-            val ctx = app.applicationContext
-            ReportExporter.shareFile(ctx, file, "application/pdf")
-        } catch (e: Exception) {
-            _uiState.update { it.copy(message = "خطا در اشتراک‌گذاری: ${e.message}") }
+    /**
+     * ذخیره دائمی فایل PDF در مقصد انتخاب‌شده توسط کاربر.
+     * این متد از UI لایر با Uri صدا زده می‌شود.
+     */
+    fun savePdfToDestination(destinationUri: android.net.Uri, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val sourceFile = _uiState.value.reportFile
+                if (sourceFile == null || !ReportExporter.validateFile(sourceFile)) {
+                    onResult(false, "فایل PDF معتبر نیست. ابتدا گزارش را تولید کنید.")
+                    return@launch
+                }
+                val ctx = app.applicationContext
+                val success = ReportExporter.copyToDestination(ctx, sourceFile, destinationUri)
+                if (success) {
+                    onResult(true, "فایل PDF با موفقیت در محل انتخاب‌شده ذخیره شد")
+                } else {
+                    onResult(false, "خطا در کپی فایل به مقصد")
+                }
+            } catch (e: Exception) {
+                onResult(false, "خطا در ذخیره فایل: ${e.message}")
+            }
         }
     }
 

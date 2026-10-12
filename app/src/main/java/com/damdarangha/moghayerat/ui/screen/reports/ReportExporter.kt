@@ -340,20 +340,104 @@ object ReportExporter {
     }
 
     /**
-     * اشتراک‌گذاری فایل با Intent استاندارد.
+     * اعتبارسنجی فایل: وجود، حجم غیرصفر و خوانا بودن.
      */
-    fun shareFile(context: Context, file: File, mimeType: String = "*/*") {
-        val uri: Uri = FileProvider.getUriForFile(
+    fun validateFile(file: File): Boolean {
+        return file.exists() && file.length() > 0 && file.canRead()
+    }
+
+    /**
+     * ساخت Uri معتبر FileProvider برای فایل.
+     */
+    fun getFileUri(context: Context, file: File): Uri {
+        return FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
             file
         )
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
+    }
+
+    /**
+     * باز کردن فایل PDF با PDF Viewer.
+     * نیاز به Activity Context دارد (نه Application Context).
+     *
+     * @param activityContext باید از نوع Activity باشد
+     * @throws ActivityNotFoundException اگر برنامه PDFخوان نصب نباشد
+     */
+    fun openPdf(activityContext: Context, file: File) {
+        if (!validateFile(file)) {
+            throw java.io.IOException("فایل PDF معتبر نیست یا وجود ندارد")
+        }
+        val uri = getFileUri(activityContext, file)
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // FLAG_ACTIVITY_NEW_TASK برای زمانی که از Application Context صدا زده می‌شود
+            if (activityContext !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+        activityContext.startActivity(viewIntent)
+    }
+
+    /**
+     * اشتراک‌گذاری فایل با Intent استاندارد.
+     * نیاز به Activity Context دارد (نه Application Context).
+     *
+     * @param activityContext باید از نوع Activity باشد
+     */
+    fun shareFile(activityContext: Context, file: File, mimeType: String = "application/pdf") {
+        if (!validateFile(file)) {
+            throw java.io.IOException("فایل PDF معتبر نیست یا وجود ندارد")
+        }
+        val uri = getFileUri(activityContext, file)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // FLAG_ACTIVITY_NEW_TASK برای زمانی که از Application Context صدا زده می‌شود
+            if (activityContext !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
         }
-        context.startActivity(Intent.createChooser(shareIntent, "اشتراک‌گذاری فایل"))
+        activityContext.startActivity(Intent.createChooser(shareIntent, "اشتراک‌گذاری فایل PDF"))
+    }
+
+    /**
+     * ساخت Intent برای ذخیره فایل در محل انتخاب‌شده توسط کاربر.
+     * این Intent باید با ActivityResultLauncher در UI لایر استفاده شود.
+     */
+    fun createSaveIntent(fileName: String): Intent {
+        return Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_TITLE, fileName)
+        }
+    }
+
+    /**
+     * کپی فایل موقت به مقصد دائمی (Uri از ACTION_CREATE_DOCUMENT).
+     */
+    fun copyToDestination(context: Context, sourceFile: File, destinationUri: Uri): Boolean {
+        return try {
+            if (!validateFile(sourceFile)) {
+                return false
+            }
+            val inputStream = sourceFile.inputStream()
+            val outputStream = context.contentResolver.openOutputStream(destinationUri)
+            if (outputStream == null) {
+                inputStream.close()
+                return false
+            }
+            inputStream.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
+                    output.flush()
+                }
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }

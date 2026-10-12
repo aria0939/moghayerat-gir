@@ -1,5 +1,9 @@
 package com.damdarangha.moghayerat.ui.screen.reports
 
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,14 +51,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.ui.components.StatusChip
 import com.damdarangha.moghayerat.domain.model.StatusType
+import com.damdarangha.moghayerat.util.JalaliDateConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,20 +76,32 @@ fun ReportsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     var showPdfDialog by remember { mutableStateOf(false) }
     var showMissingWarning by remember { mutableStateOf(false) }
 
     // به‌روزرسانی گزارش وقتی کاربر از صفحه ثبت آمار برمی‌گردد
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshReport()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Launcher برای ذخیره فایل (ACTION_CREATE_DOCUMENT)
+    val saveFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.savePdfToDestination(uri) { success, message ->
+                // نمایش پیام
+            }
         }
     }
 
@@ -182,12 +207,66 @@ fun ReportsScreen(
                 Text("خروجی PDF آمارگیری")
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // دکمه اشتراک‌گذاری (اگر فایل ساخته شده)
+            // دکمه‌های باز کردن، ذخیره و اشتراک‌گذاری (فقط وقتی فایل ساخته شده)
             if (state.reportFile != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // نمایش محل فایل
+                Text(
+                    text = "فایل ساخته شد: ${state.reportFile?.name}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // دکمه باز کردن PDF
                 OutlinedButton(
-                    onClick = { viewModel.shareReport() },
+                    onClick = {
+                        try {
+                            ReportExporter.openPdf(context, state.reportFile!!)
+                        } catch (e: ActivityNotFoundException) {
+                            // نمایش پیام خطا
+                        } catch (e: Exception) {
+                            // نمایش پیام خطا
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.PlayCircle, contentDescription = null)
+                    Spacer(modifier = Modifier.padding(end = 6.dp))
+                    Text("باز کردن PDF")
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // دکمه ذخیره در گوشی
+                OutlinedButton(
+                    onClick = {
+                        val fileName = state.reportFile?.name ?: "report.pdf"
+                        saveFileLauncher.launch(fileName)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = null)
+                    Spacer(modifier = Modifier.padding(end = 6.dp))
+                    Text("ذخیره PDF در گوشی")
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // دکمه اشتراک‌گذاری
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            ReportExporter.shareFile(context, state.reportFile!!)
+                        } catch (e: Exception) {
+                            // نمایش پیام خطا
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -195,14 +274,12 @@ fun ReportsScreen(
                     Spacer(modifier = Modifier.padding(end = 6.dp))
                     Text("اشتراک‌گذاری PDF")
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // فهرست آمار یا پیام خالی
             if (state.stats.isEmpty()) {
-                // پیام مناسب وقتی آماری ثبت نشده
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -223,14 +300,14 @@ fun ReportsScreen(
                         else "هنوز گردش کاری انتخاب نشده است",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "با ثبت آمار محصولات، گزارش در اینجا نمایش داده می‌شود",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                 }
             } else {
