@@ -1,18 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- تم اصلی برنامه - حالت تیره (دیفالت) -->
-    <style name="Theme.MoghayeratGir" parent="android:Theme.Material.NoActionBar">
+    <!-- تم اصلی برنامه - حالت روشن (دیفالت مطابق طراحی جدید) -->
+    <style name="Theme.MoghayeratGir" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
-        <item name="android:statusBarColor">@color/splash_gradient_start</item>
-        <item name="android:navigationBarColor">@color/dark_background</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:statusBarColor">@color/brand_background</item>
+        <item name="android:navigationBarColor">@color/brand_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
     </style>
 
     <!-- تم Splash Screen - هنگام باز شدن برنامه -->
     <style name="Theme.MoghayeratGir.Splash" parent="Theme.MoghayeratGir">
         <item name="android:windowBackground">@drawable/splash_background</item>
-        <item name="android:statusBarColor">@color/splash_gradient_start</item>
-        <item name="android:navigationBarColor">@color/splash_gradient_end</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:statusBarColor">@color/brand_background</item>
+        <item name="android:navigationBarColor">@color/brand_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
     </style>
 </resources>

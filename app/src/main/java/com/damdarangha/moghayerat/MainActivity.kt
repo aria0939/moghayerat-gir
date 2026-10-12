@@ -39,15 +39,14 @@ class MainActivity : ComponentActivity() {
             val app = application as MoghayeratApplication
 
             // خواندن تنظیمات تم از DataStore به‌صورت StateFlow
-            // دیفالت: DARK (اگر کاربر چیزی انتخاب نکرده باشد)
-            val themeMode by app.settingsDataStore.themeMode.collectAsState(initial = ThemeMode.DARK)
+            // دیفالت: LIGHT (مطابق طراحی جدید)
+            val themeMode by app.settingsDataStore.themeMode.collectAsState(initial = ThemeMode.LIGHT)
 
             // تعیین اینکه آیا تم تاریک باید فعال باشد
-            // SYSTEM → در حالت پیش‌فرض، تاریک در نظر گرفته می‌شود (طبق درخواست کاربر)
             val darkTheme = when (themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
-                ThemeMode.SYSTEM -> true  // پیش‌فرض: تاریک
+                ThemeMode.SYSTEM -> false  // دیفالت روشن
             }
 
             MoghayeratTheme(darkTheme = darkTheme) {
