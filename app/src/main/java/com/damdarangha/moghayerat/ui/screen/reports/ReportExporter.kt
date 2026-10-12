@@ -2,88 +2,89 @@ package com.damdarangha.moghayerat.ui.screen.reports
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
+import android.text.TextUtils
 import androidx.core.content.FileProvider
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.util.JalaliDateConverter
-import com.itextpdf.io.font.PdfEncodings
-import com.itextpdf.kernel.colors.DeviceRgb
-import com.itextpdf.kernel.font.PdfFont
-import com.itextpdf.kernel.font.PdfFontFactory
-import com.itextpdf.kernel.font.PdfFontFactory.EmbeddingStrategy
-import com.itextpdf.kernel.geom.PageSize
-import com.itextpdf.kernel.pdf.PdfDocument
-import com.itextpdf.kernel.pdf.PdfWriter
-import com.itextpdf.kernel.pdf.canvas.draw.SolidLine
-import com.itextpdf.layout.Document
-import com.itextpdf.layout.element.Cell
-import com.itextpdf.layout.element.LineSeparator
-import com.itextpdf.layout.element.Paragraph
-import com.itextpdf.layout.element.Table
-import com.itextpdf.layout.properties.BaseDirection
-import com.itextpdf.layout.properties.HorizontalAlignment
-import com.itextpdf.layout.properties.TextAlignment
-import com.itextpdf.layout.properties.UnitValue
-import com.itextpdf.layout.properties.VerticalAlignment
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 
 /**
- * تولید گزارش PDF شبیه فرم کاغذی آمارگیری.
+ * تولید گزارش PDF با استفاده از PdfDocument نیتیو اندروید.
  *
- * ویژگی‌ها:
- * - صفحه افقی A4
- * - فونت Vazirmatn فارسی embed شده
- * - RTL کامل با BaseDirection.RIGHT_TO_LEFT
- * - جدول با ۱۳ ستون و ترتیب منطقی RTL
- * - شماره صفحه با Paragraph (نه PdfCanvas)
+ * مزایا:
+ * - Arabic shaping کامل (حروف متصل)
+ * - BiDi صحیح (RTL)
+ * - پشتیبانی از فونت Vazirmatn
+ * - اعداد فارسی صحیح
+ * - بدون نیاز به کتابخانه خارجی
  */
 object ReportExporter {
 
-    // رنگ‌های رسمی
-    private val HEADER_BG = DeviceRgb(220, 230, 250)
-    private val ROW_ALT_BG = DeviceRgb(248, 250, 252)
-    private val BORDER_COLOR = DeviceRgb(150, 160, 180)
-    private val TEXT_DARK = DeviceRgb(20, 30, 50)
-    private val TEXT_MUTED = DeviceRgb(100, 110, 130)
-    private val TITLE_COLOR = DeviceRgb(18, 61, 168)
-    private val DEFICIT_BG = DeviceRgb(255, 235, 235)
-    private val SURPLUS_BG = DeviceRgb(235, 255, 235)
+    // رنگ‌ها
+    private val HEADER_BG = Color.rgb(220, 230, 250)
+    private val ROW_ALT_BG = Color.rgb(248, 250, 252)
+    private val BORDER_COLOR = Color.rgb(150, 160, 180)
+    private val TEXT_DARK = Color.rgb(20, 30, 50)
+    private val TEXT_MUTED = Color.rgb(100, 110, 130)
+    private val TITLE_COLOR = Color.rgb(18, 61, 168)
+    private val DEFICIT_BG = Color.rgb(255, 235, 235)
+    private val SURPLUS_BG = Color.rgb(235, 255, 235)
+    private val WHITE = Color.WHITE
 
-    // ستون‌های جدول - ترتیب منطقی RTL (اولین = راست‌ترین)
-    private val COLUMN_HEADERS = listOf(
+    // ستون‌ها - ترتیب منطقی RTL (اولین = راست‌ترین)
+    private val COLUMN_HEADERS = arrayOf(
         "ردیف",
         "نام محصول",
         "مانده\nشب گذشته",
         "بارگیری\nصبح",
-        "میان‌روز",
+        "میان\u200Cروز",
         "برگشت\nبه انبار",
         "رسید",
         "بارگیری\nشب",
         "هدایا",
         "ضایعات",
         "مانده واقعی\nپایان روز",
-        "مانده مورد\nانتظار پایان",
+        "مانده مورد\nانتظار",
         "مغایرت\nآخر کار"
     )
 
-    // عرض ستون‌ها - متناسب با ستون‌های بالا
-    private val COLUMN_WIDTHS = floatArrayOf(
-        30f,   // ردیف
-        130f,  // نام محصول
-        70f,   // مانده شب گذشته
-        55f,   // بارگیری صبح
-        50f,   // میان‌روز
-        55f,   // برگشت به انبار
-        50f,   // رسید
-        55f,   // بارگیری شب
-        45f,   // هدایا
-        45f,   // ضایعات
-        70f,   // مانده واقعی پایان روز
-        70f,   // مانده مورد انتظار پایان
-        55f    // مغایرت آخر کار
+    // عرض نسبی ستون‌ها (درصد از عرض جدول)
+    private val COLUMN_WEIGHTS = floatArrayOf(
+        0.04f,   // ردیف
+        0.16f,   // نام محصول
+        0.08f,   // مانده شب گذشته
+        0.06f,   // بارگیری صبح
+        0.05f,   // میان‌روز
+        0.06f,   // برگشت به انبار
+        0.05f,   // رسید
+        0.06f,   // بارگیری شب
+        0.05f,   // هدایا
+        0.05f,   // ضایعات
+        0.08f,   // مانده واقعی پایان
+        0.08f,   // مانده مورد انتظار
+        0.08f    // مغایرت آخر کار
     )
+
+    // ابعاد صفحه A4 افقی (نقاط)
+    private const val PAGE_WIDTH = 842
+    private const val PAGE_HEIGHT = 595
+    private const val MARGIN = 28f
+    private const val HEADER_HEIGHT = 50f
+    private const val ROW_HEIGHT = 28f
+    private const val FOOTER_HEIGHT = 80f
 
     fun exportWorkflowReportToPdf(
         context: Context,
@@ -92,7 +93,7 @@ object ReportExporter {
         products: List<Product>,
         isoDate: String
     ): File {
-        // ایجاد پوشه مقصد
+        // ایجاد پوشه
         val reportDir = File(context.cacheDir, "shared")
         if (!reportDir.exists()) {
             val created = reportDir.mkdirs()
@@ -107,37 +108,83 @@ object ReportExporter {
         val fileName = "گزارش_${safeName}_$jalaliDateSafe.pdf"
         val pdfFile = File(reportDir, fileName)
 
-        // بارگذاری فونت
-        val fontRegular = loadFontFromAssets(context, "vazirmatn_regular.ttf")
-        val fontBold = loadFontFromAssets(context, "vazirmatn_bold.ttf")
+        // بارگذاری فونت Vazirmatn
+        val fontRegular = loadTypeface(context, "vazirmatn_regular.ttf")
+        val fontBold = loadTypeface(context, "vazirmatn_bold.ttf")
 
-        val writer = PdfWriter(pdfFile)
-        val pdfDoc = PdfDocument(writer)
-        pdfDoc.defaultPageSize = PageSize.A4.rotate()
-        val doc = Document(pdfDoc, pdfDoc.defaultPageSize)
-        doc.setFont(fontRegular)
-        doc.setFontSize(8f)
-        // ✅ تنظیم جهت پایه سند به RTL
-        doc.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+        // Paint ها
+        val titlePaint = TextPaint().apply {
+            color = TITLE_COLOR
+            textSize = 16f
+            typeface = fontBold
+            isAntiAlias = true
+        }
+        val subtitlePaint = TextPaint().apply {
+            color = TEXT_DARK
+            textSize = 11f
+            typeface = fontRegular
+            isAntiAlias = true
+        }
+        val summaryPaint = TextPaint().apply {
+            color = TEXT_MUTED
+            textSize = 10f
+            typeface = fontRegular
+            isAntiAlias = true
+        }
+        val headerPaint = TextPaint().apply {
+            color = TEXT_DARK
+            textSize = 7.5f
+            typeface = fontBold
+            isAntiAlias = true
+        }
+        val cellPaint = TextPaint().apply {
+            color = TEXT_DARK
+            textSize = 7.5f
+            typeface = fontRegular
+            isAntiAlias = true
+        }
+        val footerPaint = TextPaint().apply {
+            color = TEXT_MUTED
+            textSize = 8f
+            typeface = fontRegular
+            isAntiAlias = true
+        }
+        val signLabelPaint = TextPaint().apply {
+            color = TEXT_DARK
+            textSize = 10f
+            typeface = fontBold
+            isAntiAlias = true
+        }
+        val signLinePaint = TextPaint().apply {
+            color = TEXT_MUTED
+            textSize = 10f
+            typeface = fontRegular
+            isAntiAlias = true
+        }
+        val borderPaint = Paint().apply {
+            color = BORDER_COLOR
+            strokeWidth = 0.5f
+            style = Paint.Style.STROKE
+            isAntiAlias = true
+        }
+        val fillPaint = Paint().apply {
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        val linePaint = Paint().apply {
+            color = BORDER_COLOR
+            strokeWidth = 1f
+            isAntiAlias = true
+        }
 
-        // ===================== سربرگ =====================
-        val titlePara = Paragraph("گزارش آمارگیری و مغایرت‌گیری دامداران")
-            .setFont(fontBold)
-            .setFontSize(16f)
-            .setFontColor(TITLE_COLOR)
-            .setTextAlignment(TextAlignment.CENTER)
-            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            .setMarginBottom(4f)
-        doc.add(titlePara)
+        // ساخت PDF
+        val document = PdfDocument()
 
-        val subInfoPara = Paragraph("گردش کار: $workflowName    |    تاریخ: $jalaliDisplay")
-            .setFont(fontRegular)
-            .setFontSize(11f)
-            .setFontColor(TEXT_DARK)
-            .setTextAlignment(TextAlignment.CENTER)
-            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            .setMarginBottom(8f)
-        doc.add(subInfoPara)
+        // محاسبه ابعاد جدول
+        val tableWidth = PAGE_WIDTH - 2 * MARGIN
+        val columnWidths = COLUMN_WEIGHTS.map { it * tableWidth }
+        val tableStartX = MARGIN
+        val tableStartY = MARGIN + 100f // بعد از سربرگ
 
         // آمار خلاصه
         val totalCount = products.size
@@ -145,225 +192,271 @@ object ReportExporter {
         val varianceCount = stats.count { it.closingVariance != 0 }
         val remainingCount = (totalCount - registeredCount).coerceAtLeast(0)
 
-        val summaryPara = Paragraph(
-            "کل محصولات: $totalCount    |    " +
-            "ثبت‌شده: $registeredCount    |    " +
-            "باقی‌مانده: $remainingCount    |    " +
-            "دارای مغایرت: $varianceCount"
-        )
-            .setFont(fontRegular)
-            .setFontSize(10f)
-            .setFontColor(TEXT_MUTED)
-            .setTextAlignment(TextAlignment.CENTER)
-            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            .setMarginBottom(10f)
-        doc.add(summaryPara)
+        // صفحات
+        var pageNum = 0
+        val contentHeight = PAGE_HEIGHT - tableStartY - FOOTER_HEIGHT
+        val rowsPerPage = (contentHeight / ROW_HEIGHT).toInt()
+        val totalRows = products.size + 1 // +1 برای هدر
+        val totalPages = ((totalRows + rowsPerPage - 1) / rowsPerPage).coerceAtLeast(1)
+        var currentRow = 0
 
-        doc.add(LineSeparator(SolidLine()).setMarginBottom(10f))
-
-        // اگر هیچ محصولی وجود ندارد
+        // اگر هیچ محصولی نیست
         if (products.isEmpty()) {
-            val emptyPara = Paragraph("هیچ محصولی در این گردش کار ثبت نشده است.")
-                .setFont(fontRegular)
-                .setFontSize(12f)
-                .setFontColor(TEXT_MUTED)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setMarginTop(40f)
-            doc.add(emptyPara)
-            doc.close()
+            val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, 1).create()
+            val page = document.startPage(pageInfo)
+            val canvas = page.canvas
+
+            // عنوان
+            drawCenteredText(canvas, "گزارش آمارگیری و مغایرت‌گیری دامداران",
+                PAGE_WIDTH / 2f, MARGIN + 20f, titlePaint)
+            drawCenteredText(canvas, "گردش کار: $workflowName    |    تاریخ: $jalaliDisplay",
+                PAGE_WIDTH / 2f, MARGIN + 45f, subtitlePaint)
+            drawCenteredText(canvas, "هیچ محصولی در این گردش کار ثبت نشده است.",
+                PAGE_WIDTH / 2f, PAGE_HEIGHT / 2f, cellPaint)
+
+            // شماره صفحه
+            drawCenteredText(canvas, "1 / 1",
+                PAGE_WIDTH / 2f, PAGE_HEIGHT - 20f, footerPaint)
+
+            document.finishPage(page)
+            document.writeTo(FileOutputStream(pdfFile))
+            document.close()
             return pdfFile
         }
 
-        // ===================== جدول =====================
-        val table = Table(UnitValue.createPercentArray(COLUMN_WIDTHS))
-        table.setWidth(UnitValue.createPercentValue(100f))
-        table.setHorizontalAlignment(HorizontalAlignment.CENTER)
-        table.setFontSize(7.5f)
-        table.setFont(fontRegular)
-        // ✅ تنظیم جهت جدول به RTL
-        table.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+        // تولید صفحات
+        while (currentRow <= products.size) {
+            pageNum++
+            val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNum).create()
+            val page = document.startPage(pageInfo)
+            val canvas = page.canvas
 
-        // هدر جدول
-        COLUMN_HEADERS.forEach { header ->
-            table.addHeaderCell(
-                Cell()
-                    .add(
-                        Paragraph(header)
-                            .setFont(fontBold)
-                            .setFontColor(TEXT_DARK)
-                            .setTextAlignment(TextAlignment.CENTER)
-                            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                            .setFontSize(7.5f)
-                            .setMultipliedLeading(1.1f)
-                    )
-                    .setBackgroundColor(HEADER_BG)
-                    .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                    .setPadding(4f)
-            )
-        }
+            // ===================== سربرگ (فقط صفحه اول) =====================
+            if (pageNum == 1) {
+                drawCenteredText(canvas, "گزارش آمارگیری و مغایرت‌گیری دامداران",
+                    PAGE_WIDTH / 2f, MARGIN + 15f, titlePaint)
+                drawCenteredText(canvas, "گردش کار: $workflowName    |    تاریخ: $jalaliDisplay",
+                    PAGE_WIDTH / 2f, MARGIN + 35f, subtitlePaint)
+                drawCenteredText(canvas,
+                    "کل محصولات: $totalCount    |    ثبت‌شده: $registeredCount    |    " +
+                    "باقی‌مانده: $remainingCount    |    دارای مغایرت: $varianceCount",
+                    PAGE_WIDTH / 2f, MARGIN + 52f, summaryPaint)
 
-        // ردیف‌های داده
-        var rowIndex = 1
-        products.forEach { product ->
-            val stat = stats.find { it.productId == product.id }
-
-            // مقادیر هر ستون به ترتیب منطقی RTL
-            val cells = if (stat == null) {
-                listOf(
-                    ReportFormatter.toPersianDigits(rowIndex),
-                    product.name,
-                    "—", "—", "—", "—", "—", "—", "—", "—", "—", "—",
-                    "ثبت‌نشده"
-                )
+                // خط جداکننده
+                canvas.drawLine(MARGIN, MARGIN + 65f, PAGE_WIDTH - MARGIN, MARGIN + 65f, linePaint)
             } else {
-                listOf(
-                    ReportFormatter.toPersianDigits(rowIndex),
-                    product.name,
-                    ReportFormatter.formatBoxUnit(stat.openingStockTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.morningLoadingTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.midDayLoadingTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.returnsTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.receiptTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.nightLoadingTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.giftsTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.wasteTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.currentStockTotal, product),
-                    ReportFormatter.formatBoxUnit(stat.expectedClosingStockTotal, product),
-                    ReportFormatter.formatVariance(stat.closingVariance)
-                )
+                // صفحات بعدی: فقط نام گردش کار و تاریخ
+                drawCenteredText(canvas, "گردش کار: $workflowName    |    تاریخ: $jalaliDisplay",
+                    PAGE_WIDTH / 2f, MARGIN + 15f, subtitlePaint)
+                canvas.drawLine(MARGIN, MARGIN + 25f, PAGE_WIDTH - MARGIN, MARGIN + 25f, linePaint)
             }
 
-            cells.forEachIndexed { idx, value ->
-                val cell = Cell()
-                    .add(
-                        Paragraph(value)
-                            .setFont(fontRegular)
-                            .setTextAlignment(
-                                if (idx == 1) TextAlignment.RIGHT
-                                else TextAlignment.CENTER
-                            )
-                            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                            .setFontSize(7.5f)
-                            .setFontColor(
-                                if (stat == null && idx == 12) TEXT_MUTED
-                                else TEXT_DARK
-                            )
-                            .setMultipliedLeading(1.1f)
-                    )
-                    .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-                    .setTextAlignment(
-                        if (idx == 1) TextAlignment.RIGHT
-                        else TextAlignment.CENTER
-                    )
-                    .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                    .setPadding(3f)
+            // ===================== جدول =====================
+            var y = tableStartY
 
-                if (rowIndex % 2 == 0) {
-                    cell.setBackgroundColor(ROW_ALT_BG)
+            // هدر جدول (در هر صفحه تکرار می‌شود)
+            // پس‌زمینه هدر
+            fillPaint.color = HEADER_BG
+            canvas.drawRect(tableStartX, y, tableStartX + tableWidth, y + HEADER_HEIGHT, fillPaint)
+
+            // متن هدر و خطوط ستون‌ها
+            var x = tableStartX
+            for (i in COLUMN_HEADERS.indices) {
+                val colWidth = columnWidths[i]
+                // خط راست ستون
+                canvas.drawLine(x, y, x, y + HEADER_HEIGHT, borderPaint)
+                // متن هدر (درست در وسط ستون)
+                drawCellText(canvas, COLUMN_HEADERS[i], x, y, colWidth, HEADER_HEIGHT, headerPaint, true)
+                x += colWidth
+            }
+            // خط چپ ستون آخر
+            canvas.drawLine(x, y, x, y + HEADER_HEIGHT, borderPaint)
+            // خطوط افقی هدر
+            canvas.drawLine(tableStartX, y, tableStartX + tableWidth, y, borderPaint)
+            canvas.drawLine(tableStartX, y + HEADER_HEIGHT, tableStartX + tableWidth, y + HEADER_HEIGHT, borderPaint)
+
+            y += HEADER_HEIGHT
+
+            // ردیف‌های داده
+            val rowsThisPage = minOf(rowsPerPage - 1, products.size - currentRow)
+            for (rowOffset in 0 until rowsThisPage) {
+                val productIndex = currentRow + rowOffset
+                if (productIndex >= products.size) break
+
+                val product = products[productIndex]
+                val stat = stats.find { it.productId == product.id }
+                val rowIndexDisplay = productIndex + 1
+
+                // پس‌زمینه ردیف متناوب
+                if (rowIndexDisplay % 2 == 0) {
+                    fillPaint.color = ROW_ALT_BG
+                    canvas.drawRect(tableStartX, y, tableStartX + tableWidth, y + ROW_HEIGHT, fillPaint)
                 }
 
-                // رنگ ستون مغایرت (آخرین ستون)
-                if (idx == 12 && stat != null && stat.closingVariance != 0) {
-                    cell.setBackgroundColor(
-                        if (stat.closingVariance > 0) DEFICIT_BG
-                        else SURPLUS_BG
+                // آماده‌سازی مقادیر
+                val values = if (stat == null) {
+                    arrayOf(
+                        ReportFormatter.toPersianDigits(rowIndexDisplay),
+                        product.name,
+                        "—", "—", "—", "—", "—", "—", "—", "—", "—", "—", "ثبت\u200Cنشده"
+                    )
+                } else {
+                    arrayOf(
+                        ReportFormatter.toPersianDigits(rowIndexDisplay),
+                        product.name,
+                        ReportFormatter.formatBoxUnit(stat.openingStockTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.morningLoadingTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.midDayLoadingTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.returnsTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.receiptTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.nightLoadingTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.giftsTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.wasteTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.currentStockTotal, product),
+                        ReportFormatter.formatBoxUnit(stat.expectedClosingStockTotal, product),
+                        ReportFormatter.formatVariance(stat.closingVariance)
                     )
                 }
 
-                table.addCell(cell)
+                // رنگ خاص برای ستون مغایرت
+                if (stat != null && stat.closingVariance != 0) {
+                    val varianceBg = if (stat.closingVariance > 0) DEFICIT_BG else SURPLUS_BG
+                    val lastColX = tableStartX + tableWidth - columnWidths[12]
+                    fillPaint.color = varianceBg
+                    canvas.drawRect(lastColX, y, tableStartX + tableWidth, y + ROW_HEIGHT, fillPaint)
+                }
+
+                // رسم مقادیر سلول‌ها
+                x = tableStartX
+                for (i in values.indices) {
+                    val colWidth = columnWidths[i]
+                    canvas.drawLine(x, y, x, y + ROW_HEIGHT, borderPaint)
+                    val isProductName = i == 1
+                    drawCellText(canvas, values[i], x, y, colWidth, ROW_HEIGHT, cellPaint, isProductName)
+                    x += colWidth
+                }
+                canvas.drawLine(x, y, x, y + ROW_HEIGHT, borderPaint)
+                canvas.drawLine(tableStartX, y + ROW_HEIGHT, tableStartX + tableWidth, y + ROW_HEIGHT, borderPaint)
+
+                y += ROW_HEIGHT
             }
-            rowIndex++
+
+            currentRow += rowsThisPage
+
+            // ===================== فوتر =====================
+            // خط جداکننده فوتر
+            canvas.drawLine(MARGIN, PAGE_HEIGHT - FOOTER_HEIGHT,
+                PAGE_WIDTH - MARGIN, PAGE_HEIGHT - FOOTER_HEIGHT, linePaint)
+
+            // جدول امضا
+            val signY = PAGE_HEIGHT - FOOTER_HEIGHT + 15f
+            val signWidth = tableWidth / 3f
+
+            // سه ستون امضا
+            val signLabels = arrayOf("نام و امضای آمارگیر:", "توضیحات:", "تأیید مسئول:")
+            for (i in 0..2) {
+                val sx = tableStartX + i * signWidth
+                // خطوط کادر
+                canvas.drawRect(sx, signY, sx + signWidth, PAGE_HEIGHT - 30f, borderPaint)
+                // برچسب
+                drawRtlText(canvas, signLabels[i], sx + 8f, signY + 8f, signLabelPaint)
+                // خط امضا
+                canvas.drawLine(sx + 8f, PAGE_HEIGHT - 45f, sx + signWidth - 8f, PAGE_HEIGHT - 45f, signLinePaint)
+            }
+
+            // شماره صفحه
+            drawCenteredText(canvas, "$pageNum / $totalPages",
+                PAGE_WIDTH / 2f, PAGE_HEIGHT - 15f, footerPaint)
+
+            document.finishPage(page)
         }
 
-        doc.add(table)
-
-        // ===================== فوتر امضا =====================
-        doc.add(LineSeparator(SolidLine()).setMarginTop(20f).setMarginBottom(20f))
-
-        val signTable = Table(floatArrayOf(33f, 33f, 33f))
-        signTable.setWidth(UnitValue.createPercentValue(100f))
-        signTable.setFont(fontRegular)
-        signTable.setFontSize(10f)
-        signTable.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-
-        signTable.addCell(createSignCell("نام و امضای آمارگیر:", fontBold, fontRegular))
-        signTable.addCell(createSignCell("توضیحات:", fontBold, fontRegular))
-        signTable.addCell(createSignCell("تأیید مسئول:", fontBold, fontRegular))
-        doc.add(signTable)
-
-        // ===================== شماره صفحه =====================
-        // استفاده از Paragraph به جای PdfCanvas برای پشتیبانی صحیح از RTL
-        // شماره صفحه در زمان END_PAGE توسط event handler اضافه می‌شود
-        // اما به جای PdfCanvas از یک روش ساده استفاده می‌کنیم:
-        // تعداد صفحات را بعد از close می‌گیریم و در یک بار بازنویسی اضافه می‌کنیم
-        doc.close()
-
-        // بعد از close، تعداد صفحات نهایی را می‌گیریم
-        // و با یک PdfDocument جدید شماره صفحه را اضافه می‌کنیم
-        // در عوض، برای سادگی، شماره صفحه را قبل از close اضافه می‌کنیم
-        // با استفاده از یک Paragraph ساده در انتهای هر صفحه
-
-        // روش جایگزین: باز کردن فایل با PdfReader و اضافه‌کردن شماره صفحه
-        try {
-            val reader = com.itextpdf.kernel.pdf.PdfReader(pdfFile)
-            val stamper = com.itextpdf.kernel.pdf.PdfDocument(reader, com.itextpdf.kernel.pdf.PdfWriter(File(reportDir, "temp_$fileName")))
-            val pageCount = stamper.numberOfPages
-            for (i in 1..pageCount) {
-                val page = stamper.getPage(i)
-                val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
-                canvas.setFillColor(TEXT_MUTED)
-                // استفاده از font برای showText - فقط عدد که ASCII است
-                canvas.beginText()
-                canvas.setFontAndSize(fontRegular, 8f)
-                val text = "$i / $pageCount"
-                canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 20.0, 20.0)
-                canvas.showText(text)
-                canvas.endText()
-            }
-            stamper.close()
-            reader.close()
-            // جایگزینی فایل اصلی با فایل temp
-            val tempFile = File(reportDir, "temp_$fileName")
-            pdfFile.delete()
-            tempFile.renameTo(pdfFile)
-        } catch (e: Exception) {
-            // اگر اضافه‌کردن شماره صفحه شکست خورد، فایل اصلی بدون شماره صفحه استفاده می‌شود
+        // نوشتن فایل
+        pdfFile.outputStream().use { out ->
+            document.writeTo(out)
         }
+        document.close()
 
         return pdfFile
     }
 
     /**
-     * ساخت سلول امضا.
+     * رسم متن در وسط یک سلول.
      */
-    private fun createSignCell(label: String, fontBold: PdfFont, fontRegular: PdfFont): Cell {
-        return Cell()
-            .add(
-                Paragraph(label)
-                    .setFont(fontBold)
-                    .setFontColor(TEXT_DARK)
-                    .setFontSize(10f)
-                    .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            )
-            .add(
-                Paragraph("\n\n....................................")
-                    .setFont(fontRegular)
-                    .setFontColor(TEXT_MUTED)
-                    .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            )
-            .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            .setPadding(8f)
+    private fun drawCellText(
+        canvas: Canvas,
+        text: String,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        paint: TextPaint,
+        isRightAligned: Boolean = false
+    ) {
+        val textWidth = paint.measureText(text)
+        val padding = 4f
+        val availableWidth = width - 2 * padding
+
+        if (textWidth <= availableWidth) {
+            // متن در یک خط جا می‌شود
+            val textX = if (isRightAligned) {
+                x + width - textWidth - padding
+            } else {
+                x + (width - textWidth) / 2f
+            }
+            val textY = y + (height + paint.textSize) / 2f - paint.descent()
+            canvas.drawText(text, textX, textY, paint)
+        } else {
+            // متن چندخطی با StaticLayout
+            val sl = StaticLayout.Builder
+                .obtain(text, 0, text.length, paint, availableWidth.toInt())
+                .setAlignment(if (isRightAligned) Layout.Alignment.ALIGN_OPPOSITE else Layout.Alignment.ALIGN_CENTER)
+                .setLineSpacing(0f, 1f)
+                .setIncludePad(false)
+                .setMaxLines(2)
+                .setEllipsize(TextUtils.TruncateAt.END)
+                .build()
+
+            canvas.save()
+            val tx = if (isRightAligned) x + padding else x + (width - sl.width) / 2f
+            val ty = y + (height - sl.height) / 2f
+            canvas.translate(tx, ty)
+            sl.draw(canvas)
+            canvas.restore()
+        }
     }
 
     /**
-     * بارگذاری فونت از assets.
+     * رسم متن وسط‌چین.
      */
-    private fun loadFontFromAssets(context: Context, fontFileName: String): PdfFont {
+    private fun drawCenteredText(
+        canvas: Canvas,
+        text: String,
+        centerX: Float,
+        y: Float,
+        paint: TextPaint
+    ) {
+        val textWidth = paint.measureText(text)
+        canvas.drawText(text, centerX - textWidth / 2f, y, paint)
+    }
+
+    /**
+     * رسم متن راست‌چین.
+     */
+    private fun drawRtlText(
+        canvas: Canvas,
+        text: String,
+        x: Float,
+        y: Float,
+        paint: TextPaint
+    ) {
+        canvas.drawText(text, x, y + paint.textSize, paint)
+    }
+
+    /**
+     * بارگذاری Typeface از res/font.
+     */
+    private fun loadTypeface(context: Context, fontFileName: String): Typeface {
         return try {
             val fontResId = context.resources.getIdentifier(
                 fontFileName.substringBefore("."),
@@ -371,24 +464,12 @@ object ReportExporter {
                 context.packageName
             )
             if (fontResId != 0) {
-                val tempFile = File(context.cacheDir, fontFileName)
-                if (!tempFile.exists()) {
-                    context.resources.openRawResource(fontResId).use { input ->
-                        tempFile.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                }
-                PdfFontFactory.createFont(
-                    tempFile.absolutePath,
-                    PdfEncodings.IDENTITY_H,
-                    EmbeddingStrategy.PREFER_EMBEDDED
-                )
+                Typeface.createFromResource(context.resources, fontResId)
             } else {
-                PdfFontFactory.createFont()
+                Typeface.DEFAULT
             }
         } catch (e: Exception) {
-            PdfFontFactory.createFont()
+            Typeface.DEFAULT
         }
     }
 
@@ -410,16 +491,10 @@ object ReportExporter {
             .trim()
     }
 
-    /**
-     * اعتبارسنجی فایل.
-     */
     fun validateFile(file: File): Boolean {
         return file.exists() && file.length() > 0 && file.canRead()
     }
 
-    /**
-     * ساخت Uri معتبر FileProvider.
-     */
     fun getFileUri(context: Context, file: File): Uri {
         return FileProvider.getUriForFile(
             context,
@@ -428,9 +503,6 @@ object ReportExporter {
         )
     }
 
-    /**
-     * باز کردن فایل PDF.
-     */
     fun openPdf(activityContext: Context, file: File) {
         if (!validateFile(file)) {
             throw IOException("فایل PDF معتبر نیست یا وجود ندارد")
@@ -446,9 +518,6 @@ object ReportExporter {
         activityContext.startActivity(viewIntent)
     }
 
-    /**
-     * اشتراک‌گذاری فایل.
-     */
     fun shareFile(activityContext: Context, file: File, mimeType: String = "application/pdf") {
         if (!validateFile(file)) {
             throw IOException("فایل PDF معتبر نیست یا وجود ندارد")
@@ -465,14 +534,9 @@ object ReportExporter {
         activityContext.startActivity(Intent.createChooser(shareIntent, "اشتراک‌گذاری فایل PDF"))
     }
 
-    /**
-     * کپی فایل به مقصد دائمی.
-     */
     fun copyToDestination(context: Context, sourceFile: File, destinationUri: Uri): Boolean {
         return try {
-            if (!validateFile(sourceFile)) {
-                return false
-            }
+            if (!validateFile(sourceFile)) return false
             val inputStream = sourceFile.inputStream()
             val outputStream = context.contentResolver.openOutputStream(destinationUri)
             if (outputStream == null) {
