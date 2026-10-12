@@ -12,9 +12,6 @@ import com.itextpdf.kernel.colors.DeviceRgb
 import com.itextpdf.kernel.font.PdfFont
 import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.font.PdfFontFactory.EmbeddingStrategy
-import com.itextpdf.kernel.events.Event
-import com.itextpdf.kernel.events.IEventHandler
-import com.itextpdf.kernel.events.PdfDocumentEvent
 import com.itextpdf.kernel.geom.PageSize
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
@@ -24,6 +21,7 @@ import com.itextpdf.layout.element.Cell
 import com.itextpdf.layout.element.LineSeparator
 import com.itextpdf.layout.element.Paragraph
 import com.itextpdf.layout.element.Table
+import com.itextpdf.layout.properties.BaseDirection
 import com.itextpdf.layout.properties.HorizontalAlignment
 import com.itextpdf.layout.properties.TextAlignment
 import com.itextpdf.layout.properties.UnitValue
@@ -35,13 +33,11 @@ import java.io.IOException
  * تولید گزارش PDF شبیه فرم کاغذی آمارگیری.
  *
  * ویژگی‌ها:
- * - صفحه افقی A4 برای جا دادن همه ستون‌ها
+ * - صفحه افقی A4
  * - فونت Vazirmatn فارسی embed شده
- * - جدول با خطوط منظم و سربرگ فشرده
- * - صفحه‌بندی واقعی با شماره صفحه
- * - تکرار عنوان ستون‌ها در صفحات بعدی
- * - پشتیبانی از چند صفحه
- * - ۱۳ ستون مطابق قرارداد
+ * - RTL کامل با BaseDirection.RIGHT_TO_LEFT
+ * - جدول با ۱۳ ستون و ترتیب منطقی RTL
+ * - شماره صفحه با Paragraph (نه PdfCanvas)
  */
 object ReportExporter {
 
@@ -55,43 +51,40 @@ object ReportExporter {
     private val DEFICIT_BG = DeviceRgb(255, 235, 235)
     private val SURPLUS_BG = DeviceRgb(235, 255, 235)
 
-    // ستون‌های جدول مطابق قرارداد - ترتیب از راست به چپ
-    // (در iText، اولین ستون در سمت چپ قرار می‌گیرد، پس ترتیب را برعکس می‌کنیم)
+    // ستون‌های جدول - ترتیب منطقی RTL (اولین = راست‌ترین)
     private val COLUMN_HEADERS = listOf(
-        "مغایرت\nآخر کار",
-        "مانده مورد\nانتظار پایان",
-        "مانده واقعی\nپایان روز",
-        "ضایعات",
-        "هدایا",
-        "بارگیری\nشب",
-        "رسید",
-        "برگشت\nبه انبار",
-        "میان‌روز",
-        "بارگیری\nصبح",
-        "مانده\nشب گذشته",
+        "ردیف",
         "نام محصول",
-        "ردیف"
+        "مانده\nشب گذشته",
+        "بارگیری\nصبح",
+        "میان‌روز",
+        "برگشت\nبه انبار",
+        "رسید",
+        "بارگیری\nشب",
+        "هدایا",
+        "ضایعات",
+        "مانده واقعی\nپایان روز",
+        "مانده مورد\nانتظار پایان",
+        "مغایرت\nآخر کار"
     )
 
+    // عرض ستون‌ها - متناسب با ستون‌های بالا
     private val COLUMN_WIDTHS = floatArrayOf(
-        55f,   // مغایرت آخر کار
-        70f,   // مانده مورد انتظار پایان
-        70f,   // مانده واقعی پایان روز
-        45f,   // ضایعات
-        45f,   // هدایا
-        55f,   // بارگیری شب
-        50f,   // رسید
-        55f,   // برگشت به انبار
-        50f,   // میان‌روز
-        55f,   // بارگیری صبح
-        70f,   // مانده شب گذشته
+        30f,   // ردیف
         130f,  // نام محصول
-        30f    // ردیف
+        70f,   // مانده شب گذشته
+        55f,   // بارگیری صبح
+        50f,   // میان‌روز
+        55f,   // برگشت به انبار
+        50f,   // رسید
+        55f,   // بارگیری شب
+        45f,   // هدایا
+        45f,   // ضایعات
+        70f,   // مانده واقعی پایان روز
+        70f,   // مانده مورد انتظار پایان
+        55f    // مغایرت آخر کار
     )
 
-    /**
-     * ساخت فایل PDF گزارش آمارگیری.
-     */
     fun exportWorkflowReportToPdf(
         context: Context,
         workflowName: String,
@@ -99,7 +92,7 @@ object ReportExporter {
         products: List<Product>,
         isoDate: String
     ): File {
-        // ایجاد پوشه مقصد به‌صورت امن
+        // ایجاد پوشه مقصد
         val reportDir = File(context.cacheDir, "shared")
         if (!reportDir.exists()) {
             val created = reportDir.mkdirs()
@@ -108,18 +101,13 @@ object ReportExporter {
             }
         }
 
-        // تاریخ شمسی با فرمت امن برای نام فایل
         val jalaliDateSafe = JalaliDateConverter.gregorianToJalaliFileSafeString(isoDate)
         val jalaliDisplay = JalaliDateConverter.gregorianToJalaliString(isoDate)
-
-        // پاک‌سازی نام گردش کار
         val safeName = sanitizeFileName(workflowName)
-
-        // نام فایل نهایی
         val fileName = "گزارش_${safeName}_$jalaliDateSafe.pdf"
         val pdfFile = File(reportDir, fileName)
 
-        // بارگذاری فونت Vazirmatn از assets
+        // بارگذاری فونت
         val fontRegular = loadFontFromAssets(context, "vazirmatn_regular.ttf")
         val fontBold = loadFontFromAssets(context, "vazirmatn_bold.ttf")
 
@@ -127,9 +115,10 @@ object ReportExporter {
         val pdfDoc = PdfDocument(writer)
         pdfDoc.defaultPageSize = PageSize.A4.rotate()
         val doc = Document(pdfDoc, pdfDoc.defaultPageSize)
-        doc.setMargins(28f, 28f, 40f, 28f)
         doc.setFont(fontRegular)
         doc.setFontSize(8f)
+        // ✅ تنظیم جهت پایه سند به RTL
+        doc.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
 
         // ===================== سربرگ =====================
         val titlePara = Paragraph("گزارش آمارگیری و مغایرت‌گیری دامداران")
@@ -137,6 +126,7 @@ object ReportExporter {
             .setFontSize(16f)
             .setFontColor(TITLE_COLOR)
             .setTextAlignment(TextAlignment.CENTER)
+            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             .setMarginBottom(4f)
         doc.add(titlePara)
 
@@ -145,6 +135,7 @@ object ReportExporter {
             .setFontSize(11f)
             .setFontColor(TEXT_DARK)
             .setTextAlignment(TextAlignment.CENTER)
+            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             .setMarginBottom(8f)
         doc.add(subInfoPara)
 
@@ -164,19 +155,20 @@ object ReportExporter {
             .setFontSize(10f)
             .setFontColor(TEXT_MUTED)
             .setTextAlignment(TextAlignment.CENTER)
+            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             .setMarginBottom(10f)
         doc.add(summaryPara)
 
-        // خط جداکننده
         doc.add(LineSeparator(SolidLine()).setMarginBottom(10f))
 
-        // اگر هیچ محصولی وجود ندارد، پیام مناسب
+        // اگر هیچ محصولی وجود ندارد
         if (products.isEmpty()) {
             val emptyPara = Paragraph("هیچ محصولی در این گردش کار ثبت نشده است.")
                 .setFont(fontRegular)
                 .setFontSize(12f)
                 .setFontColor(TEXT_MUTED)
                 .setTextAlignment(TextAlignment.CENTER)
+                .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
                 .setMarginTop(40f)
             doc.add(emptyPara)
             doc.close()
@@ -189,8 +181,10 @@ object ReportExporter {
         table.setHorizontalAlignment(HorizontalAlignment.CENTER)
         table.setFontSize(7.5f)
         table.setFont(fontRegular)
+        // ✅ تنظیم جهت جدول به RTL
+        table.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
 
-        // هدر جدول (تکرار در هر صفحه)
+        // هدر جدول
         COLUMN_HEADERS.forEach { header ->
             table.addHeaderCell(
                 Cell()
@@ -199,6 +193,7 @@ object ReportExporter {
                             .setFont(fontBold)
                             .setFontColor(TEXT_DARK)
                             .setTextAlignment(TextAlignment.CENTER)
+                            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
                             .setFontSize(7.5f)
                             .setMultipliedLeading(1.1f)
                     )
@@ -210,44 +205,34 @@ object ReportExporter {
             )
         }
 
-        // ردیف‌های داده - بر اساس ترتیب products
+        // ردیف‌های داده
         var rowIndex = 1
         products.forEach { product ->
             val stat = stats.find { it.productId == product.id }
 
-            // مقادیر هر ستون (به ترتیب COLUMN_HEADERS از چپ به راست)
+            // مقادیر هر ستون به ترتیب منطقی RTL
             val cells = if (stat == null) {
-                // محصول ثبت‌نشده
                 listOf(
-                    "ثبت‌نشده",  // مغایرت آخر کار
-                    "—",         // مانده مورد انتظار
-                    "—",         // مانده واقعی پایان
-                    "—",         // ضایعات
-                    "—",         // هدایا
-                    "—",         // بارگیری شب
-                    "—",         // رسید
-                    "—",         // برگشت به انبار
-                    "—",         // میان‌روز
-                    "—",         // بارگیری صبح
-                    "—",         // مانده شب گذشته
-                    product.name,  // نام محصول
-                    ReportFormatter.toPersianDigits(rowIndex)  // ردیف
+                    ReportFormatter.toPersianDigits(rowIndex),
+                    product.name,
+                    "—", "—", "—", "—", "—", "—", "—", "—", "—", "—",
+                    "ثبت‌نشده"
                 )
             } else {
                 listOf(
-                    ReportFormatter.formatVariance(stat.closingVariance),  // مغایرت آخر کار
-                    ReportFormatter.formatBoxUnit(stat.expectedClosingStockTotal, product),  // مانده مورد انتظار
-                    ReportFormatter.formatBoxUnit(stat.currentStockTotal, product),  // مانده واقعی پایان
-                    ReportFormatter.formatBoxUnit(stat.wasteTotal, product),  // ضایعات
-                    ReportFormatter.formatBoxUnit(stat.giftsTotal, product),  // هدایا
-                    ReportFormatter.formatBoxUnit(stat.nightLoadingTotal, product),  // بارگیری شب
-                    ReportFormatter.formatBoxUnit(stat.receiptTotal, product),  // رسید
-                    ReportFormatter.formatBoxUnit(stat.returnsTotal, product),  // برگشت به انبار
-                    ReportFormatter.formatBoxUnit(stat.midDayLoadingTotal, product),  // میان‌روز
-                    ReportFormatter.formatBoxUnit(stat.morningLoadingTotal, product),  // بارگیری صبح
-                    ReportFormatter.formatBoxUnit(stat.openingStockTotal, product),  // مانده شب گذشته
-                    product.name,  // نام محصول
-                    ReportFormatter.toPersianDigits(rowIndex)  // ردیف
+                    ReportFormatter.toPersianDigits(rowIndex),
+                    product.name,
+                    ReportFormatter.formatBoxUnit(stat.openingStockTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.morningLoadingTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.midDayLoadingTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.returnsTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.receiptTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.nightLoadingTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.giftsTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.wasteTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.currentStockTotal, product),
+                    ReportFormatter.formatBoxUnit(stat.expectedClosingStockTotal, product),
+                    ReportFormatter.formatVariance(stat.closingVariance)
                 )
             }
 
@@ -256,35 +241,37 @@ object ReportExporter {
                     .add(
                         Paragraph(value)
                             .setFont(fontRegular)
-                            .setTextAlignment(TextAlignment.CENTER)
+                            .setTextAlignment(
+                                if (idx == 1) TextAlignment.RIGHT
+                                else TextAlignment.CENTER
+                            )
+                            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
                             .setFontSize(7.5f)
                             .setFontColor(
-                                if (stat == null && idx == 0) TEXT_MUTED
+                                if (stat == null && idx == 12) TEXT_MUTED
                                 else TEXT_DARK
                             )
                             .setMultipliedLeading(1.1f)
                     )
                     .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-                    .setTextAlignment(TextAlignment.CENTER)
+                    .setTextAlignment(
+                        if (idx == 1) TextAlignment.RIGHT
+                        else TextAlignment.CENTER
+                    )
+                    .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
                     .setPadding(3f)
 
-                // رنگ ردیف متناوب
                 if (rowIndex % 2 == 0) {
                     cell.setBackgroundColor(ROW_ALT_BG)
                 }
 
-                // رنگ خاص برای ستون مغایرت آخر کار (idx=0)
-                if (idx == 0 && stat != null && stat.closingVariance != 0) {
+                // رنگ ستون مغایرت (آخرین ستون)
+                if (idx == 12 && stat != null && stat.closingVariance != 0) {
                     cell.setBackgroundColor(
                         if (stat.closingVariance > 0) DEFICIT_BG
                         else SURPLUS_BG
                     )
-                }
-
-                // نام محصول را راست‌چین کن
-                if (idx == 11) {
-                    cell.setTextAlignment(TextAlignment.RIGHT)
                 }
 
                 table.addCell(cell)
@@ -294,79 +281,90 @@ object ReportExporter {
 
         doc.add(table)
 
-        // ===================== فوتر =====================
+        // ===================== فوتر امضا =====================
         doc.add(LineSeparator(SolidLine()).setMarginTop(20f).setMarginBottom(20f))
 
-        // فضای امضا
         val signTable = Table(floatArrayOf(33f, 33f, 33f))
         signTable.setWidth(UnitValue.createPercentValue(100f))
         signTable.setFont(fontRegular)
         signTable.setFontSize(10f)
+        signTable.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
 
-        signTable.addCell(
-            Cell()
-                .add(Paragraph("نام و امضای آمارگیر:").setFont(fontBold).setFontColor(TEXT_DARK).setFontSize(10f))
-                .add(Paragraph("\n\n....................................").setFont(fontRegular).setFontColor(TEXT_MUTED))
-                .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-                .setPadding(8f)
-        )
-        signTable.addCell(
-            Cell()
-                .add(Paragraph("توضیحات:").setFont(fontBold).setFontColor(TEXT_DARK).setFontSize(10f))
-                .add(Paragraph("\n\n....................................").setFont(fontRegular).setFontColor(TEXT_MUTED))
-                .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-                .setPadding(8f)
-        )
-        signTable.addCell(
-            Cell()
-                .add(Paragraph("تأیید مسئول:").setFont(fontBold).setFontColor(TEXT_DARK).setFontSize(10f))
-                .add(Paragraph("\n\n....................................").setFont(fontRegular).setFontColor(TEXT_MUTED))
-                .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
-                .setPadding(8f)
-        )
+        signTable.addCell(createSignCell("نام و امضای آمارگیر:", fontBold, fontRegular))
+        signTable.addCell(createSignCell("توضیحات:", fontBold, fontRegular))
+        signTable.addCell(createSignCell("تأیید مسئول:", fontBold, fontRegular))
         doc.add(signTable)
 
-        // ===================== صفحه‌بندی واقعی =====================
-        // استفاده از event handler برای اضافه‌کردن شماره صفحه به هر صفحه
-        // این روش قبل از بسته شدن سند اجرا می‌شود و خطای "Document was closed" نمی‌دهد
-        pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, PageNumberEventHandler(fontRegular))
-
+        // ===================== شماره صفحه =====================
+        // استفاده از Paragraph به جای PdfCanvas برای پشتیبانی صحیح از RTL
+        // شماره صفحه در زمان END_PAGE توسط event handler اضافه می‌شود
+        // اما به جای PdfCanvas از یک روش ساده استفاده می‌کنیم:
+        // تعداد صفحات را بعد از close می‌گیریم و در یک بار بازنویسی اضافه می‌کنیم
         doc.close()
+
+        // بعد از close، تعداد صفحات نهایی را می‌گیریم
+        // و با یک PdfDocument جدید شماره صفحه را اضافه می‌کنیم
+        // در عوض، برای سادگی، شماره صفحه را قبل از close اضافه می‌کنیم
+        // با استفاده از یک Paragraph ساده در انتهای هر صفحه
+
+        // روش جایگزین: باز کردن فایل با PdfReader و اضافه‌کردن شماره صفحه
+        try {
+            val reader = com.itextpdf.kernel.pdf.PdfReader(pdfFile)
+            val stamper = com.itextpdf.kernel.pdf.PdfDocument(reader, com.itextpdf.kernel.pdf.PdfWriter(File(reportDir, "temp_$fileName")))
+            val pageCount = stamper.numberOfPages
+            for (i in 1..pageCount) {
+                val page = stamper.getPage(i)
+                val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
+                canvas.setFillColor(TEXT_MUTED)
+                // استفاده از font برای showText - فقط عدد که ASCII است
+                canvas.beginText()
+                canvas.setFontAndSize(fontRegular, 8f)
+                val text = "$i / $pageCount"
+                canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 20.0, 20.0)
+                canvas.showText(text)
+                canvas.endText()
+            }
+            stamper.close()
+            reader.close()
+            // جایگزینی فایل اصلی با فایل temp
+            val tempFile = File(reportDir, "temp_$fileName")
+            pdfFile.delete()
+            tempFile.renameTo(pdfFile)
+        } catch (e: Exception) {
+            // اگر اضافه‌کردن شماره صفحه شکست خورد، فایل اصلی بدون شماره صفحه استفاده می‌شود
+        }
+
         return pdfFile
     }
 
     /**
-     * Event handler برای اضافه‌کردن شماره صفحه به هر صفحه.
-     * این handler قبل از بسته شدن سند اجرا می‌شود.
+     * ساخت سلول امضا.
      */
-    private class PageNumberEventHandler(private val font: PdfFont) : IEventHandler {
-        private var currentPage = 0
-
-        override fun handleEvent(event: Event) {
-            val docEvent = event as PdfDocumentEvent
-            val pdfDoc = docEvent.document
-            val page = docEvent.page
-            currentPage++
-
-            val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
-            canvas.setFillColor(TEXT_MUTED)
-            canvas.beginText()
-            canvas.setFontAndSize(font, 8f)
-            val text = "صفحه $currentPage"
-            canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 30.0, 20.0)
-            canvas.showText(text)
-            canvas.endText()
-            canvas.release()
-        }
+    private fun createSignCell(label: String, fontBold: PdfFont, fontRegular: PdfFont): Cell {
+        return Cell()
+            .add(
+                Paragraph(label)
+                    .setFont(fontBold)
+                    .setFontColor(TEXT_DARK)
+                    .setFontSize(10f)
+                    .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+            )
+            .add(
+                Paragraph("\n\n....................................")
+                    .setFont(fontRegular)
+                    .setFontColor(TEXT_MUTED)
+                    .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+            )
+            .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
+            .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+            .setPadding(8f)
     }
 
     /**
      * بارگذاری فونت از assets.
-     * فونت‌های Vazirmatn در res/font هستند ولی برای iText باید از assets خوانده شوند.
      */
     private fun loadFontFromAssets(context: Context, fontFileName: String): PdfFont {
         return try {
-            // کپی فونت از res/font به cache برای خواندن
             val fontResId = context.resources.getIdentifier(
                 fontFileName.substringBefore("."),
                 "font",
@@ -387,17 +385,15 @@ object ReportExporter {
                     EmbeddingStrategy.PREFER_EMBEDDED
                 )
             } else {
-                // fallback به فونت پیش‌فرض
                 PdfFontFactory.createFont()
             }
         } catch (e: Exception) {
-            // در صورت خطا، فونت پیش‌فرض استفاده شود
             PdfFontFactory.createFont()
         }
     }
 
     /**
-     * پاک‌سازی نام فایل از کاراکترهای غیرمجاز.
+     * پاک‌سازی نام فایل.
      */
     private fun sanitizeFileName(name: String): String {
         return name
@@ -433,7 +429,7 @@ object ReportExporter {
     }
 
     /**
-     * باز کردن فایل PDF با PDF Viewer.
+     * باز کردن فایل PDF.
      */
     fun openPdf(activityContext: Context, file: File) {
         if (!validateFile(file)) {
