@@ -1,0 +1,24 @@
+<resources>
+    <!-- Override colors for dark mode -->
+    <color name="brand_primary_blue">#7C9CFF</color>
+    <color name="brand_accent_red">#FF8A8A</color>
+    <color name="brand_background">#0A0E1A</color>
+
+    <!-- رنگ پس‌زمینه آیکون لانچر -->
+    <color name="launcher_background">#123DA8</color>
+
+    <!-- رنگ‌های گرادیان splash screen (تیره) -->
+    <color name="splash_gradient_start">#1A2A4A</color>
+    <color name="splash_gradient_end">#0A0E1A</color>
+
+    <color name="green_primary">#7C9CFF</color>
+    <color name="green_light">#1A2A4A</color>
+    <color name="white">#0A0E1A</color>
+    <color name="gray_bg">#141828</color>
+    <color name="green_success">#7C9CFF</color>
+    <color name="red_deficit">#FF8A8A</color>
+    <color name="orange_warning">#FFB74D</color>
+
+    <color name="dark_background">#0A0E1A</color>
+    <color name="dark_surface">#141828</color>
+</resources>

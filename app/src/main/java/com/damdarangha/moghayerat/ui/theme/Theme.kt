@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 
@@ -13,20 +14,19 @@ import androidx.compose.ui.unit.LayoutDirection
  * تم اصلی برنامه - با رنگ‌های برند دامداران
  *
  * پالت رنگ (از لوگوی جدید):
- * - آبی اصلی: #0020AC
- * - قرمز: #F70808
- * - پس‌زمینه تیره: #0F0F1A (تم پیش‌فرض)
+ * - آبی اصلی: #123DA8
+ * - قرمز مرجانی: #FA727D
  *
  * ویژگی‌ها:
- * - تم تاریک به‌عنوان پیش‌فرض
+ * - تم روشن به‌عنوان پیش‌فرض (مطابق درخواست کاربر)
  * - چیدمان RTL (راست‌چین)
  * - فونت Vazirmatn فارسی
- * - پشتیبانی از حالت روشن (اگر کاربر انتخاب کند)
+ * - پشتیبانی از حالت تاریک با رنگ‌های بهینه‌شده
  */
 @Composable
 fun MoghayeratTheme(
-    // دیفالت: تاریک (مطابق درخواست کاربر)
-    darkTheme: Boolean = true,
+    // دیفالت: روشن (مطابق درخواست کاربر)
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) {
@@ -84,19 +84,34 @@ fun MoghayeratTheme(
 
 /**
  * رنگ‌های وضعیت سفارشی برای استفاده در کامپوننت‌ها.
+ * این تابع به‌طور خودکار بر اساس تم فعلی (روشن/تاریک) رنگ‌ها را انتخاب می‌کند.
  */
 @Composable
 fun statusColors(): StatusColors {
-    return StatusColors(
-        success = DarkPrimary,
-        successBg = DarkPrimary.copy(alpha = 0.2f),
-        deficit = DarkTertiary,
-        deficitBg = DarkTertiary.copy(alpha = 0.2f),
-        surplus = SurplusGreen,
-        surplusBg = SurplusGreen.copy(alpha = 0.2f),
-        warning = WarningOrange,
-        warningBg = WarningOrange.copy(alpha = 0.2f)
-    )
+    val isDark = isSystemInDarkTheme()
+    return if (isDark) {
+        StatusColors(
+            success = Color(0xFF7C9CFF),
+            successBg = Color(0xFF1A2A4A),
+            deficit = Color(0xFFFF8A8A),
+            deficitBg = Color(0xFF3D1518),
+            surplus = Color(0xFF66BB6A),
+            surplusBg = Color(0xFF1B3320),
+            warning = Color(0xFFFFB74D),
+            warningBg = Color(0xFF33291A)
+        )
+    } else {
+        StatusColors(
+            success = Color(0xFF123DA8),
+            successBg = Color(0xFFE8EAFA),
+            deficit = Color(0xFFFA727D),
+            deficitBg = Color(0xFFFFE5E5),
+            surplus = Color(0xFF4CAF50),
+            surplusBg = Color(0xFFE8F5E9),
+            warning = Color(0xFFFFBC4D),
+            warningBg = Color(0xFFFFF3E0)
+        )
+    }
 }
 
 data class StatusColors(
@@ -109,3 +124,4 @@ data class StatusColors(
     val warning: androidx.compose.ui.graphics.Color,
     val warningBg: androidx.compose.ui.graphics.Color
 )
+
