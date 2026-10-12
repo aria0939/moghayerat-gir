@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.damdarangha.moghayerat.ui.theme.BottomNavBg
 
 /**
  * آیتم‌های نوار ناوبری پایین
@@ -64,7 +65,7 @@ fun BottomNavBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
+        color = BottomNavBg,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         shadowElevation = 8.dp
     ) {

@@ -13,19 +13,19 @@ import androidx.compose.ui.unit.LayoutDirection
 /**
  * تم اصلی برنامه - با رنگ‌های برند دامداران
  *
- * پالت رنگ (از لوگوی جدید):
+ * پالت رنگ:
  * - آبی اصلی: #123DA8
  * - قرمز مرجانی: #FA727D
  *
  * ویژگی‌ها:
- * - تم روشن به‌عنوان پیش‌فرض (مطابق درخواست کاربر)
+ * - تم روشن به‌عنوان پیش‌فرض
  * - چیدمان RTL (راست‌چین)
  * - فونت Vazirmatn فارسی
- * - پشتیبانی از حالت تاریک با رنگ‌های بهینه‌شده
+ * - پشتیبانی کامل از حالت تاریک با رنگ‌های بهینه‌شده
+ * - استفاده از LocalIsDarkTheme برای هماهنگی تمام Components
  */
 @Composable
 fun MoghayeratTheme(
-    // دیفالت: روشن (مطابق درخواست کاربر)
     darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -71,8 +71,11 @@ fun MoghayeratTheme(
         )
     }
 
-    // اعمال RTL
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    // هماهنگ کردن CompositionLocal برای هم وضعیت RTL و هم وضعیت تم تاریک
+    CompositionLocalProvider(
+        LocalLayoutDirection provides LayoutDirection.Rtl,
+        LocalIsDarkTheme provides darkTheme
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AppTypography,
@@ -84,11 +87,11 @@ fun MoghayeratTheme(
 
 /**
  * رنگ‌های وضعیت سفارشی برای استفاده در کامپوننت‌ها.
- * این تابع به‌طور خودکار بر اساس تم فعلی (روشن/تاریک) رنگ‌ها را انتخاب می‌کند.
+ * از LocalIsDarkTheme استفاده می‌کند تا با تم فعلی هماهنگ باشد.
  */
 @Composable
 fun statusColors(): StatusColors {
-    val isDark = isSystemInDarkTheme()
+    val isDark = isDarkTheme()
     return if (isDark) {
         StatusColors(
             success = Color(0xFF7C9CFF),
@@ -124,4 +127,3 @@ data class StatusColors(
     val warning: androidx.compose.ui.graphics.Color,
     val warningBg: androidx.compose.ui.graphics.Color
 )
-

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
@@ -43,10 +44,11 @@ class MainActivity : ComponentActivity() {
             val themeMode by app.settingsDataStore.themeMode.collectAsState(initial = ThemeMode.LIGHT)
 
             // تعیین اینکه آیا تم تاریک باید فعال باشد
+            val systemDark = isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
-                ThemeMode.SYSTEM -> false  // دیفالت روشن
+                ThemeMode.SYSTEM -> systemDark  // پیروی از تم سیستم
             }
 
             MoghayeratTheme(darkTheme = darkTheme) {
