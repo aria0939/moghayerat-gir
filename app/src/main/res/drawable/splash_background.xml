@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- پس‌زمینه Splash Screen - لوگوی دامداران در مرکز صفحه با گرادیان تیره -->
+<!-- پس‌زمینه Splash Screen - لوگوی دامداران در مرکز صفحه با گرادیان -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- پس‌زمینه تیره عمیق -->
     <item>
@@ -11,10 +11,10 @@
         </shape>
     </item>
 
-    <!-- لوگوی دامداران در مرکز -->
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/splash_logo" />
-    </item>
+    <!-- لوگوی دامداران در مرکز - استفاده از bitmap با gravity center و اندازه intrinsically -->
+    <item
+        android:width="180dp"
+        android:height="180dp"
+        android:gravity="center"
+        android:drawable="@drawable/splash_logo" />
 </layer-list>

@@ -89,6 +89,15 @@ val BottomNavBg = Color(0xFFFFFFFF)
 val BottomNavActiveColor = BrandPrimaryBlue
 val BottomNavInactiveColor = Color(0xFF9CA3AF)
 
+// ============================================
+// رنگ‌های فرم‌های غیرفعال - مطابق تصویر مرجع
+// ============================================
+val DisabledFieldBg = Color(0xFFF5F7FA)          // پس‌زمینه آبی بسیار کم‌رنگ
+val DisabledFieldBorder = Color(0xFFE2E8F0)      // حاشیه خاکستری آبی
+val DisabledFieldText = Color(0xFF94A3B8)        // متن خاکستری مایل به آبی
+val DisabledFieldIcon = Color(0xFF94A3B8)        // آیکون خاکستری مایل به آبی
+val EnabledFieldBorder = Color(0xFFCBD5E1)        // حاشیه حالت فعال
+
 // رنگ‌های قدیمی برای سازگاری (deprecated - در فرآینده حذف)
 val WelcomeGradientStart = BrandPrimaryBlue
 val WelcomeGradientEnd = Color(0xFF001A8C)

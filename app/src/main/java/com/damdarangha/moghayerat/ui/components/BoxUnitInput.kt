@@ -243,24 +243,39 @@ private fun EnhancedNumericField(
         label = "clearBtnScale"
     )
 
+    // تعیین رنگ‌های بر اساس حالت (فعال، غیرفعال، فوکوس)
+    val bgColor = when {
+        !enabled -> com.damdarangha.moghayerat.ui.theme.DisabledFieldBg
+        focused -> MaterialTheme.colorScheme.surface
+        else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+    }
+    val borderColor = when {
+        !enabled -> com.damdarangha.moghayerat.ui.theme.DisabledFieldBorder
+        focused -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outline.copy(alpha = borderAlpha)
+    }
+    val borderThickness = if (focused && enabled) 2.dp else 1.dp
+    val labelColor = when {
+        !enabled -> com.damdarangha.moghayerat.ui.theme.DisabledFieldText
+        focused -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val labelAlpha = if (enabled) (if (focused) 0.9f else 0.7f) else 0.6f
+    val valueColor = if (enabled) MaterialTheme.colorScheme.onSurface
+    else com.damdarangha.moghayerat.ui.theme.DisabledFieldText
+    val iconColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+    else com.damdarangha.moghayerat.ui.theme.DisabledFieldIcon
+
     Box(
         modifier = modifier
             .height(56.dp)
             .background(
-                color = if (focused) {
-                    MaterialTheme.colorScheme.surface
-                } else {
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-                },
+                color = bgColor,
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
-                width = if (focused) 2.dp else 1.dp,
-                color = if (focused) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.outline.copy(alpha = borderAlpha)
-                },
+                width = borderThickness,
+                color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             ),
         contentAlignment = Alignment.Center
@@ -272,9 +287,8 @@ private fun EnhancedNumericField(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (focused) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.alpha(if (focused) 0.9f else 0.7f)
+                color = labelColor,
+                modifier = Modifier.alpha(labelAlpha)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -311,8 +325,7 @@ private fun EnhancedNumericField(
                     fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = valueColor,
                     textAlign = TextAlign.Start
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -341,7 +354,7 @@ private fun EnhancedNumericField(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "پاک کردن",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = iconColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }

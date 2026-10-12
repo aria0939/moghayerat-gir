@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.R
@@ -109,13 +110,15 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // لوگوی دامداران (تنها لوگو در صفحه)
+            // استفاده از height با aspectRatio برای حفظ کیفیت و نسبت تصویر
             Image(
                 painter = painterResource(id = R.drawable.ic_logo),
                 contentDescription = "لوگوی دامداران",
                 modifier = Modifier
-                    .height(44.dp)
-                    .width(110.dp),
-                contentScale = ContentScale.Fit
+                    .height(48.dp)
+                    .aspectRatio(1f),  // حفظ نسبت تصویر 1:1
+                contentScale = ContentScale.Fit,
+                alignment = Alignment.Center
             )
             // آیکون اعلان ظریف (بدون دایره بزرگ)
             IconButton(
@@ -262,12 +265,15 @@ private fun HeroCard(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                // لوگو در سمت چپ کارت - اندازه مناسب
+                // لوگو در سمت چپ کارت - حفظ نسبت و کیفیت
                 Image(
                     painter = painterResource(id = R.drawable.ic_logo),
                     contentDescription = "لوگو",
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier
+                        .height(72.dp)
+                        .aspectRatio(1f),  // حفظ نسبت تصویر
+                    contentScale = ContentScale.Fit,
+                    alignment = Alignment.Center
                 )
             }
         }

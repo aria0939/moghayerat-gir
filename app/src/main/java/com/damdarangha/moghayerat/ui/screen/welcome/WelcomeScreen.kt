@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -156,14 +157,17 @@ fun WelcomeScreen(
                         .size(180.dp)
                         .scale(pulseScale)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color.White.copy(alpha = 0.1f)),
+                        .background(Color.White.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_logo),
                         contentDescription = "لوگوی دامداران",
-                        modifier = Modifier.size(160.dp),
-                        contentScale = ContentScale.Fit
+                        modifier = Modifier
+                            .size(140.dp)
+                            .aspectRatio(1f),
+                        contentScale = ContentScale.Fit,
+                        alignment = Alignment.Center
                     )
                 }
             }
