@@ -9,11 +9,12 @@ import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.util.JalaliDateConverter
 import com.itextpdf.io.font.PdfEncodings
 import com.itextpdf.kernel.colors.DeviceRgb
+import com.itextpdf.kernel.font.PdfFont
+import com.itextpdf.kernel.font.PdfFontFactory
+import com.itextpdf.kernel.font.PdfFontFactory.EmbeddingStrategy
 import com.itextpdf.kernel.events.Event
 import com.itextpdf.kernel.events.IEventHandler
 import com.itextpdf.kernel.events.PdfDocumentEvent
-import com.itextpdf.kernel.font.PdfFont
-import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.geom.PageSize
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
@@ -333,7 +334,7 @@ object ReportExporter {
         val pageCount = pdfDoc.numberOfPages
         for (i in 1..pageCount) {
             val page = pdfDoc.getPage(i)
-            val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page.newContentStreamBefore())
+            val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
             canvas.setFillColor(TEXT_MUTED)
             canvas.beginText()
             canvas.setFontAndSize(fontRegular, 8f)
@@ -366,18 +367,18 @@ object ReportExporter {
                         }
                     }
                 }
-                com.itextpdf.io.font.PdfFontFactory.createFont(
+                PdfFontFactory.createFont(
                     tempFile.absolutePath,
                     PdfEncodings.IDENTITY_H,
-                    com.itextpdf.io.font.PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                    EmbeddingStrategy.PREFER_EMBEDDED
                 )
             } else {
                 // fallback به فونت پیش‌فرض
-                com.itextpdf.io.font.PdfFontFactory.createFont()
+                PdfFontFactory.createFont()
             }
         } catch (e: Exception) {
             // در صورت خطا، فونت پیش‌فرض استفاده شود
-            com.itextpdf.io.font.PdfFontFactory.createFont()
+            PdfFontFactory.createFont()
         }
     }
 
