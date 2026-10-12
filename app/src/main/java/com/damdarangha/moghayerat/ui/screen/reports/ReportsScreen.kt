@@ -100,8 +100,10 @@ fun ReportsScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             viewModel.savePdfToDestination(uri) { success, message ->
-                // نمایش پیام
+                viewModel.showError(message)
             }
+        } else {
+            viewModel.showError("ذخیره فایل لغو شد")
         }
     }
 
@@ -227,9 +229,9 @@ fun ReportsScreen(
                         try {
                             ReportExporter.openPdf(context, state.reportFile!!)
                         } catch (e: ActivityNotFoundException) {
-                            // نمایش پیام خطا
+                            viewModel.showError("برنامه‌ای برای باز کردن فایل PDF یافت نشد. لطفاً یک PDF Viewer نصب کنید.")
                         } catch (e: Exception) {
-                            // نمایش پیام خطا
+                            viewModel.showError("خطا در باز کردن PDF: ${e.message}")
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -263,8 +265,10 @@ fun ReportsScreen(
                     onClick = {
                         try {
                             ReportExporter.shareFile(context, state.reportFile!!)
+                        } catch (e: ActivityNotFoundException) {
+                            viewModel.showError("برنامه‌ای برای اشتراک‌گذاری یافت نشد.")
                         } catch (e: Exception) {
-                            // نمایش پیام خطا
+                            viewModel.showError("خطا در اشتراک‌گذاری: ${e.message}")
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

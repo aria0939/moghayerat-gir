@@ -7,8 +7,13 @@ import androidx.core.content.FileProvider
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.util.JalaliDateConverter
-import com.itextpdf.kernel.colors.ColorConstants
+import com.itextpdf.io.font.PdfEncodings
 import com.itextpdf.kernel.colors.DeviceRgb
+import com.itextpdf.kernel.events.Event
+import com.itextpdf.kernel.events.IEventHandler
+import com.itextpdf.kernel.events.PdfDocumentEvent
+import com.itextpdf.kernel.font.PdfFont
+import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.geom.PageSize
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
@@ -23,38 +28,68 @@ import com.itextpdf.layout.properties.TextAlignment
 import com.itextpdf.layout.properties.UnitValue
 import com.itextpdf.layout.properties.VerticalAlignment
 import java.io.File
-import java.io.FileWriter
+import java.io.IOException
 
 /**
  * تولید گزارش PDF شبیه فرم کاغذی آمارگیری.
  *
  * ویژگی‌ها:
  * - صفحه افقی A4 برای جا دادن همه ستون‌ها
- * - جدول با خطوط منظم
- * - سربرگ با اطلاعات جلسه
- * - فوتر با فضای امضا و توضیحات
+ * - فونت Vazirmatn فارسی embed شده
+ * - جدول با خطوط منظم و سربرگ فشرده
+ * - صفحه‌بندی واقعی با شماره صفحه
  * - تکرار عنوان ستون‌ها در صفحات بعدی
  * - پشتیبانی از چند صفحه
+ * - ۱۳ ستون مطابق قرارداد
  */
 object ReportExporter {
 
     // رنگ‌های رسمی
-    private val HEADER_BG = DeviceRgb(220, 230, 250)   // آبی بسیار روشن
-    private val ROW_ALT_BG = DeviceRgb(248, 250, 252)   // خاکستری بسیار روشن
-    private val BORDER_COLOR = DeviceRgb(150, 160, 180) // خاکستری آبی
+    private val HEADER_BG = DeviceRgb(220, 230, 250)
+    private val ROW_ALT_BG = DeviceRgb(248, 250, 252)
+    private val BORDER_COLOR = DeviceRgb(150, 160, 180)
     private val TEXT_DARK = DeviceRgb(20, 30, 50)
     private val TEXT_MUTED = DeviceRgb(100, 110, 130)
-    private val TITLE_COLOR = DeviceRgb(18, 61, 168)    // آبی برند
+    private val TITLE_COLOR = DeviceRgb(18, 61, 168)
+    private val DEFICIT_BG = DeviceRgb(255, 235, 235)
+    private val SURPLUS_BG = DeviceRgb(235, 255, 235)
+
+    // ستون‌های جدول مطابق قرارداد - ترتیب از راست به چپ
+    // (در iText، اولین ستون در سمت چپ قرار می‌گیرد، پس ترتیب را برعکس می‌کنیم)
+    private val COLUMN_HEADERS = listOf(
+        "مغایرت\nآخر کار",
+        "مانده مورد\nانتظار پایان",
+        "مانده واقعی\nپایان روز",
+        "ضایعات",
+        "هدایا",
+        "بارگیری\nشب",
+        "رسید",
+        "برگشت\nبه انبار",
+        "میان‌روز",
+        "بارگیری\nصبح",
+        "مانده\nشب گذشته",
+        "نام محصول",
+        "ردیف"
+    )
+
+    private val COLUMN_WIDTHS = floatArrayOf(
+        55f,   // مغایرت آخر کار
+        70f,   // مانده مورد انتظار پایان
+        70f,   // مانده واقعی پایان روز
+        45f,   // ضایعات
+        45f,   // هدایا
+        55f,   // بارگیری شب
+        50f,   // رسید
+        55f,   // برگشت به انبار
+        50f,   // میان‌روز
+        55f,   // بارگیری صبح
+        70f,   // مانده شب گذشته
+        130f,  // نام محصول
+        30f    // ردیف
+    )
 
     /**
      * ساخت فایل PDF گزارش آمارگیری.
-     *
-     * @param context Context
-     * @param workflowName نام گردش کار
-     * @param stats فهرست آمار روزانه
-     * @param products فهرست محصولات
-     * @param isoDate تاریخ آمارگیری
-     * @return فایل PDF ایجاد شده
      */
     fun exportWorkflowReportToPdf(
         context: Context,
@@ -68,41 +103,36 @@ object ReportExporter {
         if (!reportDir.exists()) {
             val created = reportDir.mkdirs()
             if (!created && !reportDir.exists()) {
-                throw java.io.IOException("امکان ایجاد پوشه گزارش وجود ندارد: ${reportDir.absolutePath}")
+                throw IOException("امکان ایجاد پوشه گزارش وجود ندارد: ${reportDir.absolutePath}")
             }
         }
 
-        // تاریخ شمسی با فرمت امن برای نام فایل (با خط تیره به‌جای اسلش)
-        val jalaliDate = JalaliDateConverter.gregorianToJalaliFileSafeString(isoDate)
+        // تاریخ شمسی با فرمت امن برای نام فایل
+        val jalaliDateSafe = JalaliDateConverter.gregorianToJalaliFileSafeString(isoDate)
         val jalaliDisplay = JalaliDateConverter.gregorianToJalaliString(isoDate)
 
-        // پاک‌سازی نام گردش کار از کاراکترهای غیرمجاز
-        val safeName = workflowName
-            .replace(" ", "_")
-            .replace("/", "-")
-            .replace("\\", "-")
-            .replace(":", "-")
-            .replace("*", "-")
-            .replace("?", "-")
-            .replace("\"", "-")
-            .replace("<", "-")
-            .replace(">", "-")
-            .replace("|", "-")
-            .trim()
+        // پاک‌سازی نام گردش کار
+        val safeName = sanitizeFileName(workflowName)
 
-        // نام فایل نهایی - بدون اسلش در تاریخ
-        val fileName = "گزارش_${safeName}_$jalaliDate.pdf"
+        // نام فایل نهایی
+        val fileName = "گزارش_${safeName}_$jalaliDateSafe.pdf"
         val pdfFile = File(reportDir, fileName)
+
+        // بارگذاری فونت Vazirmatn از assets
+        val fontRegular = loadFontFromAssets(context, "vazirmatn_regular.ttf")
+        val fontBold = loadFontFromAssets(context, "vazirmatn_bold.ttf")
 
         val writer = PdfWriter(pdfFile)
         val pdfDoc = PdfDocument(writer)
         pdfDoc.defaultPageSize = PageSize.A4.rotate()
         val doc = Document(pdfDoc, pdfDoc.defaultPageSize)
         doc.setMargins(28f, 28f, 40f, 28f)
+        doc.setFont(fontRegular)
+        doc.setFontSize(8f)
 
         // ===================== سربرگ =====================
         val titlePara = Paragraph("گزارش آمارگیری و مغایرت‌گیری دامداران")
-            .setBold()
+            .setFont(fontBold)
             .setFontSize(16f)
             .setFontColor(TITLE_COLOR)
             .setTextAlignment(TextAlignment.CENTER)
@@ -110,6 +140,7 @@ object ReportExporter {
         doc.add(titlePara)
 
         val subInfoPara = Paragraph("گردش کار: $workflowName    |    تاریخ: $jalaliDisplay")
+            .setFont(fontRegular)
             .setFontSize(11f)
             .setFontColor(TEXT_DARK)
             .setTextAlignment(TextAlignment.CENTER)
@@ -128,6 +159,7 @@ object ReportExporter {
             "باقی‌مانده: $remainingCount    |    " +
             "دارای مغایرت: $varianceCount"
         )
+            .setFont(fontRegular)
             .setFontSize(10f)
             .setFontColor(TEXT_MUTED)
             .setTextAlignment(TextAlignment.CENTER)
@@ -137,9 +169,10 @@ object ReportExporter {
         // خط جداکننده
         doc.add(LineSeparator(SolidLine()).setMarginBottom(10f))
 
-        // اگر هیچ محصولی وجود ندارد، پیام مناسب نمایش بده
+        // اگر هیچ محصولی وجود ندارد، پیام مناسب
         if (products.isEmpty()) {
             val emptyPara = Paragraph("هیچ محصولی در این گردش کار ثبت نشده است.")
+                .setFont(fontRegular)
                 .setFontSize(12f)
                 .setFontColor(TEXT_MUTED)
                 .setTextAlignment(TextAlignment.CENTER)
@@ -150,53 +183,23 @@ object ReportExporter {
         }
 
         // ===================== جدول =====================
-        val numColumns = 13
-        val columnWidths = floatArrayOf(
-            30f,   // ۱. ردیف
-            130f,  // ۲. نام محصول
-            80f,   // ۳. مانده شب گذشته
-            80f,   // ۴. بارگیری صبح
-            90f,   // ۵. مانده واقعی صبح
-            60f,   // ۶. مغایرت اول کار
-            60f,   // ۷. رسید
-            70f,   // ۸. بارگیری شب
-            50f,   // ۹. هدایا
-            50f,   // ۱۰. ضایعات
-            80f,   // ۱۱. مانده واقعی پایان
-            80f,   // ۱۲. مانده مورد انتظار
-            60f    // ۱۳. مغایرت آخر کار
-        )
-
-        val table = Table(UnitValue.createPercentArray(columnWidths))
+        val table = Table(UnitValue.createPercentArray(COLUMN_WIDTHS))
         table.setWidth(UnitValue.createPercentValue(100f))
         table.setHorizontalAlignment(HorizontalAlignment.CENTER)
-        table.setFontSize(8f)
+        table.setFontSize(7.5f)
+        table.setFont(fontRegular)
 
-        // هدر جدول
-        val headers = listOf(
-            "ردیف",
-            "نام محصول",
-            "مانده شب گذشته",
-            "بارگیری صبح",
-            "مانده واقعی صبح",
-            "مغایرت اول کار",
-            "رسید",
-            "بارگیری شب",
-            "هدایا",
-            "ضایعات",
-            "مانده واقعی پایان",
-            "مانده مورد انتظار",
-            "مغایرت آخر کار"
-        )
-        headers.forEach { header ->
+        // هدر جدول (تکرار در هر صفحه)
+        COLUMN_HEADERS.forEach { header ->
             table.addHeaderCell(
                 Cell()
                     .add(
                         Paragraph(header)
-                            .setBold()
+                            .setFont(fontBold)
                             .setFontColor(TEXT_DARK)
                             .setTextAlignment(TextAlignment.CENTER)
-                            .setFontSize(8f)
+                            .setFontSize(7.5f)
+                            .setMultipliedLeading(1.1f)
                     )
                     .setBackgroundColor(HEADER_BG)
                     .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
@@ -206,41 +209,44 @@ object ReportExporter {
             )
         }
 
-        // ردیف‌های داده - بر اساس ترتیب products (فهرست گردش کار)
+        // ردیف‌های داده - بر اساس ترتیب products
         var rowIndex = 1
         products.forEach { product ->
             val stat = stats.find { it.productId == product.id }
 
-            // اگر آمار ثبت نشده، ردیف خالی با عنوان «ثبت‌نشده»
+            // مقادیر هر ستون (به ترتیب COLUMN_HEADERS از چپ به راست)
             val cells = if (stat == null) {
+                // محصول ثبت‌نشده
                 listOf(
-                    rowIndex.toString(),
-                    product.name,
-                    "—", "—", "—", "—", "—", "—", "—", "—",
-                    "—", "—",
-                    "ثبت‌نشده"
+                    "ثبت‌نشده",  // مغایرت آخر کار
+                    "—",         // مانده مورد انتظار
+                    "—",         // مانده واقعی پایان
+                    "—",         // ضایعات
+                    "—",         // هدایا
+                    "—",         // بارگیری شب
+                    "—",         // رسید
+                    "—",         // برگشت به انبار
+                    "—",         // میان‌روز
+                    "—",         // بارگیری صبح
+                    "—",         // مانده شب گذشته
+                    product.name,  // نام محصول
+                    ReportFormatter.toPersianDigits(rowIndex)  // ردیف
                 )
             } else {
-                val morningVar = stat.morningVariance?.let { if (it == 0) "صفر" else it.toString() } ?: "—"
-                val closingVar = when {
-                    stat.closingVariance == 0 -> "صفر"
-                    stat.closingVariance > 0 -> "کسری ${stat.closingVariance}"
-                    else -> "اضافه ${-stat.closingVariance}"
-                }
                 listOf(
-                    rowIndex.toString(),
-                    product.name,
-                    formatBoxUnit(stat.openingStockTotal, product),
-                    formatBoxUnit(stat.morningLoadingTotal, product),
-                    stat.actualMorningStockTotal?.let { formatBoxUnit(it, product) } ?: "—",
-                    morningVar,
-                    formatBoxUnit(stat.receiptTotal, product),
-                    formatBoxUnit(stat.nightLoadingTotal, product),
-                    formatBoxUnit(stat.giftsTotal, product),
-                    formatBoxUnit(stat.wasteTotal, product),
-                    formatBoxUnit(stat.currentStockTotal, product),
-                    formatBoxUnit(stat.expectedClosingStockTotal, product),
-                    closingVar
+                    ReportFormatter.formatVariance(stat.closingVariance),  // مغایرت آخر کار
+                    ReportFormatter.formatBoxUnit(stat.expectedClosingStockTotal, product),  // مانده مورد انتظار
+                    ReportFormatter.formatBoxUnit(stat.currentStockTotal, product),  // مانده واقعی پایان
+                    ReportFormatter.formatBoxUnit(stat.wasteTotal, product),  // ضایعات
+                    ReportFormatter.formatBoxUnit(stat.giftsTotal, product),  // هدایا
+                    ReportFormatter.formatBoxUnit(stat.nightLoadingTotal, product),  // بارگیری شب
+                    ReportFormatter.formatBoxUnit(stat.receiptTotal, product),  // رسید
+                    ReportFormatter.formatBoxUnit(stat.returnsTotal, product),  // برگشت به انبار
+                    ReportFormatter.formatBoxUnit(stat.midDayLoadingTotal, product),  // میان‌روز
+                    ReportFormatter.formatBoxUnit(stat.morningLoadingTotal, product),  // بارگیری صبح
+                    ReportFormatter.formatBoxUnit(stat.openingStockTotal, product),  // مانده شب گذشته
+                    product.name,  // نام محصول
+                    ReportFormatter.toPersianDigits(rowIndex)  // ردیف
                 )
             }
 
@@ -248,12 +254,14 @@ object ReportExporter {
                 val cell = Cell()
                     .add(
                         Paragraph(value)
+                            .setFont(fontRegular)
                             .setTextAlignment(TextAlignment.CENTER)
-                            .setFontSize(8f)
+                            .setFontSize(7.5f)
                             .setFontColor(
-                                if (stat == null && idx == 12) TEXT_MUTED
+                                if (stat == null && idx == 0) TEXT_MUTED
                                 else TEXT_DARK
                             )
+                            .setMultipliedLeading(1.1f)
                     )
                     .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
                     .setTextAlignment(TextAlignment.CENTER)
@@ -264,13 +272,20 @@ object ReportExporter {
                 if (rowIndex % 2 == 0) {
                     cell.setBackgroundColor(ROW_ALT_BG)
                 }
-                // رنگ خاص برای ستون مغایرت آخر کار
-                if (idx == 12 && stat != null && stat.closingVariance != 0) {
-                    val varianceBg = if (stat.closingVariance > 0)
-                        DeviceRgb(255, 235, 235)  // کسری - قرمز روشن
-                    else DeviceRgb(235, 255, 235)  // اضافه - سبز روشن
-                    cell.setBackgroundColor(varianceBg)
+
+                // رنگ خاص برای ستون مغایرت آخر کار (idx=0)
+                if (idx == 0 && stat != null && stat.closingVariance != 0) {
+                    cell.setBackgroundColor(
+                        if (stat.closingVariance > 0) DEFICIT_BG
+                        else SURPLUS_BG
+                    )
                 }
+
+                // نام محصول را راست‌چین کن
+                if (idx == 11) {
+                    cell.setTextAlignment(TextAlignment.RIGHT)
+                }
+
                 table.addCell(cell)
             }
             rowIndex++
@@ -284,70 +299,114 @@ object ReportExporter {
         // فضای امضا
         val signTable = Table(floatArrayOf(33f, 33f, 33f))
         signTable.setWidth(UnitValue.createPercentValue(100f))
+        signTable.setFont(fontRegular)
         signTable.setFontSize(10f)
 
         signTable.addCell(
             Cell()
-                .add(Paragraph("نام و امضای آمارگیر:").setFontColor(TEXT_DARK).setFontSize(10f))
-                .add(Paragraph("\n\n....................................").setFontColor(TEXT_MUTED))
+                .add(Paragraph("نام و امضای آمارگیر:").setFont(fontBold).setFontColor(TEXT_DARK).setFontSize(10f))
+                .add(Paragraph("\n\n....................................").setFont(fontRegular).setFontColor(TEXT_MUTED))
                 .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
                 .setPadding(8f)
         )
         signTable.addCell(
             Cell()
-                .add(Paragraph("توضیحات:").setFontColor(TEXT_DARK).setFontSize(10f))
-                .add(Paragraph("\n\n....................................").setFontColor(TEXT_MUTED))
+                .add(Paragraph("توضیحات:").setFont(fontBold).setFontColor(TEXT_DARK).setFontSize(10f))
+                .add(Paragraph("\n\n....................................").setFont(fontRegular).setFontColor(TEXT_MUTED))
                 .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
                 .setPadding(8f)
         )
         signTable.addCell(
             Cell()
-                .add(Paragraph("تأیید مسئول:").setFontColor(TEXT_DARK).setFontSize(10f))
-                .add(Paragraph("\n\n....................................").setFontColor(TEXT_MUTED))
+                .add(Paragraph("تأیید مسئول:").setFont(fontBold).setFontColor(TEXT_DARK).setFontSize(10f))
+                .add(Paragraph("\n\n....................................").setFont(fontRegular).setFontColor(TEXT_MUTED))
                 .setBorder(com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
                 .setPadding(8f)
         )
         doc.add(signTable)
 
-        // شماره صفحه
+        // ===================== صفحه‌بندی واقعی =====================
+        // اضافه‌کردن event handler برای شماره صفحه
         val pageCount = pdfDoc.numberOfPages
-        val pageNumberPara = Paragraph("صفحه ۱ از $pageCount    |    تولید شده توسط برنامه مغایرت‌گیر دامداران")
-            .setFontSize(8f)
-            .setFontColor(TEXT_MUTED)
-            .setTextAlignment(TextAlignment.CENTER)
-            .setMarginTop(10f)
-        doc.add(pageNumberPara)
+        for (i in 1..pageCount) {
+            val page = pdfDoc.getPage(i)
+            val pageSize = page.pageSize
+            val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
+            canvas.beginText()
+            canvas.setFontAndSize(fontRegular, 8f)
+            canvas.setColor(TEXT_MUTED, 0.8f)
+            val text = "صفحه $i از $pageCount    |    تولید شده توسط برنامه مغایرت‌گیر دامداران"
+            canvas.moveText(
+                pageSize.width / 2 - 100f,
+                20f
+            )
+            canvas.showText(text)
+            canvas.endText()
+        }
 
         doc.close()
         return pdfFile
     }
 
     /**
-     * قالب‌بندی مقدار به‌صورت باکس و عدد.
-     * برای محصولات رند فقط تعداد باکس.
+     * بارگذاری فونت از assets.
+     * فونت‌های Vazirmatn در res/font هستند ولی برای iText باید از assets خوانده شوند.
      */
-    private fun formatBoxUnit(total: Int, product: Product): String {
-        if (total == 0) return "۰"
-        return if (product.isRoundBox) {
-            "${total} باکس"
-        } else {
-            val capacity = if (product.boxCapacity <= 0) 1 else product.boxCapacity
-            val boxes = total / capacity
-            val units = total % capacity
-            if (units == 0) "${boxes} باکس"
-            else "${boxes} ب / ${units} ع"
+    private fun loadFontFromAssets(context: Context, fontFileName: String): PdfFont {
+        return try {
+            // کپی فونت از res/font به cache برای خواندن
+            val fontResId = context.resources.getIdentifier(
+                fontFileName.substringBefore("."),
+                "font",
+                context.packageName
+            )
+            if (fontResId != 0) {
+                val tempFile = File(context.cacheDir, fontFileName)
+                if (!tempFile.exists()) {
+                    context.resources.openRawResource(fontResId).use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+                PdfFontFactory.createFont(tempFile.absolutePath, PdfEncodings.IDENTITY_H, true)
+            } else {
+                // fallback به فونت پیش‌فرض
+                PdfFontFactory.createFont()
+            }
+        } catch (e: Exception) {
+            // در صورت خطا، فونت پیش‌فرض استفاده شود
+            PdfFontFactory.createFont()
         }
     }
 
     /**
-     * اعتبارسنجی فایل: وجود، حجم غیرصفر و خوانا بودن.
+     * پاک‌سازی نام فایل از کاراکترهای غیرمجاز.
+     */
+    private fun sanitizeFileName(name: String): String {
+        return name
+            .replace(" ", "_")
+            .replace("/", "-")
+            .replace("\\", "-")
+            .replace(":", "-")
+            .replace("*", "-")
+            .replace("?", "-")
+            .replace("\"", "-")
+            .replace("<", "-")
+            .replace(">", "-")
+            .replace("|", "-")
+            .trim()
+    }
+
+    /**
+     * اعتبارسنجی فایل.
      */
     fun validateFile(file: File): Boolean {
         return file.exists() && file.length() > 0 && file.canRead()
     }
 
     /**
-     * ساخت Uri معتبر FileProvider برای فایل.
+     * ساخت Uri معتبر FileProvider.
      */
     fun getFileUri(context: Context, file: File): Uri {
         return FileProvider.getUriForFile(
@@ -359,20 +418,15 @@ object ReportExporter {
 
     /**
      * باز کردن فایل PDF با PDF Viewer.
-     * نیاز به Activity Context دارد (نه Application Context).
-     *
-     * @param activityContext باید از نوع Activity باشد
-     * @throws ActivityNotFoundException اگر برنامه PDFخوان نصب نباشد
      */
     fun openPdf(activityContext: Context, file: File) {
         if (!validateFile(file)) {
-            throw java.io.IOException("فایل PDF معتبر نیست یا وجود ندارد")
+            throw IOException("فایل PDF معتبر نیست یا وجود ندارد")
         }
         val uri = getFileUri(activityContext, file)
         val viewIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/pdf")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            // FLAG_ACTIVITY_NEW_TASK برای زمانی که از Application Context صدا زده می‌شود
             if (activityContext !is android.app.Activity) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -381,21 +435,17 @@ object ReportExporter {
     }
 
     /**
-     * اشتراک‌گذاری فایل با Intent استاندارد.
-     * نیاز به Activity Context دارد (نه Application Context).
-     *
-     * @param activityContext باید از نوع Activity باشد
+     * اشتراک‌گذاری فایل.
      */
     fun shareFile(activityContext: Context, file: File, mimeType: String = "application/pdf") {
         if (!validateFile(file)) {
-            throw java.io.IOException("فایل PDF معتبر نیست یا وجود ندارد")
+            throw IOException("فایل PDF معتبر نیست یا وجود ندارد")
         }
         val uri = getFileUri(activityContext, file)
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            // FLAG_ACTIVITY_NEW_TASK برای زمانی که از Application Context صدا زده می‌شود
             if (activityContext !is android.app.Activity) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -404,19 +454,7 @@ object ReportExporter {
     }
 
     /**
-     * ساخت Intent برای ذخیره فایل در محل انتخاب‌شده توسط کاربر.
-     * این Intent باید با ActivityResultLauncher در UI لایر استفاده شود.
-     */
-    fun createSaveIntent(fileName: String): Intent {
-        return Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_TITLE, fileName)
-        }
-    }
-
-    /**
-     * کپی فایل موقت به مقصد دائمی (Uri از ACTION_CREATE_DOCUMENT).
+     * کپی فایل به مقصد دائمی.
      */
     fun copyToDestination(context: Context, sourceFile: File, destinationUri: Uri): Boolean {
         return try {

@@ -1,5 +1,6 @@
 package com.damdarangha.moghayerat.ui.screen.reports
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -7,12 +8,14 @@ import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.domain.model.Workflow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 data class ReportsUiState(
@@ -28,6 +31,7 @@ data class ReportsUiState(
     val totalDeficit: Int = 0,
     val totalSurplus: Int = 0,
     val isLoading: Boolean = true,
+    val isExporting: Boolean = false,
     val reportFile: File? = null,
     val message: String? = null
 )
@@ -61,9 +65,19 @@ class ReportsViewModel(
         _uiState.update { it.copy(isoDate = today, jalaliDate = jalali) }
     }
 
+    /**
+     * انتخاب گردش کار و بارگذاری آمار آن.
+     * reportFile قبلی را پاک می‌کند تا فایل نامرتبط نمایش داده نشود.
+     */
     fun selectWorkflow(workflow: Workflow) {
         viewModelScope.launch {
-            _uiState.update { it.copy(selectedWorkflow = workflow, isLoading = true) }
+            _uiState.update {
+                it.copy(
+                    selectedWorkflow = workflow,
+                    isLoading = true,
+                    reportFile = null  // پاک‌کردن فایل قبلی
+                )
+            }
             val today = _uiState.value.isoDate
 
             val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
@@ -92,59 +106,100 @@ class ReportsViewModel(
         selectWorkflow(workflow)
     }
 
+    /**
+     * تولید PDF در Dispatchers.IO.
+     * isExporting state برای جلوگیری از تولید هم‌زمان.
+     */
     fun exportToPdf(reportType: ReportType) {
+        // جلوگیری از تولید هم‌زمان
+        if (_uiState.value.isExporting) return
+
         viewModelScope.launch {
+            _uiState.update { it.copy(isExporting = true) }
             try {
                 val state = _uiState.value
                 val workflow = state.selectedWorkflow
                 if (workflow == null) {
-                    _uiState.update { it.copy(message = "لطفاً ابتدا یک گردش کار انتخاب کنید") }
+                    _uiState.update {
+                        it.copy(
+                            isExporting = false,
+                            message = "لطفاً ابتدا یک گردش کار انتخاب کنید"
+                        )
+                    }
                     return@launch
                 }
+
                 val ctx = app.applicationContext
 
-                val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
-                if (products.isEmpty()) {
-                    _uiState.update { it.copy(message = "هیچ محصولی در این گردش کار وجود ندارد") }
+                // خواندن داده‌های تازه از دیتابیس در IO
+                val (statsToExport, productsToExport) = withContext(Dispatchers.IO) {
+                    val products = app.productRepository.observeActiveProductsByWorkflow(workflow.id).first()
+                    if (products.isEmpty()) {
+                        null to emptyList<Product>()
+                    } else {
+                        val productIds = products.map { it.id }.toSet()
+                        val allStats = app.dailyStatRepository.getStatsForDate(state.isoDate)
+                        val workflowStats = allStats.filter { it.productId in productIds }
+
+                        // فیلتر بر اساس نوع گزارش
+                        val (filteredStats, filteredProducts) = when (reportType) {
+                            ReportType.FULL -> workflowStats to products
+                            ReportType.REGISTERED_ONLY -> {
+                                // همه رکوردهای موجود (نه فقط closingVariance == 0)
+                                workflowStats to products.filter { p ->
+                                    workflowStats.any { it.productId == p.id }
+                                }
+                            }
+                            ReportType.VARIANCE_ONLY -> {
+                                val filtered = workflowStats.filter { s -> s.closingVariance != 0 }
+                                filtered to products.filter { p ->
+                                    filtered.any { it.productId == p.id }
+                                }
+                            }
+                        }
+                        filteredStats to filteredProducts
+                    }
+                }
+
+                if (productsToExport.isEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            isExporting = false,
+                            message = "هیچ محصولی در این گردش کار وجود ندارد"
+                        )
+                    }
                     return@launch
                 }
 
-                val productIds = products.map { it.id }.toSet()
-                val allStats = app.dailyStatRepository.getStatsForDate(state.isoDate)
-                val workflowStats = allStats.filter { it.productId in productIds }
-
-                val (statsToExport, productsToExport) = when (reportType) {
-                    ReportType.FULL -> workflowStats to products
-                    ReportType.REGISTERED_ONLY -> {
-                        val filtered = workflowStats.filter { s -> s.closingVariance == 0 }
-                        filtered to products.filter { p -> filtered.any { it.productId == p.id } }
-                    }
-                    ReportType.VARIANCE_ONLY -> {
-                        val filtered = workflowStats.filter { s -> s.closingVariance != 0 }
-                        filtered to products.filter { p -> filtered.any { it.productId == p.id } }
-                    }
+                // تولید PDF در IO
+                val pdfFile = withContext(Dispatchers.IO) {
+                    ReportExporter.exportWorkflowReportToPdf(
+                        ctx, workflow.name, statsToExport!!, productsToExport, state.isoDate
+                    )
                 }
 
-                val pdfFile = ReportExporter.exportWorkflowReportToPdf(
-                    ctx, workflow.name, statsToExport, productsToExport, state.isoDate
-                )
                 _uiState.update {
                     it.copy(
+                        isExporting = false,
                         reportFile = pdfFile,
                         message = "گزارش PDF ساخته شد: ${pdfFile.name}"
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(message = "خطا در ساخت PDF: ${e.message}") }
+                _uiState.update {
+                    it.copy(
+                        isExporting = false,
+                        message = "خطا در ساخت PDF: ${e.message}"
+                    )
+                }
             }
         }
     }
 
     /**
-     * ذخیره دائمی فایل PDF در مقصد انتخاب‌شده توسط کاربر.
-     * این متد از UI لایر با Uri صدا زده می‌شود.
+     * ذخیره دائمی فایل PDF در مقصد انتخاب‌شده.
      */
-    fun savePdfToDestination(destinationUri: android.net.Uri, onResult: (Boolean, String) -> Unit) {
+    fun savePdfToDestination(destinationUri: Uri, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             try {
                 val sourceFile = _uiState.value.reportFile
@@ -153,7 +208,9 @@ class ReportsViewModel(
                     return@launch
                 }
                 val ctx = app.applicationContext
-                val success = ReportExporter.copyToDestination(ctx, sourceFile, destinationUri)
+                val success = withContext(Dispatchers.IO) {
+                    ReportExporter.copyToDestination(ctx, sourceFile, destinationUri)
+                }
                 if (success) {
                     onResult(true, "فایل PDF با موفقیت در محل انتخاب‌شده ذخیره شد")
                 } else {
@@ -167,6 +224,13 @@ class ReportsViewModel(
 
     fun clearMessage() {
         _uiState.update { it.copy(message = null) }
+    }
+
+    /**
+     * نمایش پیام خطا از UI layer.
+     */
+    fun showError(message: String) {
+        _uiState.update { it.copy(message = message) }
     }
 
     companion object {
