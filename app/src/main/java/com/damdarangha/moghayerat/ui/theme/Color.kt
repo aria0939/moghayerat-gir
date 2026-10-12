@@ -31,7 +31,7 @@ val GroupDonutColor = Color(0xFFFFA726)         // نارنجی/زرد برای 
 val GroupDonutBg = Color(0xFFFFF8E1)            // پس‌زمینه زرد بسیار روشن
 
 // رنگ‌های حالت روشن (Light Theme) - دیفالت برنامه
-val LightBackground = Color(0xFFF4F6FA)         // پس‌زمینه خاکستری آبی بسیار روشن
+val LightBackground = Color(0xFFF5F7FB)         // پس‌زمینه روشن (سفید مایل به آبی)
 val LightSurface = Color(0xFFFFFFFF)
 val LightSurfaceVariant = Color(0xFFEEF1FB)     // سطح کارت‌ها
 val LightPrimary = BrandPrimaryBlue
