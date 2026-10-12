@@ -54,7 +54,8 @@ object ReportExporter {
     private val DEFICIT_BG = Color.rgb(255, 235, 235)
     private val SURPLUS_BG = Color.rgb(235, 255, 235)
 
-    // ۱۴ ستون - ترتیب RTL (اولین = راست‌ترین)
+    // ۱۳ ستون - ترتیب RTL (اولین = راست‌ترین)
+    // ستون "کسری یا اضافه" حذف شد - مغایرت خودش نشان می‌دهد
     private val COLUMN_HEADERS = arrayOf(
         "ردیف",
         "نام محصول",
@@ -68,14 +69,13 @@ object ReportExporter {
         "تعداد\nبارگیری شده",
         "مانده",
         "توضیحات",
-        "کسری یا\nاضافه",
         "مغایرت"
     )
 
     // عرض نسبی ستون‌ها (مجموع = 1.0)
     private val COLUMN_WEIGHTS = floatArrayOf(
         0.03f,   // ردیف
-        0.13f,   // نام محصول
+        0.14f,   // نام محصول
         0.07f,   // مانده
         0.06f,   // تحویل روز
         0.06f,   // آزمایشگاه
@@ -85,8 +85,7 @@ object ReportExporter {
         0.07f,   // موجودی کل
         0.07f,   // تعداد بارگیری شده
         0.07f,   // مانده
-        0.08f,   // توضیحات
-        0.06f,   // کسری یا اضافه
+        0.09f,   // توضیحات
         0.07f    // مغایرت
     )
 
@@ -271,12 +270,12 @@ object ReportExporter {
                 // تعداد بارگیری شده = بارگیری روز + میان روز + بارگیری شب
                 val totalLoaded = morningTotal + midDayTotal + nightTotal
 
-                // مقادیر هر ستون
+                // مقادیر هر ستون (۱۳ ستون - بدون کسری یا اضافه)
                 val values = if (stat == null) {
                     arrayOf(
                         toPersian(rowIndexDisplay), product.name,
                         "—", "—", "—", "—", "—", "—", "—", "—", "—",
-                        "", "ثبت‌نشده", "—"
+                        "", "ثبت‌نشده"
                     )
                 } else {
                     arrayOf(
@@ -284,7 +283,7 @@ object ReportExporter {
                         product.name,                  // 2. نام محصول
                         formatBoxUnit(openingTotal, product),        // 3. مانده
                         formatBoxUnit(morningTotal, product),       // 4. تحویل روز
-                        formatBoxUnit(stat?.laboratoryTotal ?: 0, product),       // 5. آزمایشگاه
+                        formatBoxUnit(stat?.laboratoryTotal ?: 0, product), // 5. آزمایشگاه
                         formatBoxUnit(giftsTotal, product),          // 6. متفرقه / هدایا
                         formatBoxUnit(midDayTotal, product),        // 7. میان روز
                         formatBoxUnit(returnsTotal, product),       // 8. برگشت به انبار
@@ -292,18 +291,17 @@ object ReportExporter {
                         formatBoxUnit(totalLoaded, product),        // 10. تعداد بارگیری شده
                         formatBoxUnit(stat.expectedClosingStockTotal, product), // 11. مانده
                         stat.notes ?: "",                            // 12. توضیحات
-                        getVarianceLabel(stat.closingVariance),     // 13. کسری یا اضافه
-                        formatVarianceValue(stat.closingVariance, product) // 14. مغایرت
+                        formatVarianceValue(stat.closingVariance, product) // 13. مغایرت
                     )
                 }
 
-                // رنگ ستون مغایرت (ستون 13 = چپ‌ترین)
+                // رنگ ستون مغایرت (ستون 12 = چپ‌ترین، آخرین ستون)
                 if (stat != null && stat.closingVariance != 0) {
                     val varianceBg = if (stat.closingVariance > 0) DEFICIT_BG else SURPLUS_BG
                     fillPaint.color = varianceBg
                     var vx = tableRightX
-                    for (i in 0 until 13) vx -= columnWidths[i]
-                    canvas.drawRect(vx - columnWidths[13], y, vx, y + ROW_HEIGHT, fillPaint)
+                    for (i in 0 until 12) vx -= columnWidths[i]
+                    canvas.drawRect(vx - columnWidths[12], y, vx, y + ROW_HEIGHT, fillPaint)
                 }
 
                 // رسم سلول‌ها از راست به چپ
@@ -315,19 +313,17 @@ object ReportExporter {
                     canvas.drawLine(xRight, y, xRight, y + ROW_HEIGHT, borderPaint)
 
                     // انتخاب paint مناسب:
-                    // ستون 1 (ردیف): valuePaint (بولد، بزرگ)
-                    // ستون 2 (نام محصول): namePaint (regular، کوچک)
+                    // ستون 2 (نام محصول): namePaint (regular، کوچک) - وسط‌چین
                     // ستون 12 (توضیحات): textPaint (regular)
-                    // ستون 13 (کسری یا اضافه): textPaint (regular)
                     // بقیه: valuePaint (بولد، بزرگ)
                     val cellPaint = when (i) {
-                        1 -> namePaint      // نام محصول
+                        1 -> namePaint      // نام محصول - وسط‌چین
                         11 -> textPaint     // توضیحات
-                        12 -> textPaint     // کسری یا اضافه
                         else -> valuePaint  // مقادیر عددی (بولد، بزرگ‌تر)
                     }
 
-                    drawRtlCellText(canvas, values[i], colLeft, y, colWidth, ROW_HEIGHT, cellPaint, i == 1)
+                    // نام محصول وسط‌چین (false = ALIGN_CENTER)
+                    drawRtlCellText(canvas, values[i], colLeft, y, colWidth, ROW_HEIGHT, cellPaint, false)
                     xRight = colLeft
                 }
                 canvas.drawLine(xRight, y, xRight, y + ROW_HEIGHT, borderPaint)
@@ -362,19 +358,21 @@ object ReportExporter {
     }
 
     /**
-     * فرمت مقدار به‌صورت: 2B + 2'
-     * B = باکس، ' = عدد
+     * فرمت مقدار به‌صورت: ۲B + ۲'
+     * اعداد فارسی
+     * اگر فقط عدد است (باکس صفر): فقط عدد نشان داده شود مثل ۶'
      */
     private fun formatBoxUnit(total: Int, product: Product): String {
-        if (total == 0) return "0"
+        if (total == 0) return "۰"
         return if (product.isRoundBox) {
-            "${total}B"
+            "${toPersian(total)}B"
         } else {
             val capacity = if (product.boxCapacity <= 0) 1 else product.boxCapacity
             val boxes = total / capacity
             val units = total % capacity
-            if (units == 0) "${boxes}B"
-            else "${boxes}B + ${units}'"
+            if (boxes == 0) "${toPersian(units)}'"           // فقط عدد: ۶'
+            else if (units == 0) "${toPersian(boxes)}B"      // فقط باکس: ۲B
+            else "${toPersian(boxes)}B + ${toPersian(units)}'" // باکس + عدد: ۲B + ۶'
         }
     }
 
@@ -391,18 +389,21 @@ object ReportExporter {
 
     /**
      * مقدار مغایرت با فرمت B + '
+     * اعداد فارسی
      */
     private fun formatVarianceValue(variance: Int, product: Product): String {
-        if (variance == 0) return "0"
+        if (variance == 0) return "۰"
         val absValue = if (variance > 0) variance else -variance
+        val sign = if (variance > 0) "-" else "+"  // کسری منفی، اضافه مثبت
         return if (product.isRoundBox) {
-            "${absValue}B"
+            "$sign${toPersian(absValue)}B"
         } else {
             val capacity = if (product.boxCapacity <= 0) 1 else product.boxCapacity
             val boxes = absValue / capacity
             val units = absValue % capacity
-            if (units == 0) "${boxes}B"
-            else "${boxes}B + ${units}'"
+            if (boxes == 0) "$sign${toPersian(units)}'"
+            else if (units == 0) "$sign${toPersian(boxes)}B"
+            else "$sign${toPersian(boxes)}B + ${toPersian(units)}'"
         }
     }
 
