@@ -19,6 +19,7 @@ import com.damdarangha.moghayerat.ui.components.BottomNavBar
 import com.damdarangha.moghayerat.ui.screen.backup.BackupScreen
 import com.damdarangha.moghayerat.ui.screen.history.HistoryScreen
 import com.damdarangha.moghayerat.ui.screen.home.HomeScreen
+import com.damdarangha.moghayerat.ui.screen.productlist.ProductListScreen
 import com.damdarangha.moghayerat.ui.screen.productmanagement.ProductManagementScreen
 import com.damdarangha.moghayerat.ui.screen.reports.ReportsScreen
 import com.damdarangha.moghayerat.ui.screen.settings.SettingsScreen
