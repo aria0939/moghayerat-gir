@@ -63,7 +63,7 @@ class HomeViewModel(
 
                 _uiState.update {
                     it.copy(
-                        todayJalali = today.toFullDisplayString(),
+                        todayJalali = today.toDisplayString(),
                         todayIso = todayIso,
                         workflows = workflowStats,
                         workflowRegisteredCounts = registeredCounts,

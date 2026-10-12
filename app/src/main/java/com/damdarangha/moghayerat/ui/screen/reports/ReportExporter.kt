@@ -63,10 +63,34 @@ object ReportExporter {
         products: List<Product>,
         isoDate: String
     ): File {
-        val reportDir = File(context.cacheDir, "shared").apply { if (!exists()) mkdirs() }
-        val jalaliDate = JalaliDateConverter.gregorianToJalaliString(isoDate)
-        val safeName = workflowName.replace(" ", "_").replace("/", "-")
-            .replace("\\", "-").replace(":", "-")
+        // ایجاد پوشه مقصد به‌صورت امن
+        val reportDir = File(context.cacheDir, "shared")
+        if (!reportDir.exists()) {
+            val created = reportDir.mkdirs()
+            if (!created && !reportDir.exists()) {
+                throw java.io.IOException("امکان ایجاد پوشه گزارش وجود ندارد: ${reportDir.absolutePath}")
+            }
+        }
+
+        // تاریخ شمسی با فرمت امن برای نام فایل (با خط تیره به‌جای اسلش)
+        val jalaliDate = JalaliDateConverter.gregorianToJalaliFileSafeString(isoDate)
+        val jalaliDisplay = JalaliDateConverter.gregorianToJalaliString(isoDate)
+
+        // پاک‌سازی نام گردش کار از کاراکترهای غیرمجاز
+        val safeName = workflowName
+            .replace(" ", "_")
+            .replace("/", "-")
+            .replace("\\", "-")
+            .replace(":", "-")
+            .replace("*", "-")
+            .replace("?", "-")
+            .replace("\"", "-")
+            .replace("<", "-")
+            .replace(">", "-")
+            .replace("|", "-")
+            .trim()
+
+        // نام فایل نهایی - بدون اسلش در تاریخ
         val fileName = "گزارش_${safeName}_$jalaliDate.pdf"
         val pdfFile = File(reportDir, fileName)
 
@@ -85,7 +109,7 @@ object ReportExporter {
             .setMarginBottom(4f)
         doc.add(titlePara)
 
-        val subInfoPara = Paragraph("گردش کار: $workflowName    |    تاریخ: $jalaliDate")
+        val subInfoPara = Paragraph("گردش کار: $workflowName    |    تاریخ: $jalaliDisplay")
             .setFontSize(11f)
             .setFontColor(TEXT_DARK)
             .setTextAlignment(TextAlignment.CENTER)
