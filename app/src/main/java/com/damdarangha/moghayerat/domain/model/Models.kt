@@ -74,18 +74,19 @@ data class BoxAndUnits(
  */
 data class DailyStatInput(
     val productId: Long,
-    val isoDate: String, // تاریخ میلادی به فرمت yyyy-MM-dd
-    val openingStock: BoxAndUnits,         // مانده شب گذشته
-    val morningLoading: BoxAndUnits,       // بارگیری صبح / شهرستان
-    val actualMorningStock: BoxAndUnits?,  // مانده واقعی بعد از بارگیری صبح (اختیاری)
-    val receipt: BoxAndUnits,              // رسید انبار
-    val returns: BoxAndUnits,              // برگشت به انبار (به موجودی اضافه می‌شود)
-    val gifts: BoxAndUnits,                // هدایا
-    val waste: BoxAndUnits,                // ضایعات
-    val midDayLoading: BoxAndUnits,        // بارگیری میان روز (از موجودی کم می‌شود)
-    val nightLoading: BoxAndUnits,         // بارگیری شب
-    val currentStock: BoxAndUnits,         // مانده واقعی پایان روز
-    val notes: String = ""                 // توضیحات اختیاری
+    val isoDate: String,
+    val openingStock: BoxAndUnits,
+    val morningLoading: BoxAndUnits,
+    val actualMorningStock: BoxAndUnits?,
+    val receipt: BoxAndUnits,
+    val returns: BoxAndUnits,
+    val gifts: BoxAndUnits,
+    val waste: BoxAndUnits,
+    val laboratory: BoxAndUnits,           // آزمایشگاه (از موجودی کم می‌شود، مثل ضایعات)
+    val midDayLoading: BoxAndUnits,
+    val nightLoading: BoxAndUnits,
+    val currentStock: BoxAndUnits,
+    val notes: String = ""
 )
 
 /**
@@ -98,6 +99,7 @@ data class VarianceResult(
     val returnsTotal: Int,                 // برگشت به انبار به عدد کل
     val giftsTotal: Int,                   // هدایا به عدد کل
     val wasteTotal: Int,                   // ضایعات به عدد کل
+    val laboratoryTotal: Int,               // آزمایشگاه به عدد کل (از موجودی کم می‌شود)
     val midDayLoadingTotal: Int,           // بارگیری میان روز به عدد کل
     val nightLoadingTotal: Int,            // بارگیری شب به عدد کل
     val expectedMorningStockTotal: Int,    // موجودی مورد انتظار بعد از بارگیری صبح

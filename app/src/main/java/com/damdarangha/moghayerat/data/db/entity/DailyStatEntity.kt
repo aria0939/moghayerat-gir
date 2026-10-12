@@ -40,6 +40,7 @@ data class DailyStatEntity(
     val returnsTotal: Int,              // برگشت به انبار (به موجودی اضافه می‌شود)
     val giftsTotal: Int,
     val wasteTotal: Int,
+    val laboratoryTotal: Int,               // آزمایشگاه (از موجودی کم می‌شود)
     val midDayLoadingTotal: Int,        // بارگیری میان روز (از موجودی کم می‌شود)
     val nightLoadingTotal: Int,
     val currentStockTotal: Int,

@@ -30,7 +30,7 @@ import java.io.IOException
  * 2. نام محصول
  * 3. مانده (openingStock)
  * 4. تحویل روز (morningLoading)
- * 5. آزمایشگاه (receipt)
+ * 5. آزمایشگاه (laboratory)
  * 6. متفرقه / هدایا (gifts)
  * 7. میان روز (midDayLoading)
  * 8. برگشت به انبار (returns)
@@ -284,7 +284,7 @@ object ReportExporter {
                         product.name,                  // 2. نام محصول
                         formatBoxUnit(openingTotal, product),        // 3. مانده
                         formatBoxUnit(morningTotal, product),       // 4. تحویل روز
-                        formatBoxUnit(receiptTotal, product),       // 5. آزمایشگاه
+                        formatBoxUnit(stat?.laboratoryTotal ?: 0, product),       // 5. آزمایشگاه
                         formatBoxUnit(giftsTotal, product),          // 6. متفرقه / هدایا
                         formatBoxUnit(midDayTotal, product),        // 7. میان روز
                         formatBoxUnit(returnsTotal, product),       // 8. برگشت به انبار

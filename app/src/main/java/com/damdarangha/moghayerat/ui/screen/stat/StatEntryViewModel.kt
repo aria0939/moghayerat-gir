@@ -34,6 +34,7 @@ data class StatEntryUiState(
     val returns: BoxAndUnits = BoxAndUnits.ZERO,         // برگشت به انبار
     val gifts: BoxAndUnits = BoxAndUnits.ZERO,
     val waste: BoxAndUnits = BoxAndUnits.ZERO,
+    val laboratory: BoxAndUnits = BoxAndUnits.ZERO,      // آزمایشگاه
     val midDayLoading: BoxAndUnits = BoxAndUnits.ZERO,    // بارگیری میان روز
     val nightLoading: BoxAndUnits = BoxAndUnits.ZERO,
     val currentStock: BoxAndUnits = BoxAndUnits.ZERO,
@@ -62,6 +63,7 @@ data class StatEntryUiState(
                 returns = returns,
                 gifts = gifts,
                 waste = waste,
+                laboratory = laboratory,
                 midDayLoading = midDayLoading,
                 nightLoading = nightLoading,
                 currentStock = currentStock,
@@ -124,6 +126,7 @@ class StatEntryViewModel(
                         returns = VarianceCalculator.fromTotalUnits(existingStat.returnsTotal, product),
                         gifts = VarianceCalculator.fromTotalUnits(existingStat.giftsTotal, product),
                         waste = VarianceCalculator.fromTotalUnits(existingStat.wasteTotal, product),
+                        laboratory = VarianceCalculator.fromTotalUnits(existingStat.laboratoryTotal, product),
                         midDayLoading = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product),
                         nightLoading = VarianceCalculator.fromTotalUnits(existingStat.nightLoadingTotal, product),
                         currentStock = VarianceCalculator.fromTotalUnits(existingStat.currentStockTotal, product),
@@ -191,6 +194,11 @@ class StatEntryViewModel(
 
     fun updateWaste(value: BoxAndUnits) {
         _uiState.update { it.copy(waste = value) }
+        validateAndUpdate()
+    }
+
+    fun updateLaboratory(value: BoxAndUnits) {
+        _uiState.update { it.copy(laboratory = value) }
         validateAndUpdate()
     }
 
@@ -268,6 +276,7 @@ class StatEntryViewModel(
             returns = state.returns,
             gifts = state.gifts,
             waste = state.waste,
+                    laboratory = state.laboratory,
             midDayLoading = state.midDayLoading,
             nightLoading = state.nightLoading,
             currentStock = state.currentStock,
@@ -320,6 +329,7 @@ class StatEntryViewModel(
                     returns = state.returns,
                     gifts = state.gifts,
                     waste = state.waste,
+                    laboratory = state.laboratory,
                     midDayLoading = state.midDayLoading,
                     nightLoading = state.nightLoading,
                     currentStock = state.currentStock,

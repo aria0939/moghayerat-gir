@@ -135,4 +135,53 @@ class ProductRepository(private val productDao: ProductDao) {
         )
         products.forEach { productDao.insert(ProductEntity.fromDomain(it)) }
     }
+
+    /**
+     * محصولات گردش کار ماست ۷۵۰.
+     * ۱۳ محصول با ترتیب دقیق درخواستی.
+     */
+    suspend fun seedYoghurt750Products(workflowId: Long) {
+        val products = listOf(
+            Product(workflowId = workflowId, name = "لیوان کم",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 12, displayOrder = 1),
+            Product(workflowId = workflowId, name = "لیوان پر",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 12, displayOrder = 2),
+            Product(workflowId = workflowId, name = "پرچرب برو ۷۵۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 4, displayOrder = 3),
+            Product(workflowId = workflowId, name = "کم چرب برو ۷۵۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 4, displayOrder = 4),
+            Product(workflowId = workflowId, name = "همزده ۴۵۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 12, displayOrder = 5),
+            Product(workflowId = workflowId, name = "پرچرب ۷۵۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 4, displayOrder = 6),
+            Product(workflowId = workflowId, name = "کم چرب ۷۵۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 4, displayOrder = 7),
+            Product(workflowId = workflowId, name = "همزده ۵۰۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 12, displayOrder = 8),
+            Product(workflowId = workflowId, name = "ماست همزده ۲۵۰",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.ROUND_BOX,
+                boxCapacity = 1, displayOrder = 9),
+            Product(workflowId = workflowId, name = "ماست لیوانی ص",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.ROUND_BOX,
+                boxCapacity = 1, displayOrder = 10),
+            Product(workflowId = workflowId, name = "همزده ۴۵۰ سحر",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.TUB,
+                boxCapacity = 12, displayOrder = 11),
+            Product(workflowId = workflowId, name = "کم چرب ۷۵۰ ص",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.ROUND_BOX,
+                boxCapacity = 1, displayOrder = 12),
+            Product(workflowId = workflowId, name = "پرچرب ۷۵۰ ص",
+                group = ProductGroup.YOGHURT_BOX, packagingType = PackagingType.ROUND_BOX,
+                boxCapacity = 1, displayOrder = 13)
+        )
+        products.forEach { productDao.insert(ProductEntity.fromDomain(it)) }
+    }
 }

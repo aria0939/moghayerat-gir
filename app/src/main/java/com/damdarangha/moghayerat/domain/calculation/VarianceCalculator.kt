@@ -119,6 +119,7 @@ object VarianceCalculator {
         val returnsTotal = toTotalUnits(input.returns, product)
         val giftsTotal = toTotalUnits(input.gifts, product)
         val wasteTotal = toTotalUnits(input.waste, product)
+        val laboratoryTotal = toTotalUnits(input.laboratory, product)
         val midDayLoadingTotal = toTotalUnits(input.midDayLoading, product)
         val nightLoadingTotal = toTotalUnits(input.nightLoading, product)
         val currentStockTotal = toTotalUnits(input.currentStock, product)
@@ -135,7 +136,7 @@ object VarianceCalculator {
         }
 
         // موجودی مورد انتظار پایان روز
-        // = مانده شب گذشته + رسید + برگشت به انبار - بارگیری صبح - بارگیری میان روز - بارگیری شب - هدایا - ضایعات
+        // = مانده شب گذشته + رسید + برگشت به انبار - بارگیری صبح - بارگیری میان روز - بارگیری شب - هدایا - ضایعات - آزمایشگاه
         val expectedClosingStockTotal = safeAdd(openingStockTotal, receiptTotal)
             .let { safeAdd(it, returnsTotal) }
             .let { safeSubtract(it, morningLoadingTotal) }
@@ -143,6 +144,7 @@ object VarianceCalculator {
             .let { safeSubtract(it, nightLoadingTotal) }
             .let { safeSubtract(it, giftsTotal) }
             .let { safeSubtract(it, wasteTotal) }
+            .let { safeSubtract(it, laboratoryTotal) }
 
         // مغایرت پایان روز = موجودی مورد انتظار - مانده واقعی
         val closingVariance = safeSubtract(expectedClosingStockTotal, currentStockTotal)
@@ -154,6 +156,7 @@ object VarianceCalculator {
             returnsTotal = returnsTotal,
             giftsTotal = giftsTotal,
             wasteTotal = wasteTotal,
+            laboratoryTotal = laboratoryTotal,
             midDayLoadingTotal = midDayLoadingTotal,
             nightLoadingTotal = nightLoadingTotal,
             expectedMorningStockTotal = expectedMorningStockTotal,

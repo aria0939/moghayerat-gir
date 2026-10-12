@@ -111,6 +111,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 8, units = 2),     // ۸×۲۷+۲ = ۲۱۸
             currentStock = BoxAndUnits(boxes = 16, units = 2)     // ۱۶×۲۷+۲ = ۴۳۴
@@ -154,6 +155,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 8, units = 2),
             currentStock = BoxAndUnits(boxes = 15, units = 2) // ۱۵×۲۷+۲ = ۴۰۷
@@ -186,6 +188,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 8, units = 2),
             currentStock = BoxAndUnits(boxes = 16, units = 5) // ۱۶×۲۷+۵ = ۴۳۷ = ۴۳۴+۳
@@ -217,6 +220,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 3, units = 0),     // ۸۱
             currentStock = BoxAndUnits(boxes = 10, units = 0)     // ۲۷۰ واقعی
@@ -244,7 +248,8 @@ class VarianceCalculatorTest {
             receipt = BoxAndUnits.ZERO,
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits(boxes = 1, units = 5),            // ۳۲ = ۱×۲۷+۵
-            waste = BoxAndUnits(boxes = 0, units = 10),           // ۱۰
+            waste = BoxAndUnits(boxes = 0, units = 10),
+            laboratory = BoxAndUnits.ZERO,           // ۱۰
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 8, units = 10)      // ۲۲۶ واقعی = ۸×۲۷+۱۰
@@ -318,6 +323,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndPairs(),
             waste = BoxAndPairs(),
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 0, units = 0),
             currentStock = BoxAndUnits(boxes = 8, units = 2) // ۲۱۸
@@ -348,6 +354,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 10, units = 0) // ۲۷۰
@@ -374,6 +381,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 2000, units = 0),   // ۵۴۰۰۰
             currentStock = BoxAndUnits(boxes = 9300, units = 26)  // ۲۵۱۱۲۶
@@ -409,6 +417,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 5, units = 0) // ۱۳۵ واقعی
@@ -442,6 +451,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 7, units = 20)
@@ -467,6 +477,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 8, units = 0)
@@ -491,6 +502,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 10, units = 0)
@@ -513,6 +525,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 9, units = 0) // کسری ۲۷
@@ -535,6 +548,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
             currentStock = BoxAndUnits(boxes = 11, units = 0) // اضافه ۲۷
@@ -568,6 +582,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits(boxes = 2, units = 0),          // ۵۴ برگشت به انبار
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 3, units = 0),     // ۸۱ بارگیری شب
             currentStock = BoxAndUnits(boxes = 9, units = 0)       // ۲۴۳ واقعی
@@ -600,6 +615,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits(boxes = 2, units = 0),
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits(boxes = 3, units = 0),
             currentStock = BoxAndUnits(boxes = 8, units = 0)  // کمتر از مورد انتظار
@@ -631,6 +647,7 @@ class VarianceCalculatorTest {
             returns = BoxAndUnits.ZERO,
             gifts = BoxAndUnits.ZERO,
             waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits(boxes = 3, units = 0),      // ۸۱ بارگیری میان روز
             nightLoading = BoxAndUnits(boxes = 1, units = 0),        // ۲۷ بارگیری شب
             currentStock = BoxAndUnits(boxes = 4, units = 0)         // ۱۰۸ واقعی
@@ -659,7 +676,8 @@ class VarianceCalculatorTest {
             receipt = BoxAndUnits(boxes = 2, units = 0),             // ۵۴ رسید
             returns = BoxAndUnits(boxes = 1, units = 0),            // ۲۷ برگشت
             gifts = BoxAndUnits(boxes = 1, units = 0),              // ۲۷ هدیه
-            waste = BoxAndUnits(boxes = 0, units = 5),              // ۵ ضایعات
+            waste = BoxAndUnits(boxes = 0, units = 5),
+            laboratory = BoxAndUnits.ZERO,              // ۵ ضایعات
             midDayLoading = BoxAndUnits(boxes = 2, units = 0),      // ۵۴ بارگیری میان روز
             nightLoading = BoxAndUnits(boxes = 3, units = 0),        // ۸۱ بارگیری شب
             currentStock = BoxAndUnits(boxes = 11, units = 19)       // ۳۱۶ واقعی

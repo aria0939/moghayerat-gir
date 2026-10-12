@@ -96,6 +96,7 @@ class DailyStatRepository(
             returnsTotal = result.returnsTotal,
             giftsTotal = result.giftsTotal,
             wasteTotal = result.wasteTotal,
+            laboratoryTotal = result.laboratoryTotal,
             midDayLoadingTotal = result.midDayLoadingTotal,
             nightLoadingTotal = result.nightLoadingTotal,
             currentStockTotal = result.currentStockTotal,

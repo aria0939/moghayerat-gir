@@ -69,5 +69,16 @@ class WorkflowRepository(private val workflowDao: WorkflowDao) {
             )
         )
         productRepository.seedTubAndDateProducts(tubDateWorkflowId)
+
+        // گردش کار ماست ۷۵۰
+        val yoghurt750WorkflowId = workflowDao.insert(
+            WorkflowEntity(
+                name = "ماست ۷۵۰",
+                displayOrder = 3,
+                isActive = true,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        productRepository.seedYoghurt750Products(yoghurt750WorkflowId)
     }
 }

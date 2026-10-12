@@ -264,11 +264,19 @@ fun StatEntryScreen(
                 enabled = !state.isFinalized
             )
 
+            BoxUnitInput(
+                label = "۱۰. آزمایشگاه",
+                value = state.laboratory,
+                product = product,
+                onValueChange = viewModel::updateLaboratory,
+                enabled = !state.isFinalized
+            )
+
             // بخش ۳: موجودی پایان روز
             SectionHeader(title = "بخش ۳: موجودی پایان روز")
 
             BoxUnitInput(
-                label = "۱۰. مانده واقعی حال حاضر",
+                label = "۱۱. مانده واقعی حال حاضر",
                 value = state.currentStock,
                 product = product,
                 onValueChange = viewModel::updateCurrentStock,

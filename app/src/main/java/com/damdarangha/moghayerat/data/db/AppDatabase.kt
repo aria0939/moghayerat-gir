@@ -18,7 +18,7 @@ import com.damdarangha.moghayerat.data.db.entity.WorkflowEntity
         DailyStatEntity::class,
         StatHistoryEntity::class
     ],
-    version = 4,  // افزایش نسخه به دلیل اضافه شدن WorkflowEntity و فیلد workflowId
+    version = 5,  // افزایش نسخه برای فیلد laboratoryTotal
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
