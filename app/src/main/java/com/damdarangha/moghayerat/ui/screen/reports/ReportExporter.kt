@@ -340,19 +340,19 @@ object ReportExporter {
      * این handler قبل از بسته شدن سند اجرا می‌شود.
      */
     private class PageNumberEventHandler(private val font: PdfFont) : IEventHandler {
+        private var currentPage = 0
+
         override fun handleEvent(event: Event) {
             val docEvent = event as PdfDocumentEvent
             val pdfDoc = docEvent.document
             val page = docEvent.page
-            val pageNum = pdfDoc.pageNumber
+            currentPage++
 
             val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
             canvas.setFillColor(TEXT_MUTED)
             canvas.beginText()
             canvas.setFontAndSize(font, 8f)
-            // در زمان END_PAGE، تعداد کل صفحات هنوز مشخص نیست
-            // پس فقط شماره صفحه فعلی را نشان می‌دهیم
-            val text = "صفحه $pageNum"
+            val text = "صفحه $currentPage"
             canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 30.0, 20.0)
             canvas.showText(text)
             canvas.endText()
