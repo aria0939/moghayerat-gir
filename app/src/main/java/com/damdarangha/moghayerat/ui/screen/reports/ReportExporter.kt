@@ -326,25 +326,22 @@ object ReportExporter {
         doc.add(signTable)
 
         // ===================== صفحه‌بندی واقعی =====================
-        // اضافه‌کردن event handler برای شماره صفحه
+        // بستن سند برای قطعی شدن صفحه‌بندی
+        doc.close()
+
+        // اضافه‌کردن شماره صفحه به هر صفحه بعد از بستن سند
         val pageCount = pdfDoc.numberOfPages
         for (i in 1..pageCount) {
             val page = pdfDoc.getPage(i)
-            val pageSize = page.pageSize
-            val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page)
+            val canvas = com.itextpdf.kernel.pdf.canvas.PdfCanvas(page.newContentStreamBefore())
+            canvas.setFillColor(TEXT_MUTED)
             canvas.beginText()
             canvas.setFontAndSize(fontRegular, 8f)
-            canvas.setColor(TEXT_MUTED, 0.8f)
-            val text = "صفحه $i از $pageCount    |    تولید شده توسط برنامه مغایرت‌گیر دامداران"
-            canvas.moveText(
-                (pageSize.width / 2f - 100f),
-                20f
-            )
+            val text = "صفحه $i از $pageCount"
+            canvas.moveText(page.pageSize.width.toDouble() / 2.0 - 50.0, 20.0)
             canvas.showText(text)
             canvas.endText()
         }
-
-        doc.close()
         return pdfFile
     }
 
@@ -376,11 +373,11 @@ object ReportExporter {
                 )
             } else {
                 // fallback به فونت پیش‌فرض
-                PdfFontFactory.createFont()
+                com.itextpdf.io.font.PdfFontFactory.createFont()
             }
         } catch (e: Exception) {
             // در صورت خطا، فونت پیش‌فرض استفاده شود
-            PdfFontFactory.createFont()
+            com.itextpdf.io.font.PdfFontFactory.createFont()
         }
     }
 
