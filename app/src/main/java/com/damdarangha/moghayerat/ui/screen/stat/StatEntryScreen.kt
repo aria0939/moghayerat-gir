@@ -362,54 +362,76 @@ fun StatEntryScreen(
             }
 
             // ===== بخش ۲: عملیات روزانه - در هر سه مرحله (START, END, FULL) =====
-            // این فیلدها در طول روز وارد می‌شوند و در هر دو مرحله اول کار و آخر کار قابل ویرایش هستند.
+            // در START از فیلدهای start* استفاده می‌شود، در END از فیلدهای آخر کار.
+            // این جداسازی باعث می‌شود تغییری که در اول کار داده می‌شود به آخر کار منتقل نشود.
             SectionHeader(title = "بخش ۲: عملیات روزانه")
+
+            // در START از فیلدهای start* استفاده می‌کنیم، در END و FULL از فیلدهای آخر کار
+            val (effReceipt, effReturns, effMidDay, effGifts, effWaste, effLab,
+                 fnUpdateReceipt, fnUpdateReturns, fnUpdateMidDay, fnUpdateGifts, fnUpdateWaste, fnUpdateLab) =
+                if (isStartStage) {
+                    Sextuple12(
+                        state.startReceipt, state.startReturns, state.startMidDayLoading,
+                        state.startGifts, state.startWaste, state.startLaboratory,
+                        viewModel::updateStartReceipt, viewModel::updateStartReturns,
+                        viewModel::updateStartMidDayLoading, viewModel::updateStartGifts,
+                        viewModel::updateStartWaste, viewModel::updateStartLaboratory
+                    )
+                } else {
+                    Sextuple12(
+                        state.receipt, state.returns, state.midDayLoading,
+                        state.gifts, state.waste, state.laboratory,
+                        viewModel::updateReceipt, viewModel::updateReturns,
+                        viewModel::updateMidDayLoading, viewModel::updateGifts,
+                        viewModel::updateWaste, viewModel::updateLaboratory
+                    )
+                }
 
             BoxUnitInput(
                 label = "۵. رسید انبار",
-                value = state.receipt,
+                value = effReceipt,
                 product = product,
-                onValueChange = viewModel::updateReceipt,
-                enabled = !state.isFinalized  // فعال در همه مراحل
+                onValueChange = fnUpdateReceipt,
+                enabled = !state.isFinalized
             )
 
             BoxUnitInput(
                 label = "۶. برگشت به انبار",
-                value = state.returns,
+                value = effReturns,
                 product = product,
-                onValueChange = viewModel::updateReturns,
+                onValueChange = fnUpdateReturns,
                 enabled = !state.isFinalized
             )
 
             BoxUnitInput(
                 label = "۷. میان روز",
-                value = state.midDayLoading,
+                value = effMidDay,
                 product = product,
-                onValueChange = viewModel::updateMidDayLoading,
+                onValueChange = fnUpdateMidDay,
                 enabled = !state.isFinalized
             )
 
             BoxUnitInput(
                 label = "۸. هدایا",
-                value = state.gifts,
+                value = effGifts,
                 product = product,
-                onValueChange = viewModel::updateGifts,
+                onValueChange = fnUpdateGifts,
                 enabled = !state.isFinalized
             )
 
             BoxUnitInput(
                 label = "۹. ضایعات",
-                value = state.waste,
+                value = effWaste,
                 product = product,
-                onValueChange = viewModel::updateWaste,
+                onValueChange = fnUpdateWaste,
                 enabled = !state.isFinalized
             )
 
             BoxUnitInput(
                 label = "۱۰. آزمایشگاه",
-                value = state.laboratory,
+                value = effLab,
                 product = product,
-                onValueChange = viewModel::updateLaboratory,
+                onValueChange = fnUpdateLab,
                 enabled = !state.isFinalized
             )
 
@@ -759,4 +781,29 @@ private fun Int.toPersian(): String {
     return this.toString().map { c ->
         if (c.isDigit()) persianDigits[c - '0'] else c
     }.joinToString("")
+}
+
+/**
+ * Helper برای نگهداری ۶ مقدار و ۶ تابع آپدیت هم‌زمان.
+ * برای جداسازی فیلدهای عملیات روزانه اول کار و آخر کار استفاده می‌شود.
+ */
+private class Sextuple12(
+    val v1: BoxAndUnits, val v2: BoxAndUnits, val v3: BoxAndUnits,
+    val v4: BoxAndUnits, val v5: BoxAndUnits, val v6: BoxAndUnits,
+    val f1: (BoxAndUnits) -> Unit, val f2: (BoxAndUnits) -> Unit,
+    val f3: (BoxAndUnits) -> Unit, val f4: (BoxAndUnits) -> Unit,
+    val f5: (BoxAndUnits) -> Unit, val f6: (BoxAndUnits) -> Unit
+) {
+    operator fun component1() = v1
+    operator fun component2() = v2
+    operator fun component3() = v3
+    operator fun component4() = v4
+    operator fun component5() = v5
+    operator fun component6() = v6
+    operator fun component7() = f1
+    operator fun component8() = f2
+    operator fun component9() = f3
+    operator fun component10() = f4
+    operator fun component11() = f5
+    operator fun component12() = f6
 }

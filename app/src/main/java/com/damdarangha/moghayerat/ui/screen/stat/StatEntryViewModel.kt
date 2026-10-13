@@ -40,24 +40,40 @@ enum class StatEntryStage {
  *
  * این وضعیت تمام فیلدهای فرم و نتیجه محاسبه را نگه می‌دارد.
  * نتیجه محاسبه با هر تغییر ورودی به‌صورت زنده به‌روزرسانی می‌شود.
+ *
+ * نکته مهم: فیلدهای عملیات روزانه به دو گروه تقسیم شده‌اند:
+ * - فیلدهای اول کار (startReceipt، startReturns، ...) که در مرحله اول کار وارد می‌شوند.
+ * - فیلدهای آخر کار (receipt، returns، ...) که در مرحله آخر کار وارد می‌شوند.
+ *
+ * این جداسازی باعث می‌شود تغییری که در اول کار داده می‌شود به آخر کار منتقل نشود.
  */
 data class StatEntryUiState(
     val product: Product? = null,
     val isoDate: String = "",
     val jalaliDate: String = "",
+    // ===== فیلدهای اول کار =====
     val openingStock: BoxAndUnits = BoxAndUnits.ZERO,
     val morningLoading: BoxAndUnits = BoxAndUnits.ZERO,
     val actualMorningStock: BoxAndUnits? = null, // null = فیلد خالی
     val hasActualMorningStock: Boolean = false,  // آیا کاربر این فیلد را پر کرده است
+    // عملیات روزانه اول کار (جدا از آخر کار)
+    val startReceipt: BoxAndUnits = BoxAndUnits.ZERO,
+    val startReturns: BoxAndUnits = BoxAndUnits.ZERO,
+    val startGifts: BoxAndUnits = BoxAndUnits.ZERO,
+    val startWaste: BoxAndUnits = BoxAndUnits.ZERO,
+    val startLaboratory: BoxAndUnits = BoxAndUnits.ZERO,
+    val startMidDayLoading: BoxAndUnits = BoxAndUnits.ZERO,
+    // ===== فیلدهای آخر کار =====
+    val nightLoading: BoxAndUnits = BoxAndUnits.ZERO,
+    val currentStock: BoxAndUnits? = null,    // null = شمارش آخر کار ثبت‌نشده
+    val hasCurrentStock: Boolean = false,    // آیا کاربر شمارش آخر کار را انجام داده
+    // عملیات روزانه آخر کار (جدا از اول کار)
     val receipt: BoxAndUnits = BoxAndUnits.ZERO,
     val returns: BoxAndUnits = BoxAndUnits.ZERO,         // برگشت به انبار
     val gifts: BoxAndUnits = BoxAndUnits.ZERO,
     val waste: BoxAndUnits = BoxAndUnits.ZERO,
     val laboratory: BoxAndUnits = BoxAndUnits.ZERO,      // آزمایشگاه
     val midDayLoading: BoxAndUnits = BoxAndUnits.ZERO,    // بارگیری میان روز
-    val nightLoading: BoxAndUnits = BoxAndUnits.ZERO,
-    val currentStock: BoxAndUnits? = null,    // null = شمارش آخر کار ثبت‌نشده
-    val hasCurrentStock: Boolean = false,    // آیا کاربر شمارش آخر کار را انجام داده
     val notes: String = "",
     val isFinalized: Boolean = false,
     val statId: Long? = null,
@@ -147,30 +163,58 @@ class StatEntryViewModel(
     /**
      * ساخت DailyStatInput با توجه به مرحله فعلی.
      *
-     * در START: فیلدهای آخر کار را از state فعلی می‌گیرد (که معمولاً ZERO یا مقادیر بارگذاری‌شده از DB است).
-     * در END: فیلدهای اول کار را از state فعلی می‌گیرد.
+     * - در START: از فیلدهای اول کار (openingStock، morningLoading، actualMorningStock)
+     *   و فیلدهای عملیات روزانه اول کار (startReceipt، startReturns، ...) استفاده می‌کند.
+     *   فیلدهای آخر کار (nightLoading، currentStock) از state فعلی می‌گیرد که معمولاً ZERO یا
+     *   مقادیر بارگذاری‌شده از DB است.
+     * - در END: از فیلدهای آخر کار (nightLoading، currentStock) و فیلدهای عملیات روزانه آخر کار
+     *   (receipt، returns، ...) استفاده می‌کند. فیلدهای اول کار از state فعلی می‌گیرد.
+     * - در FULL: همه فیلدها از state فعلی می‌گیرد (که عملیات روزانه آخر کار را نشان می‌دهد).
      */
     private fun buildInput(): DailyStatInput {
         val state = _uiState.value
         val product = state.product ?: throw IllegalStateException("product null")
         val actualMorning = if (state.hasActualMorningStock) state.actualMorningStock else null
+
+        // انتخاب فیلدهای عملیات روزانه بر اساس مرحله
+        val (effReceipt, effReturns, effGifts, effWaste, effLaboratory, effMidDayLoading) = when (stage) {
+            StatEntryStage.START -> SixTuple(
+                state.startReceipt, state.startReturns, state.startGifts,
+                state.startWaste, state.startLaboratory, state.startMidDayLoading
+            )
+            StatEntryStage.END -> SixTuple(
+                state.receipt, state.returns, state.gifts,
+                state.waste, state.laboratory, state.midDayLoading
+            )
+            StatEntryStage.FULL -> SixTuple(
+                state.receipt, state.returns, state.gifts,
+                state.waste, state.laboratory, state.midDayLoading
+            )
+        }
+
         return DailyStatInput(
             productId = product.id,
             isoDate = state.isoDate,
             openingStock = state.openingStock,
             morningLoading = state.morningLoading,
             actualMorningStock = actualMorning,
-            receipt = state.receipt,
-            returns = state.returns,
-            gifts = state.gifts,
-            waste = state.waste,
-            laboratory = state.laboratory,
-            midDayLoading = state.midDayLoading,
+            receipt = effReceipt,
+            returns = effReturns,
+            gifts = effGifts,
+            waste = effWaste,
+            laboratory = effLaboratory,
+            midDayLoading = effMidDayLoading,
             nightLoading = state.nightLoading,
             currentStock = if (state.hasCurrentStock) state.currentStock else null,
             notes = state.notes
         )
     }
+
+    /** helper برای برگرداندن ۶ مقدار هم‌زمان */
+    private data class SixTuple(
+        val a: BoxAndUnits, val b: BoxAndUnits, val c: BoxAndUnits,
+        val d: BoxAndUnits, val e: BoxAndUnits, val f: BoxAndUnits
+    )
 
     /**
      * ذخیره پیش‌نویس بدون نمایش پیام.
@@ -227,7 +271,18 @@ class StatEntryViewModel(
                 // اگر آمار موجود است، مقادیر آن را بارگذاری می‌کنیم
                 // نکته کلیدی: از currentStockTotal != null برای تشخیص hasCurrentStock استفاده می‌کنیم
                 // (نه currentStockTotal > 0) زیرا صفر یک مقدار معتبر برای «ثبت‌شده با مقدار صفر» است.
+                //
+                // نکته در مورد فیلدهای start*: چون در DB فقط یک ستون receiptTotal داریم،
+                // مقدار آن را در هر دو فیلد startReceipt و receipt کپی می‌کنیم. این فقط مقدار اولیه
+                // است؛ وقتی کاربر در START یا END تغییری می‌دهد، فقط فیلد همان مرحله به‌روزرسانی می‌شود
+                // و در فیلد دیگر تغییری ایجاد نمی‌شود.
                 _uiState.update {
+                    val receiptBU = VarianceCalculator.fromTotalUnits(existingStat.receiptTotal, product)
+                    val returnsBU = VarianceCalculator.fromTotalUnits(existingStat.returnsTotal, product)
+                    val giftsBU = VarianceCalculator.fromTotalUnits(existingStat.giftsTotal, product)
+                    val wasteBU = VarianceCalculator.fromTotalUnits(existingStat.wasteTotal, product)
+                    val laboratoryBU = VarianceCalculator.fromTotalUnits(existingStat.laboratoryTotal, product)
+                    val midDayBU = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product)
                     it.copy(
                         product = product,
                         jalaliDate = jalaliDate,
@@ -237,12 +292,20 @@ class StatEntryViewModel(
                             VarianceCalculator.fromTotalUnits(t, product)
                         },
                         hasActualMorningStock = existingStat.actualMorningStockTotal != null,
-                        receipt = VarianceCalculator.fromTotalUnits(existingStat.receiptTotal, product),
-                        returns = VarianceCalculator.fromTotalUnits(existingStat.returnsTotal, product),
-                        gifts = VarianceCalculator.fromTotalUnits(existingStat.giftsTotal, product),
-                        waste = VarianceCalculator.fromTotalUnits(existingStat.wasteTotal, product),
-                        laboratory = VarianceCalculator.fromTotalUnits(existingStat.laboratoryTotal, product),
-                        midDayLoading = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product),
+                        // عملیات روزانه اول کار (کپی از DB به‌عنوان مقدار اولیه)
+                        startReceipt = receiptBU,
+                        startReturns = returnsBU,
+                        startGifts = giftsBU,
+                        startWaste = wasteBU,
+                        startLaboratory = laboratoryBU,
+                        startMidDayLoading = midDayBU,
+                        // عملیات روزانه آخر کار (همان مقدار DB)
+                        receipt = receiptBU,
+                        returns = returnsBU,
+                        gifts = giftsBU,
+                        waste = wasteBU,
+                        laboratory = laboratoryBU,
+                        midDayLoading = midDayBU,
                         nightLoading = VarianceCalculator.fromTotalUnits(existingStat.nightLoadingTotal, product),
                         currentStock = existingStat.currentStockTotal?.let { t ->
                             VarianceCalculator.fromTotalUnits(t, product)
@@ -252,15 +315,11 @@ class StatEntryViewModel(
                         isFinalized = existingStat.isFinalized,
                         statId = existingStat.id,
                         // تعیین پرچم‌های ثبت هر مرحله بر اساس داده موجود:
-                        // - endStageSaved: فقط اگر currentStockTotal ثبت شده باشد (شامل صفر)
-                        // - startStageSaved: اگر رکورد وجود دارد و END ثبت نشده، احتمالاً START ثبت شده
-                        //   (یا هر دو فیلد START با مقادیر غیر صفر دارند یا actualMorningStock ثبت شده)
                         endStageSaved = existingStat.currentStockTotal != null,
                         startStageSaved = existingStat.actualMorningStockTotal != null
                             || existingStat.startVariance != null
                             || existingStat.openingStockTotal > 0
                             || existingStat.morningLoadingTotal > 0
-                            // اگر رکورد هست ولی END ثبت نشده، یعنی حداقل START یک‌بار ذخیره شده
                             || (existingStat.currentStockTotal == null && existingStat.id > 0L),
                         isLoading = false
                     )
@@ -333,6 +392,38 @@ class StatEntryViewModel(
 
     fun updateMidDayLoading(value: BoxAndUnits) {
         _uiState.update { it.copy(midDayLoading = value) }
+        validateAndUpdate()
+    }
+
+    // ===== متدهای آپدیت عملیات روزانه اول کار (جدا از آخر کار) =====
+
+    fun updateStartReceipt(value: BoxAndUnits) {
+        _uiState.update { it.copy(startReceipt = value) }
+        validateAndUpdate()
+    }
+
+    fun updateStartReturns(value: BoxAndUnits) {
+        _uiState.update { it.copy(startReturns = value) }
+        validateAndUpdate()
+    }
+
+    fun updateStartGifts(value: BoxAndUnits) {
+        _uiState.update { it.copy(startGifts = value) }
+        validateAndUpdate()
+    }
+
+    fun updateStartWaste(value: BoxAndUnits) {
+        _uiState.update { it.copy(startWaste = value) }
+        validateAndUpdate()
+    }
+
+    fun updateStartLaboratory(value: BoxAndUnits) {
+        _uiState.update { it.copy(startLaboratory = value) }
+        validateAndUpdate()
+    }
+
+    fun updateStartMidDayLoading(value: BoxAndUnits) {
+        _uiState.update { it.copy(startMidDayLoading = value) }
         validateAndUpdate()
     }
 
@@ -527,16 +618,18 @@ class StatEntryViewModel(
                     morningLoading = BoxAndUnits.ZERO,
                     actualMorningStock = null,
                     hasActualMorningStock = false,
-                    receipt = BoxAndUnits.ZERO,
-                    returns = BoxAndUnits.ZERO,
-                    gifts = BoxAndUnits.ZERO,
-                    waste = BoxAndUnits.ZERO,
-                    laboratory = BoxAndUnits.ZERO,
-                    midDayLoading = BoxAndUnits.ZERO,
+                    // عملیات روزانه اول کار
+                    startReceipt = BoxAndUnits.ZERO,
+                    startReturns = BoxAndUnits.ZERO,
+                    startGifts = BoxAndUnits.ZERO,
+                    startWaste = BoxAndUnits.ZERO,
+                    startLaboratory = BoxAndUnits.ZERO,
+                    startMidDayLoading = BoxAndUnits.ZERO,
                     isFinalized = false,
                     showWarning = null
                 )
                 StatEntryStage.END -> state.copy(
+                    // عملیات روزانه آخر کار
                     receipt = BoxAndUnits.ZERO,
                     returns = BoxAndUnits.ZERO,
                     gifts = BoxAndUnits.ZERO,
@@ -554,6 +647,12 @@ class StatEntryViewModel(
                     morningLoading = BoxAndUnits.ZERO,
                     actualMorningStock = null,
                     hasActualMorningStock = false,
+                    startReceipt = BoxAndUnits.ZERO,
+                    startReturns = BoxAndUnits.ZERO,
+                    startGifts = BoxAndUnits.ZERO,
+                    startWaste = BoxAndUnits.ZERO,
+                    startLaboratory = BoxAndUnits.ZERO,
+                    startMidDayLoading = BoxAndUnits.ZERO,
                     receipt = BoxAndUnits.ZERO,
                     returns = BoxAndUnits.ZERO,
                     gifts = BoxAndUnits.ZERO,
@@ -570,24 +669,33 @@ class StatEntryViewModel(
             }
             _uiState.value = newState
 
-            // ذخیره در دیتابیس
-            val input = buildInput()
-            val savedId = when (stage) {
-                StatEntryStage.START -> app.dailyStatRepository.saveStartStage(input, product, isFinalized = false)
-                StatEntryStage.END -> app.dailyStatRepository.saveEndStage(input, product, isFinalized = false)
-                StatEntryStage.FULL -> app.dailyStatRepository.saveStat(input, product, isFinalized = false)
-            }
-            _uiState.update {
-                it.copy(
-                    statId = savedId,
-                    startStageSaved = if (stage == StatEntryStage.START) false else it.startStageSaved,
-                    endStageSaved = if (stage == StatEntryStage.END) false else it.endStageSaved,
-                    saveMessage = when (stage) {
-                        StatEntryStage.START -> "فیلدهای اول کار پاک شدند"
-                        StatEntryStage.END -> "فیلدهای آخر کار پاک شدند"
-                        StatEntryStage.FULL -> "همه فیلدها پاک شدند"
-                    }
-                )
+            // ذخیره در دیتابیس (با try-catch برای جلوگیری از کرش)
+            try {
+                val input = buildInput()
+                val savedId = when (stage) {
+                    StatEntryStage.START -> app.dailyStatRepository.saveStartStage(input, product, isFinalized = false)
+                    StatEntryStage.END -> app.dailyStatRepository.saveEndStage(input, product, isFinalized = false)
+                    StatEntryStage.FULL -> app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+                }
+                _uiState.update {
+                    it.copy(
+                        statId = savedId,
+                        startStageSaved = if (stage == StatEntryStage.START) false else it.startStageSaved,
+                        endStageSaved = if (stage == StatEntryStage.END) false else it.endStageSaved,
+                        saveMessage = when (stage) {
+                            StatEntryStage.START -> "فیلدهای اول کار پاک شدند"
+                            StatEntryStage.END -> "فیلدهای آخر کار پاک شدند"
+                            StatEntryStage.FULL -> "همه فیلدها پاک شدند"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        saveMessage = "خطا در ذخیره پس از ریست: ${e.message}"
+                    )
+                }
             }
         }
     }
@@ -600,7 +708,41 @@ class StatEntryViewModel(
      */
     fun deleteStat() {
         val state = _uiState.value
-        val statId = state.statId ?: return
+        val statId = state.statId
+        if (statId == null) {
+            // اگر statId نبود، فقط state را ریست کن
+            _uiState.update {
+                it.copy(
+                    openingStock = BoxAndUnits.ZERO,
+                    morningLoading = BoxAndUnits.ZERO,
+                    actualMorningStock = null,
+                    hasActualMorningStock = false,
+                    startReceipt = BoxAndUnits.ZERO,
+                    startReturns = BoxAndUnits.ZERO,
+                    startGifts = BoxAndUnits.ZERO,
+                    startWaste = BoxAndUnits.ZERO,
+                    startLaboratory = BoxAndUnits.ZERO,
+                    startMidDayLoading = BoxAndUnits.ZERO,
+                    receipt = BoxAndUnits.ZERO,
+                    returns = BoxAndUnits.ZERO,
+                    gifts = BoxAndUnits.ZERO,
+                    waste = BoxAndUnits.ZERO,
+                    laboratory = BoxAndUnits.ZERO,
+                    midDayLoading = BoxAndUnits.ZERO,
+                    nightLoading = BoxAndUnits.ZERO,
+                    currentStock = null,
+                    hasCurrentStock = false,
+                    notes = "",
+                    isFinalized = false,
+                    statId = null,
+                    startStageSaved = false,
+                    endStageSaved = false,
+                    showWarning = null,
+                    saveMessage = "آمار پاک شد"
+                )
+            }
+            return
+        }
 
         viewModelScope.launch {
             try {
@@ -611,6 +753,12 @@ class StatEntryViewModel(
                         morningLoading = BoxAndUnits.ZERO,
                         actualMorningStock = null,
                         hasActualMorningStock = false,
+                        startReceipt = BoxAndUnits.ZERO,
+                        startReturns = BoxAndUnits.ZERO,
+                        startGifts = BoxAndUnits.ZERO,
+                        startWaste = BoxAndUnits.ZERO,
+                        startLaboratory = BoxAndUnits.ZERO,
+                        startMidDayLoading = BoxAndUnits.ZERO,
                         receipt = BoxAndUnits.ZERO,
                         returns = BoxAndUnits.ZERO,
                         gifts = BoxAndUnits.ZERO,
