@@ -251,7 +251,26 @@ private fun ProductItemCard(
         StatStatus.FINALIZED -> Triple(MaterialTheme.colorScheme.primary, Icons.Default.Lock, "نهایی‌شده")
     }
 
-    // رنگ مغایرت شیفت شب
+    // مغایرت اول کار
+    val startVariance = statInfo?.startVariance
+    // ثبت‌شده بودن اول کار: یا startVariance محاسبه شده یا رکورد وجود دارد با actualMorningStock
+    val isStartRegistered = startVariance != null
+    val startText = if (isStartRegistered && startVariance != null) {
+        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
+            startVariance, product, isRegistered = true
+        )
+    } else "اول کار"
+
+    // مغایرت آخر کار
+    val endVariance = statInfo?.endCumulativeVariance
+    val isEndRegistered = endVariance != null
+    val endText = if (isEndRegistered) {
+        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
+            endVariance!!, product, isRegistered = true
+        )
+    } else "آخر کار"
+
+    // مغایرت شیفت شب
     val nightVariance = statInfo?.nightShiftVariance
     val nightColor = when {
         nightVariance == null -> Color(0xFF9CA3AF)  // خاکستری - نامشخص
@@ -259,29 +278,15 @@ private fun ProductItemCard(
         nightVariance < 0 -> Color(0xFFEF5350)     // قرمز - کسری
         else -> Color(0xFF42A5F5)                   // آبی - اضافه
     }
-
-    // متن مغایرت اول کار - با VarianceFormatter
-    val startVariance = statInfo?.startVariance
-    val startText = if (startVariance != null) {
-        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
-            startVariance, product, isRegistered = true
-        )
-    } else "اول کار"
-
-    // متن مغایرت آخر کار - با VarianceFormatter
-    val endVariance = statInfo?.endCumulativeVariance
-    val endText = if (endVariance != null) {
-        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
-            endVariance, product, isRegistered = true
-        )
-    } else "آخر کار"
-
-    // متن مغایرت شیفت شب - با VarianceFormatter
     val nightText = if (nightVariance != null) {
         com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
             nightVariance, product, isRegistered = true
         )
     } else "—"
+
+    // رنگ‌های برجسته برای دکمه‌های ثبت‌شده
+    val startButtonColor = if (isStartRegistered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+    val endButtonColor = if (isEndRegistered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -357,37 +362,51 @@ private fun ProductItemCard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // دکمه اول کار
+                // دکمه اول کار - اگر ثبت شده، برجسته می‌شود
                 OutlinedButton(
                     onClick = onStartClick,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                        contentColor = startButtonColor
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isStartRegistered) startButtonColor else startButtonColor.copy(alpha = 0.4f)
+                    ),
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = startText,
                         style = MaterialTheme.typography.labelMedium,
                         fontSize = 11.sp,
-                        fontWeight = if (startVariance != null) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (isStartRegistered) FontWeight.Bold else FontWeight.Normal
                     )
                 }
 
-                // دکمه آخر کار
+                // دکمه آخر کار - اگر ثبت شده، برجسته می‌شود
                 OutlinedButton(
                     onClick = onEndClick,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                        contentColor = endButtonColor
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isEndRegistered) endButtonColor else endButtonColor.copy(alpha = 0.4f)
+                    ),
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = endText,
                         style = MaterialTheme.typography.labelMedium,
                         fontSize = 11.sp,
-                        fontWeight = if (endVariance != null) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (isEndRegistered) FontWeight.Bold else FontWeight.Normal
                     )
                 }
 
-                // نتیجه مغایرت شیفت شب - مهم‌ترین عدد
+                // نتیجه مغایرت شیفت شب
                 Box(
                     modifier = Modifier
                         .weight(1f)

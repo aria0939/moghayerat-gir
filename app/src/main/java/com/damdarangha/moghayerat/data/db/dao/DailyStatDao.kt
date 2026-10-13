@@ -55,19 +55,19 @@ interface DailyStatDao {
     """)
     fun observeProductHistory(productId: Long): Flow<List<DailyStatEntity>>
 
-    @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND closingVariance = 0")
+    @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND currentStockTotal IS NOT NULL AND closingVariance = 0")
     fun observeZeroVarianceStats(isoDate: String): Flow<List<DailyStatEntity>>
 
-    @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND closingVariance > 0")
+    @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND currentStockTotal IS NOT NULL AND closingVariance > 0")
     fun observeDeficitStats(isoDate: String): Flow<List<DailyStatEntity>>
 
-    @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND closingVariance < 0")
+    @Query("SELECT * FROM daily_stats WHERE isoDate = :isoDate AND currentStockTotal IS NOT NULL AND closingVariance < 0")
     fun observeSurplusStats(isoDate: String): Flow<List<DailyStatEntity>>
 
     @Query("SELECT COUNT(*) FROM daily_stats WHERE isoDate = :isoDate")
     suspend fun countStatsForDate(isoDate: String): Int
 
-    @Query("SELECT COUNT(*) FROM daily_stats WHERE isoDate = :isoDate AND closingVariance != 0")
+    @Query("SELECT COUNT(*) FROM daily_stats WHERE isoDate = :isoDate AND currentStockTotal IS NOT NULL AND closingVariance != 0")
     suspend fun countVarianceStatsForDate(isoDate: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

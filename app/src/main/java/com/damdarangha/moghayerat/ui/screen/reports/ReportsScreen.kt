@@ -481,7 +481,7 @@ private fun ReportItemCard(stat: DailyStatEntity, productName: String) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                ReportValueItem("واقعی", stat.currentStockTotal)
+                ReportValueItem("واقعی", stat.currentStockTotal ?: 0)
                 ReportValueItem("مغایرت", stat.closingVariance)
             }
         }

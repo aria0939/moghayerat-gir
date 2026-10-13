@@ -130,12 +130,16 @@ fun VarianceResultCard(
                 total = result.expectedClosingStockTotal,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            // اگر آخر کار ثبت نشده، پیام مناسب نمایش می‌دهیم، در غیر این صورت مقدار واقعی را
             ResultRow(
                 label = "موجودی واقعی پایان روز",
-                value = (result.currentStockTotal ?: 0).toPersianDigits(),
+                value = "",
                 product = product,
                 total = result.currentStockTotal ?: 0,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (result.currentStockTotal == null)
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+                isUnregistered = result.currentStockTotal == null
             )
 
             // مغایرت اول کار (در صورت ورود)
@@ -177,13 +181,18 @@ private fun ResultRow(
     value: String,
     product: Product,
     total: Int,
-    color: Color
+    color: Color,
+    isUnregistered: Boolean = false
 ) {
-    val pair = VarianceCalculator.fromTotalUnits(total, product)
-    val displayValue = if (product.isRoundBox) {
-        "${pair.boxes.toPersianDigits()} باکس"
+    val displayValue = if (isUnregistered) {
+        "ثبت‌نشده"
     } else {
-        "${pair.boxes.toPersianDigits()} باکس و ${pair.units.toPersianDigits()} عدد"
+        val pair = VarianceCalculator.fromTotalUnits(total, product)
+        if (product.isRoundBox) {
+            "${pair.boxes.toPersianDigits()} باکس"
+        } else {
+            "${pair.boxes.toPersianDigits()} باکس و ${pair.units.toPersianDigits()} عدد"
+        }
     }
     Row(
         modifier = Modifier

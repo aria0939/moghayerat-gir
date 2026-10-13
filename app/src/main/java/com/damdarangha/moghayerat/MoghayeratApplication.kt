@@ -31,7 +31,7 @@ class MoghayeratApplication : Application() {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(AppDatabase.MIGRATION_6_7)
             .build()
 
         val gson = Gson()

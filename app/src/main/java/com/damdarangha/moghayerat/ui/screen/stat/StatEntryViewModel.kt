@@ -17,6 +17,25 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
+ * مرحله ثبت آمار.
+ *
+ * - START: فقط اول کار (openingStock، morningLoading، actualMorningStock)
+ * - END: فقط آخر کار (receipt، returns، gifts، waste، laboratory، midDayLoading، nightLoading، currentStock)
+ * - FULL: هر دو مرحله با هم (حالت قدیمی)
+ */
+enum class StatEntryStage {
+    START, END, FULL;
+
+    companion object {
+        fun fromString(value: String?): StatEntryStage = when (value?.uppercase()) {
+            "START" -> START
+            "END" -> END
+            else -> FULL
+        }
+    }
+}
+
+/**
  * وضعیت فرم ورودی آمار روزانه.
  *
  * این وضعیت تمام فیلدهای فرم و نتیجه محاسبه را نگه می‌دارد.
@@ -45,10 +64,16 @@ data class StatEntryUiState(
     val isSaving: Boolean = false,
     val saveMessage: String? = null,
     val isLoading: Boolean = true,
-    val showWarning: String? = null
+    val showWarning: String? = null,
+    // پرچم‌های وضعیت ثبت هر مرحله (برای نمایش در UI)
+    val startStageSaved: Boolean = false,   // آیا مرحله اول کار ثبت شده
+    val endStageSaved: Boolean = false      // آیا مرحله آخر کار ثبت شده
 ) {
     /**
      * محاسبه زنده نتیجه مغایرت.
+     *
+     * نکته: برای مرحله START، فقط فیلدهای اول کار را در نظر می‌گیرد.
+     * برای مرحله END، فقط فیلدهای آخر کار را در نظر می‌گیرد.
      */
     val varianceResult: VarianceResult?
         get() {
@@ -77,7 +102,8 @@ data class StatEntryUiState(
 class StatEntryViewModel(
     private val app: MoghayeratApplication,
     private val productId: Long,
-    private val isoDate: String
+    private val isoDate: String,
+    val stage: StatEntryStage
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatEntryUiState(isoDate = isoDate))
@@ -86,6 +112,16 @@ class StatEntryViewModel(
     // ذخیره خودکار با debounce
     private var autoSaveJob: kotlinx.coroutines.Job? = null
     private val autoSaveDelay = 2000L  // ۲ ثانیه
+
+    /**
+     * آیا این مرحله START است.
+     */
+    val isStartStage: Boolean get() = stage == StatEntryStage.START
+
+    /**
+     * آیا این مرحله END است.
+     */
+    val isEndStage: Boolean get() = stage == StatEntryStage.END
 
     /**
      * آغاز ذخیره خودکار با debounce.
@@ -109,13 +145,16 @@ class StatEntryViewModel(
     }
 
     /**
-     * ذخیره پیش‌نویس بدون نمایش پیام.
+     * ساخت DailyStatInput با توجه به مرحله فعلی.
+     *
+     * در START: فیلدهای آخر کار را از state فعلی می‌گیرد (که معمولاً ZERO یا مقادیر بارگذاری‌شده از DB است).
+     * در END: فیلدهای اول کار را از state فعلی می‌گیرد.
      */
-    private suspend fun saveDraftSilent() {
+    private fun buildInput(): DailyStatInput {
         val state = _uiState.value
-        val product = state.product ?: return
+        val product = state.product ?: throw IllegalStateException("product null")
         val actualMorning = if (state.hasActualMorningStock) state.actualMorningStock else null
-        val input = DailyStatInput(
+        return DailyStatInput(
             productId = product.id,
             isoDate = state.isoDate,
             openingStock = state.openingStock,
@@ -131,8 +170,29 @@ class StatEntryViewModel(
             currentStock = if (state.hasCurrentStock) state.currentStock else null,
             notes = state.notes
         )
-        val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = false)
-        _uiState.update { it.copy(statId = savedId) }
+    }
+
+    /**
+     * ذخیره پیش‌نویس بدون نمایش پیام.
+     * بر اساس مرحله فعلی، از متد مناسب repository استفاده می‌کند.
+     */
+    private suspend fun saveDraftSilent() {
+        val state = _uiState.value
+        val product = state.product ?: return
+        val input = buildInput()
+
+        val savedId = when (stage) {
+            StatEntryStage.START -> app.dailyStatRepository.saveStartStage(input, product, isFinalized = false)
+            StatEntryStage.END -> app.dailyStatRepository.saveEndStage(input, product, isFinalized = false)
+            StatEntryStage.FULL -> app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+        }
+        _uiState.update {
+            it.copy(
+                statId = savedId,
+                startStageSaved = stage == StatEntryStage.START || it.startStageSaved,
+                endStageSaved = stage == StatEntryStage.END || it.endStageSaved
+            )
+        }
     }
 
     init {
@@ -165,6 +225,8 @@ class StatEntryViewModel(
 
             if (existingStat != null) {
                 // اگر آمار موجود است، مقادیر آن را بارگذاری می‌کنیم
+                // نکته کلیدی: از currentStockTotal != null برای تشخیص hasCurrentStock استفاده می‌کنیم
+                // (نه currentStockTotal > 0) زیرا صفر یک مقدار معتبر برای «ثبت‌شده با مقدار صفر» است.
                 _uiState.update {
                     it.copy(
                         product = product,
@@ -182,11 +244,24 @@ class StatEntryViewModel(
                         laboratory = VarianceCalculator.fromTotalUnits(existingStat.laboratoryTotal, product),
                         midDayLoading = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product),
                         nightLoading = VarianceCalculator.fromTotalUnits(existingStat.nightLoadingTotal, product),
-                        currentStock = VarianceCalculator.fromTotalUnits(existingStat.currentStockTotal, product),
-                        hasCurrentStock = existingStat.currentStockTotal > 0 || existingStat.endCumulativeVariance != null,
+                        currentStock = existingStat.currentStockTotal?.let { t ->
+                            VarianceCalculator.fromTotalUnits(t, product)
+                        },
+                        hasCurrentStock = existingStat.currentStockTotal != null,
                         notes = existingStat.notes,
                         isFinalized = existingStat.isFinalized,
                         statId = existingStat.id,
+                        // تعیین پرچم‌های ثبت هر مرحله بر اساس داده موجود:
+                        // - endStageSaved: فقط اگر currentStockTotal ثبت شده باشد (شامل صفر)
+                        // - startStageSaved: اگر رکورد وجود دارد و END ثبت نشده، احتمالاً START ثبت شده
+                        //   (یا هر دو فیلد START با مقادیر غیر صفر دارند یا actualMorningStock ثبت شده)
+                        endStageSaved = existingStat.currentStockTotal != null,
+                        startStageSaved = existingStat.actualMorningStockTotal != null
+                            || existingStat.startVariance != null
+                            || existingStat.openingStockTotal > 0
+                            || existingStat.morningLoadingTotal > 0
+                            // اگر رکورد هست ولی END ثبت نشده، یعنی حداقل START یک‌بار ذخیره شده
+                            || (existingStat.currentStockTotal == null && existingStat.id > 0L),
                         isLoading = false
                     )
                 }
@@ -271,6 +346,17 @@ class StatEntryViewModel(
         validateAndUpdate()
     }
 
+    /**
+     * لغو صریح ثبت آخر کار (پاک کردن currentStock).
+     * این متد فقط در END معنا دارد.
+     */
+    fun clearCurrentStock() {
+        _uiState.update {
+            it.copy(currentStock = null, hasCurrentStock = false)
+        }
+        validateAndUpdate()
+    }
+
     fun updateNotes(notes: String) {
         _uiState.update { it.copy(notes = notes) }
     }
@@ -290,22 +376,26 @@ class StatEntryViewModel(
         // ذخیره خودکار با debounce
         scheduleAutoSave()
 
-        // هشدار: بارگیری از موجودی قابل دسترس بیشتر شد
-        val availableBeforeMorning = state.openingStock.let {
-            VarianceCalculator.toTotalUnits(it, product)
-        }
-        val morningLoadingTotal = state.morningLoading.let {
-            VarianceCalculator.toTotalUnits(it, product)
-        }
-        if (morningLoadingTotal > availableBeforeMorning && availableBeforeMorning > 0) {
-            _uiState.update {
-                it.copy(showWarning = "بارگیری صبح از مانده شب گذشته بیشتر است. آیا مطمئن هستید؟")
+        // هشدار: بارگیری از موجودی قابل دسترس بیشتر شد (فقط در START)
+        if (stage == StatEntryStage.START || stage == StatEntryStage.FULL) {
+            val availableBeforeMorning = VarianceCalculator.toTotalUnits(state.openingStock, product)
+            val morningLoadingTotal = VarianceCalculator.toTotalUnits(state.morningLoading, product)
+            if (morningLoadingTotal > availableBeforeMorning && availableBeforeMorning > 0) {
+                _uiState.update {
+                    it.copy(showWarning = "بارگیری صبح از مانده شب گذشته بیشتر است. آیا مطمئن هستید؟")
+                }
+                return
             }
-            return
         }
 
         // هشدار: مغایرت بسیار بزرگ
-        if (result.closingVariance.absoluteValue() > 1000) {
+        val maxVariance = listOfNotNull(
+            result.startVariance,
+            result.endCumulativeVariance,
+            result.nightShiftVariance
+        ).maxOfOrNull { kotlin.math.abs(it) } ?: 0
+
+        if (maxVariance > 1000) {
             _uiState.update {
                 it.copy(showWarning = "مقدار مغایرت بسیار بزرگ است. لطفاً مقادیر را بررسی کنید.")
             }
@@ -316,39 +406,32 @@ class StatEntryViewModel(
     }
 
     /**
-     * ذخیره آمار (پیش‌نویس).
+     * ذخیره آمار (پیش‌نویس) - stage-aware.
      */
     fun saveDraft() {
         val state = _uiState.value
         val product = state.product ?: return
-        val actualMorning = if (state.hasActualMorningStock) state.actualMorningStock else null
-
-        val input = DailyStatInput(
-            productId = product.id,
-            isoDate = state.isoDate,
-            openingStock = state.openingStock,
-            morningLoading = state.morningLoading,
-            actualMorningStock = actualMorning,
-            receipt = state.receipt,
-            returns = state.returns,
-            gifts = state.gifts,
-            waste = state.waste,
-                    laboratory = state.laboratory,
-            midDayLoading = state.midDayLoading,
-            nightLoading = state.nightLoading,
-            currentStock = if (state.hasCurrentStock) state.currentStock else null,
-            notes = state.notes
-        )
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             try {
-                val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+                val input = buildInput()
+                val savedId = when (stage) {
+                    StatEntryStage.START -> app.dailyStatRepository.saveStartStage(input, product, isFinalized = false)
+                    StatEntryStage.END -> app.dailyStatRepository.saveEndStage(input, product, isFinalized = false)
+                    StatEntryStage.FULL -> app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+                }
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        statId = savedId,  // به‌روزرسانی statId برای جلوگیری از رکورد تکراری
-                        saveMessage = "آمار با موفقیت ذخیره شد"
+                        statId = savedId,
+                        startStageSaved = if (stage == StatEntryStage.START) true else it.startStageSaved,
+                        endStageSaved = if (stage == StatEntryStage.END) true else it.endStageSaved,
+                        saveMessage = when (stage) {
+                            StatEntryStage.START -> "ذخیره اول کار انجام شد"
+                            StatEntryStage.END -> "ذخیره آخر کار انجام شد"
+                            StatEntryStage.FULL -> "آمار با موفقیت ذخیره شد"
+                        }
                     )
                 }
             } catch (e: Exception) {
@@ -363,9 +446,7 @@ class StatEntryViewModel(
     }
 
     /**
-     * نهایی کردن آمار.
-     * ابتدا اطلاعات را ذخیره می‌کند، سپس آن را نهایی می‌کند.
-     * اگر statId وجود نداشته باشد، ابتدا یک آمار جدید می‌سازد.
+     * نهایی کردن آمار - stage-aware.
      */
     fun finalizeStat() {
         val state = _uiState.value
@@ -374,31 +455,24 @@ class StatEntryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             try {
-                // ابتدا ذخیره آخرین تغییرات
-                val actualMorning = if (state.hasActualMorningStock) state.actualMorningStock else null
-                val input = DailyStatInput(
-                    productId = product.id,
-                    isoDate = state.isoDate,
-                    openingStock = state.openingStock,
-                    morningLoading = state.morningLoading,
-                    actualMorningStock = actualMorning,
-                    receipt = state.receipt,
-                    returns = state.returns,
-                    gifts = state.gifts,
-                    waste = state.waste,
-                    laboratory = state.laboratory,
-                    midDayLoading = state.midDayLoading,
-                    nightLoading = state.nightLoading,
-                    currentStock = if (state.hasCurrentStock) state.currentStock else null,
-                    notes = state.notes
-                )
-                val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = true)
+                val input = buildInput()
+                val savedId = when (stage) {
+                    StatEntryStage.START -> app.dailyStatRepository.saveStartStage(input, product, isFinalized = true)
+                    StatEntryStage.END -> app.dailyStatRepository.saveEndStage(input, product, isFinalized = true)
+                    StatEntryStage.FULL -> app.dailyStatRepository.saveStat(input, product, isFinalized = true)
+                }
                 _uiState.update {
                     it.copy(
                         isSaving = false,
                         isFinalized = true,
-                        statId = savedId,  // به‌روزرسانی statId برای جلوگیری از رکورد تکراری
-                        saveMessage = "آمار نهایی شد"
+                        statId = savedId,
+                        startStageSaved = if (stage == StatEntryStage.START) true else it.startStageSaved,
+                        endStageSaved = if (stage == StatEntryStage.END) true else it.endStageSaved,
+                        saveMessage = when (stage) {
+                            StatEntryStage.START -> "اول کار نهایی شد"
+                            StatEntryStage.END -> "آخر کار نهایی شد"
+                            StatEntryStage.FULL -> "آمار نهایی شد"
+                        }
                     )
                 }
             } catch (e: Exception) {
@@ -428,11 +502,11 @@ class StatEntryViewModel(
     }
 
     companion object {
-        fun factory(app: MoghayeratApplication, productId: Long, isoDate: String): ViewModelProvider.Factory =
+        fun factory(app: MoghayeratApplication, productId: Long, isoDate: String, stage: StatEntryStage): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return StatEntryViewModel(app, productId, isoDate) as T
+                    return StatEntryViewModel(app, productId, isoDate, stage) as T
                 }
             }
     }

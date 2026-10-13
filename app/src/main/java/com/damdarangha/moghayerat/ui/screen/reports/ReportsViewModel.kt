@@ -87,14 +87,18 @@ class ReportsViewModel(
             val workflowStats = allStats.filter { it.productId in productIds }
 
             _uiState.update {
+                // فیلتر کردن: فقط رکوردهایی که آخر کار ثبت شده (currentStockTotal != null)
+                // در محاسبات مغایرت روزانه شرکت می‌کنند تا آمار ثبت‌نشده به‌اشتباه
+                // «مغایرت صفر» محسوب نشوند.
+                val registeredStats = workflowStats.filter { s -> s.currentStockTotal != null }
                 it.copy(
                     stats = workflowStats,
                     products = products,
-                    zeroVarianceCount = workflowStats.count { s -> s.closingVariance == 0 },
-                    deficitCount = workflowStats.count { s -> s.closingVariance > 0 },
-                    surplusCount = workflowStats.count { s -> s.closingVariance < 0 },
-                    totalDeficit = workflowStats.filter { s -> s.closingVariance > 0 }.sumOf { it.closingVariance },
-                    totalSurplus = workflowStats.filter { s -> s.closingVariance < 0 }.sumOf { -it.closingVariance },
+                    zeroVarianceCount = registeredStats.count { s -> s.closingVariance == 0 },
+                    deficitCount = registeredStats.count { s -> s.closingVariance > 0 },
+                    surplusCount = registeredStats.count { s -> s.closingVariance < 0 },
+                    totalDeficit = registeredStats.filter { s -> s.closingVariance > 0 }.sumOf { it.closingVariance },
+                    totalSurplus = registeredStats.filter { s -> s.closingVariance < 0 }.sumOf { -it.closingVariance },
                     isLoading = false
                 )
             }
@@ -145,13 +149,17 @@ class ReportsViewModel(
                         val (filteredStats, filteredProducts) = when (reportType) {
                             ReportType.FULL -> workflowStats to products
                             ReportType.REGISTERED_ONLY -> {
-                                // همه رکوردهای موجود (نه فقط closingVariance == 0)
-                                workflowStats to products.filter { p ->
-                                    workflowStats.any { it.productId == p.id }
+                                // فقط رکوردهایی که آخر کار واقعاً ثبت شده (currentStockTotal != null)
+                                val registered = workflowStats.filter { s -> s.currentStockTotal != null }
+                                registered to products.filter { p ->
+                                    registered.any { it.productId == p.id }
                                 }
                             }
                             ReportType.VARIANCE_ONLY -> {
-                                val filtered = workflowStats.filter { s -> s.closingVariance != 0 }
+                                // فقط رکوردهایی که آخر کار ثبت شده و مغایرت غیر صفر دارند
+                                val filtered = workflowStats.filter { s ->
+                                    s.currentStockTotal != null && s.closingVariance != 0
+                                }
                                 filtered to products.filter { p ->
                                     filtered.any { it.productId == p.id }
                                 }

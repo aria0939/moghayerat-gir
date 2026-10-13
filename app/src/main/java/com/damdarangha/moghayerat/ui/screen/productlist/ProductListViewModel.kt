@@ -62,12 +62,12 @@ class ProductListViewModel(
         else products.filter { it.name.contains(query, ignoreCase = true) }
 
         val statuses = infos.mapValues { it.value.status }
-        val startCount = infos.count { it.value.status != StatStatus.NOT_REGISTERED }
-        val endCount = infos.count {
-            it.value.status == StatStatus.FINALIZED ||
-            it.value.status == StatStatus.HAS_VARIANCE ||
-            it.value.status == StatStatus.REGISTERED
+        // شمارش اول کار: رکوردهایی که حداقل یکی از فیلدهای اول کار دارند
+        val startCount = infos.count {
+            it.value.startVariance != null || it.value.status != StatStatus.NOT_REGISTERED
         }
+        // شمارش آخر کار: فقط رکوردهایی که currentStock ثبت شده (endCumulativeVariance != null)
+        val endCount = infos.count { it.value.endCumulativeVariance != null }
 
         // اگر بررسی پایان شیفت فعال است، مرتب‌سازی کن
         val sortedProducts = if (shiftReview) {
@@ -129,10 +129,18 @@ class ProductListViewModel(
             infos[product.id] = if (stat == null) {
                 ProductStatInfo(StatStatus.NOT_REGISTERED, null, null, null)
             } else {
+                // تشخیص وضعیت بر اساس داده‌های واقعی ثبت‌شده
+                val hasStartVariance = stat.startVariance != null
+                val hasEndVariance = stat.endCumulativeVariance != null
+                val hasNightVariance = stat.nightShiftVariance != null
                 val status = when {
                     stat.isFinalized -> StatStatus.FINALIZED
-                    stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
-                    else -> StatStatus.REGISTERED
+                    // اگر آخر کار ثبت شده و مغایرت غیر صفر دارد
+                    hasEndVariance && stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
+                    // اگر اول کار یا آخر کار ثبت شده ولی هنوز نهایی نشده
+                    hasStartVariance || hasEndVariance || hasNightVariance -> StatStatus.REGISTERED
+                    // اگر رکورد هست اما هیچ واریانسی ثبت نشده (مثلاً فقط مقادیر صفر)
+                    else -> StatStatus.DRAFT
                 }
                 ProductStatInfo(
                     status = status,

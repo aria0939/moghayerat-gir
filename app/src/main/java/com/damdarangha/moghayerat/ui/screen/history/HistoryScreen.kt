@@ -104,6 +104,8 @@ private fun HistoryItemCard(
     onClick: () -> Unit
 ) {
     val statusType = when {
+        // اگر آخر کار ثبت نشده، وضعیت «ناقص» است
+        stat.currentStockTotal == null -> StatusType.INCOMPLETE
         stat.closingVariance == 0 -> StatusType.ZERO
         stat.closingVariance > 0 -> StatusType.DEFICIT
         else -> StatusType.SURPLUS
@@ -137,6 +139,7 @@ private fun HistoryItemCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             val varianceText = when {
+                stat.currentStockTotal == null -> "ثبت آخر کار نشده"
                 stat.closingVariance == 0 -> "بدون مغایرت"
                 stat.closingVariance > 0 -> "کسری ${stat.closingVariance.toPersian()} عدد"
                 else -> "اضافه ${(-stat.closingVariance).toPersian()} عدد"

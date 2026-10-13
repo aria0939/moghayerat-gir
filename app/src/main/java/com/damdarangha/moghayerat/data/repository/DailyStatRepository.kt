@@ -73,6 +73,9 @@ class DailyStatRepository(
      * ذخیره آمار روزانه.
      * اگر آمار از قبل وجود داشته باشد، آن را به‌روزرسانی می‌کند.
      * تاریخچه تغییرات نیز ذخیره می‌شود.
+     *
+     * این متد یک ذخیره کامل است و همه فیلدها را بازنویسی می‌کند.
+     * برای ذخیره مرحله‌ای (فقط اول کار یا فقط آخر کار) از [saveStartStage] یا [saveEndStage] استفاده کنید.
      */
     suspend fun saveStat(
         input: DailyStatInput,
@@ -99,7 +102,7 @@ class DailyStatRepository(
             laboratoryTotal = result.laboratoryTotal,
             midDayLoadingTotal = result.midDayLoadingTotal,
             nightLoadingTotal = result.nightLoadingTotal,
-            currentStockTotal = result.currentStockTotal ?: 0,
+            currentStockTotal = result.currentStockTotal,
             expectedMorningStockTotal = result.expectedMorningStockTotal,
             morningVariance = result.morningVariance,
             expectedClosingStockTotal = result.expectedClosingStockTotal,
@@ -148,6 +151,247 @@ class DailyStatRepository(
     }
 
     /**
+     * ذخیره مرحله اول کار (START).
+     *
+     * فقط فیلدهای مربوط به اول کار را به‌روزرسانی می‌کند و فیلدهای آخر کار را دست نمی‌زند.
+     * فیلدهای اول کار:
+     * - openingStock (مانده شب گذشته)
+     * - morningLoading (بارگیری صبح)
+     * - actualMorningStock (شمارش واقعی اول کار)
+     * - startVariance (مغایرت اول کار)
+     *
+     * اگر آمار قبلی برای آخر کار ثبت شده باشد، آن داده‌ها حفظ می‌شوند و
+     * nightShiftVariance بر اساس startVariance جدید و endCumulativeVariance قدیمی محاسبه می‌شود.
+     *
+     * @param input ورودی آمار - فقط فیلدهای اول کار استفاده می‌شوند
+     * @param product محصول موردنظر
+     * @param isFinalized آیا این مرحله نهایی شود
+     * @return شناسه آمار ذخیره‌شده
+     */
+    suspend fun saveStartStage(
+        input: DailyStatInput,
+        product: Product,
+        isFinalized: Boolean = false
+    ): Long {
+        val now = System.currentTimeMillis()
+        val existing = dailyStatDao.getStat(input.productId, input.isoDate)
+        val jalaliDate = JalaliDateConverter.gregorianToJalaliString(input.isoDate)
+
+        // محاسبه کامل برای استخراج مقادیر اول کار
+        val fullResult = VarianceCalculator.calculate(input, product)
+
+        // حفظ داده‌های آخر کار از رکورد موجود (در صورت وجود)
+        val currentStockTotal: Int? = existing?.currentStockTotal
+        val nightLoadingTotal: Int = existing?.nightLoadingTotal ?: fullResult.nightLoadingTotal
+        val receiptTotal: Int = existing?.receiptTotal ?: fullResult.receiptTotal
+        val returnsTotal: Int = existing?.returnsTotal ?: fullResult.returnsTotal
+        val giftsTotal: Int = existing?.giftsTotal ?: fullResult.giftsTotal
+        val wasteTotal: Int = existing?.wasteTotal ?: fullResult.wasteTotal
+        val laboratoryTotal: Int = existing?.laboratoryTotal ?: fullResult.laboratoryTotal
+        val midDayLoadingTotal: Int = existing?.midDayLoadingTotal ?: fullResult.midDayLoadingTotal
+
+        // محاسبه دوباره expectedClosingStock بر اساس openingStock جدید + داده‌های آخر کار موجود
+        // expected = opening + receipt + returns - morning - midDay - night - gifts - waste - lab
+        val expectedClosingStockTotal = (
+            fullResult.openingStockTotal +
+            receiptTotal + returnsTotal -
+            fullResult.morningLoadingTotal -
+            midDayLoadingTotal - nightLoadingTotal -
+            giftsTotal - wasteTotal - laboratoryTotal
+        )
+
+        // محاسبه closingVariance و endCumulativeVariance اگر currentStock داریم
+        // نکته: این مقادیر مجدداً محاسبه می‌شوند چون openingStock (و در نتیجه expected) تغییر کرده
+        val closingVariance: Int = if (currentStockTotal != null) {
+            expectedClosingStockTotal - currentStockTotal
+        } else 0
+
+        val endCumulativeVariance: Int? = if (currentStockTotal != null) {
+            // actual - expected (منفی=کسری، مثبت=اضافه)
+            currentStockTotal - expectedClosingStockTotal
+        } else null
+
+        // محاسبه nightShiftVariance اگر هر دو موجود باشند
+        val nightShiftVariance: Int? = if (fullResult.startVariance != null && endCumulativeVariance != null) {
+            endCumulativeVariance - fullResult.startVariance
+        } else null
+
+        val entity = DailyStatEntity(
+            id = existing?.id ?: 0L,
+            productId = input.productId,
+            isoDate = input.isoDate,
+            jalaliDate = jalaliDate,
+            openingStockTotal = fullResult.openingStockTotal,
+            morningLoadingTotal = fullResult.morningLoadingTotal,
+            actualMorningStockTotal = fullResult.actualMorningStockTotal,
+            receiptTotal = receiptTotal,
+            returnsTotal = returnsTotal,
+            giftsTotal = giftsTotal,
+            wasteTotal = wasteTotal,
+            laboratoryTotal = laboratoryTotal,
+            midDayLoadingTotal = midDayLoadingTotal,
+            nightLoadingTotal = nightLoadingTotal,
+            currentStockTotal = currentStockTotal,
+            expectedMorningStockTotal = fullResult.expectedMorningStockTotal,
+            morningVariance = fullResult.morningVariance,
+            expectedClosingStockTotal = expectedClosingStockTotal,
+            closingVariance = closingVariance,
+            startVariance = fullResult.startVariance,
+            endCumulativeVariance = endCumulativeVariance,
+            nightShiftVariance = nightShiftVariance,
+            isFinalized = isFinalized,
+            notes = input.notes.ifEmpty { existing?.notes ?: "" },
+            createdAt = existing?.createdAt ?: now,
+            updatedAt = now
+        )
+
+        return persistEntity(entity, existing, "SAVE_START_STAGE")
+    }
+
+    /**
+     * ذخیره مرحله آخر کار (END).
+     *
+     * فقط فیلدهای مربوط به آخر کار را به‌روزرسانی می‌کند و فیلدهای اول کار را دست نمی‌زند.
+     * فیلدهای آخر کار:
+     * - receipt, returns, gifts, waste, laboratory, midDayLoading (عملیات روزانه)
+     * - nightLoading (بارگیری شب)
+     * - currentStock (مانده واقعی آخر کار)
+     * - endCumulativeVariance (مغایرت تجمعی آخر کار)
+     * - nightShiftVariance (مغایرت شیفت شب)
+     *
+     * اگر آمار قبلی برای اول کار ثبت شده باشد، آن داده‌ها حفظ می‌شوند.
+     *
+     * @param input ورودی آمار - فقط فیلدهای آخر کار استفاده می‌شوند
+     * @param product محصول موردنظر
+     * @param isFinalized آیا این مرحله نهایی شود
+     * @return شناسه آمار ذخیره‌شده
+     */
+    suspend fun saveEndStage(
+        input: DailyStatInput,
+        product: Product,
+        isFinalized: Boolean = false
+    ): Long {
+        val now = System.currentTimeMillis()
+        val existing = dailyStatDao.getStat(input.productId, input.isoDate)
+        val jalaliDate = JalaliDateConverter.gregorianToJalaliString(input.isoDate)
+
+        // محاسبه کامل برای استخراج مقادیر آخر کار
+        val fullResult = VarianceCalculator.calculate(input, product)
+
+        // اگر آمار اول کار قبلاً ثبت شده، آن را حفظ می‌کنیم
+        val openingStockTotal: Int = existing?.openingStockTotal ?: fullResult.openingStockTotal
+        val morningLoadingTotal: Int = existing?.morningLoadingTotal ?: fullResult.morningLoadingTotal
+        val actualMorningStockTotal: Int? = existing?.actualMorningStockTotal ?: fullResult.actualMorningStockTotal
+        val startVariance: Int? = existing?.startVariance ?: fullResult.startVariance
+        val expectedMorningStockTotal: Int = existing?.expectedMorningStockTotal
+            ?: fullResult.expectedMorningStockTotal
+        val morningVariance: Int? = existing?.morningVariance ?: fullResult.morningVariance
+
+        // محاسبه expectedClosingStock بر اساس داده‌های آخر کار + opening قدیمی
+        // expected = opening + receipt + returns - morning - midDay - night - gifts - waste - lab
+        val expectedClosingStockTotal = (
+            openingStockTotal +
+            fullResult.receiptTotal + fullResult.returnsTotal -
+            morningLoadingTotal -
+            fullResult.midDayLoadingTotal - fullResult.nightLoadingTotal -
+            fullResult.giftsTotal - fullResult.wasteTotal - fullResult.laboratoryTotal
+        )
+
+        val currentStockTotal: Int? = fullResult.currentStockTotal
+        val closingVariance: Int = if (currentStockTotal != null) {
+            expectedClosingStockTotal - currentStockTotal
+        } else 0
+
+        // محاسبه endCumulativeVariance و nightShiftVariance
+        // قرارداد: منفی=کسری، مثبت=اضافه
+        val endCumulativeVariance: Int? = if (currentStockTotal != null) {
+            currentStockTotal - expectedClosingStockTotal
+        } else null
+
+        val nightShiftVariance: Int? = if (startVariance != null && endCumulativeVariance != null) {
+            endCumulativeVariance - startVariance
+        } else null
+
+        val entity = DailyStatEntity(
+            id = existing?.id ?: 0L,
+            productId = input.productId,
+            isoDate = input.isoDate,
+            jalaliDate = jalaliDate,
+            openingStockTotal = openingStockTotal,
+            morningLoadingTotal = morningLoadingTotal,
+            actualMorningStockTotal = actualMorningStockTotal,
+            receiptTotal = fullResult.receiptTotal,
+            returnsTotal = fullResult.returnsTotal,
+            giftsTotal = fullResult.giftsTotal,
+            wasteTotal = fullResult.wasteTotal,
+            laboratoryTotal = fullResult.laboratoryTotal,
+            midDayLoadingTotal = fullResult.midDayLoadingTotal,
+            nightLoadingTotal = fullResult.nightLoadingTotal,
+            currentStockTotal = currentStockTotal,
+            expectedMorningStockTotal = expectedMorningStockTotal,
+            morningVariance = morningVariance,
+            expectedClosingStockTotal = expectedClosingStockTotal,
+            closingVariance = closingVariance,
+            startVariance = startVariance,
+            endCumulativeVariance = endCumulativeVariance,
+            nightShiftVariance = nightShiftVariance,
+            isFinalized = isFinalized,
+            notes = input.notes.ifEmpty { existing?.notes ?: "" },
+            createdAt = existing?.createdAt ?: now,
+            updatedAt = now
+        )
+
+        return persistEntity(entity, existing, "SAVE_END_STAGE")
+    }
+
+    /**
+     * متد کمکی برای ذخیره موجودیت و ثبت در تاریخچه.
+     */
+    private suspend fun persistEntity(
+        entity: DailyStatEntity,
+        existing: DailyStatEntity?,
+        changeType: String
+    ): Long {
+        return if (existing != null) {
+            dailyStatDao.update(entity)
+            statHistoryDao.insert(
+                StatHistoryEntity(
+                    statId = existing.id,
+                    productId = entity.productId,
+                    isoDate = entity.isoDate,
+                    changeType = changeType,
+                    previousValue = gson.toJson(existing),
+                    newValue = gson.toJson(entity),
+                    note = when (changeType) {
+                        "SAVE_START_STAGE" -> "ذخیره مرحله اول کار"
+                        "SAVE_END_STAGE" -> "ذخیره مرحله آخر کار"
+                        else -> "به‌روزرسانی آمار"
+                    }
+                )
+            )
+            existing.id
+        } else {
+            val newId = dailyStatDao.insert(entity)
+            statHistoryDao.insert(
+                StatHistoryEntity(
+                    statId = newId,
+                    productId = entity.productId,
+                    isoDate = entity.isoDate,
+                    changeType = "CREATE",
+                    previousValue = null,
+                    newValue = gson.toJson(entity),
+                    note = when (changeType) {
+                        "SAVE_START_STAGE" -> "ایجاد با مرحله اول کار"
+                        "SAVE_END_STAGE" -> "ایجاد با مرحله آخر کار"
+                        else -> "ایجاد آمار جدید"
+                    }
+                )
+            )
+            newId
+        }
+    }
+
+    /**
      * نهایی کردن آمار.
      */
     suspend fun finalizeStat(id: Long) {
@@ -171,15 +415,13 @@ class DailyStatRepository(
 
     /**
      * دریافت مانده پایان روز قبل برای استفاده به‌عنوان مانده شب گذشته روز جاری.
-     * اگر آمار روز قبل وجود نداشت، null برمی‌گرداند.
+     * اگر آمار روز قبل وجود نداشت یا شمارش آخر کار ثبت نشده بود، null برمی‌گرداند.
      */
     suspend fun getCarryOverStock(productId: Long, currentIsoDate: String): BoxAndUnits? {
         val previousStat = dailyStatDao.getPreviousDayStat(productId, currentIsoDate) ?: return null
-        // تبدیل تعداد کل به باکس و عدد با استفاده از محصول فعلی
-        // نیاز به محصول داریم، اما برای سادگی، تعداد کل را برمی‌گردانیم
-        // تبدیل در ViewModel انجام می‌شود
-        return BoxAndUnits(boxes = previousStat.currentStockTotal, units = 0)
-            // این مقدار موقت است و در ViewModel با اطلاعات محصول نرمال‌سازی می‌شود
+        // اگر آخر کار ثبت نشده باشد، مانده قابل اتکایی هم نداریم
+        val previousTotal = previousStat.currentStockTotal ?: return null
+        return BoxAndUnits(boxes = previousTotal, units = 0)
     }
 
     /**

@@ -142,6 +142,8 @@ fun HomeScreen(
                 workflowId = workflow.id,
                 totalProducts = workflow.totalProducts,
                 registeredCount = workflow.registeredToday,
+                startCount = workflow.startCount,
+                endCount = workflow.endCount,
                 onClick = {
                     // ساخت Workflow موقت برای پاس دادن (فقط id و name نیاز است)
                     onWorkflowClick(
@@ -267,7 +269,7 @@ private fun HeroCard(
 }
 
 /**
- * کارت گردش کار - نمایش نام، تعداد محصولات، ثبت‌شده، باقی‌مانده و درصد پیشرفت
+ * کارت گردش کار - نمایش نام، تعداد محصولات، ثبت‌شده اول کار/آخر کار، باقی‌مانده و درصد پیشرفت
  */
 @Composable
 private fun WorkflowCard(
@@ -275,11 +277,14 @@ private fun WorkflowCard(
     workflowId: Long,
     totalProducts: Int,
     registeredCount: Int,
+    startCount: Int = 0,
+    endCount: Int = 0,
     onClick: () -> Unit
 ) {
     val totalCount = totalProducts
-    val remainingCount = (totalCount - registeredCount).coerceAtLeast(0)
-    val progress = if (totalCount > 0) registeredCount.toFloat() / totalCount else 0f
+    val remainingCount = (totalCount - endCount).coerceAtLeast(0)
+    // درصد پیشرفت بر اساس آخر کار است (مرحله کامل‌تر)
+    val progress = if (totalCount > 0) endCount.toFloat() / totalCount else 0f
 
     // رنگ کارت بر اساس نام گردش کار
     val (cardBg, accentColor) = when (workflowName) {
@@ -337,7 +342,8 @@ private fun WorkflowCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         StatItem("کل محصولات", totalCount)
-                        StatItem("ثبت‌شده", registeredCount)
+                        StatItem("اول کار", startCount)
+                        StatItem("آخر کار", endCount)
                         StatItem("باقی‌مانده", remainingCount)
                     }
                 }
@@ -366,7 +372,7 @@ private fun WorkflowCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "پیشرفت: ${(progress * 100).toInt().toPersian()}%",
+                text = "پیشرفت آخر کار: ${(progress * 100).toInt().toPersian()}%",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp
