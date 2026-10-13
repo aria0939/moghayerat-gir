@@ -20,10 +20,6 @@ import com.damdarangha.moghayerat.ui.components.BottomNavBar
 import com.damdarangha.moghayerat.ui.motion.LocalMotionSettings
 import com.damdarangha.moghayerat.ui.motion.backwardEnterTransition
 import com.damdarangha.moghayerat.ui.motion.backwardExitTransition
-import com.damdarangha.moghayerat.ui.motion.containerEnterTransition
-import com.damdarangha.moghayerat.ui.motion.containerExitTransition
-import com.damdarangha.moghayerat.ui.motion.containerPopEnterTransition
-import com.damdarangha.moghayerat.ui.motion.containerPopExitTransition
 import com.damdarangha.moghayerat.ui.motion.forwardEnterTransition
 import com.damdarangha.moghayerat.ui.motion.forwardExitTransition
 import com.damdarangha.moghayerat.ui.motion.reducedEnterTransition
@@ -155,19 +151,9 @@ fun AppNavigation() {
                 navArgument("productId") { type = NavType.LongType },
                 navArgument("isoDate") { type = NavType.StringType },
                 navArgument("stage") { type = NavType.StringType; defaultValue = "FULL" }
-            ),
-            enterTransition = {
-                if (cfg.reducedMotion) reducedEnterTransition() else containerEnterTransition()
-            },
-            exitTransition = {
-                if (cfg.reducedMotion) reducedExitTransition() else containerExitTransition()
-            },
-            popEnterTransition = {
-                if (cfg.reducedMotion) reducedEnterTransition() else containerPopEnterTransition()
-            },
-            popExitTransition = {
-                if (cfg.reducedMotion) reducedExitTransition() else containerPopExitTransition()
-            }
+            )
+            // از همان transitionهای پیش‌فرض NavHost استفاده می‌کند (slide افقی)
+            // container transform حذف شد چون scale انیمیشن سنگین‌تر است و حس لگی می‌داد
         ) { backStackEntry ->
             val productId = backStackEntry.arguments?.getLong("productId") ?: 0L
             val isoDate = backStackEntry.arguments?.getString("isoDate") ?: ""

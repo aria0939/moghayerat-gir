@@ -101,7 +101,8 @@ object VarianceFormatter {
             }
         }
 
-        return "$sign$absStr"
+        // علامت پشت عدد می‌آید (مثلاً ۱B+ یا ۲'-)
+        return "$absStr$sign"
     }
 
     /**
