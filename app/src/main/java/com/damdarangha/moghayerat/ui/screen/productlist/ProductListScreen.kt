@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -58,7 +59,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.domain.model.StatStatus
-import com.damdarangha.moghayerat.ui.motion.pressFeedback
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 
@@ -292,9 +292,7 @@ private fun ProductItemCard(
     val endButtonColor = if (isEndRegistered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pressFeedback(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(12.dp)
@@ -370,21 +368,23 @@ private fun ProductItemCard(
                 // دکمه اول کار - اگر ثبت شده، برجسته می‌شود
                 OutlinedButton(
                     onClick = onStartClick,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 44.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = startButtonColor
                     ),
                     border = BorderStroke(
                         1.dp,
-                        if (isStartRegistered) startButtonColor else startButtonColor.copy(alpha = 0.4f)
+                        if (isStartRegistered) startButtonColor else startButtonColor.copy(alpha = 0.5f)
                     ),
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = startText,
                         style = MaterialTheme.typography.labelMedium,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = if (isStartRegistered) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -392,21 +392,23 @@ private fun ProductItemCard(
                 // دکمه آخر کار - اگر ثبت شده، برجسته می‌شود
                 OutlinedButton(
                     onClick = onEndClick,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 44.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = endButtonColor
                     ),
                     border = BorderStroke(
                         1.dp,
-                        if (isEndRegistered) endButtonColor else endButtonColor.copy(alpha = 0.4f)
+                        if (isEndRegistered) endButtonColor else endButtonColor.copy(alpha = 0.5f)
                     ),
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = endText,
                         style = MaterialTheme.typography.labelMedium,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = if (isEndRegistered) FontWeight.Bold else FontWeight.Normal
                     )
                 }

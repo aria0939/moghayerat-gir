@@ -18,7 +18,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.damdarangha.moghayerat.ui.components.BottomNavBar
 import com.damdarangha.moghayerat.ui.motion.LocalMotionSettings
-import com.damdarangha.moghayerat.ui.motion.SwipeBackLayout
 import com.damdarangha.moghayerat.ui.motion.backwardEnterTransition
 import com.damdarangha.moghayerat.ui.motion.backwardExitTransition
 import com.damdarangha.moghayerat.ui.motion.containerEnterTransition
@@ -140,19 +139,14 @@ fun AppNavigation() {
             arguments = listOf(navArgument("workflowId") { type = NavType.LongType })
         ) { backStackEntry ->
             val workflowId = backStackEntry.arguments?.getLong("workflowId") ?: 0L
-            SwipeBackLayout(
-                enabled = true,
-                onSwipeComplete = { navController.popBackStack() }
-            ) {
-                ProductListScreen(
-                    workflowId = workflowId,
-                    onProductClick = { product, stage ->
-                        val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
-                        navController.navigate(Routes.statEntry(product.id, today, stage))
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
+            ProductListScreen(
+                workflowId = workflowId,
+                onProductClick = { product, stage ->
+                    val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
+                    navController.navigate(Routes.statEntry(product.id, today, stage))
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(
@@ -205,17 +199,12 @@ fun AppNavigation() {
         }
 
         composable(Routes.HISTORY) {
-            SwipeBackLayout(
-                enabled = true,
-                onSwipeComplete = { navController.popBackStack() }
-            ) {
-                HistoryScreen(
-                    onStatClick = { statId, productId, isoDate ->
-                        navController.navigate(Routes.statEntry(productId, isoDate, "FULL"))
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
+            HistoryScreen(
+                onStatClick = { statId, productId, isoDate ->
+                    navController.navigate(Routes.statEntry(productId, isoDate, "FULL"))
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Routes.SETTINGS) {
@@ -255,21 +244,11 @@ fun AppNavigation() {
         }
 
         composable(Routes.WORKFLOW_MANAGEMENT) {
-            SwipeBackLayout(
-                enabled = true,
-                onSwipeComplete = { navController.popBackStack() }
-            ) {
-                WorkflowManagementScreen(onBack = { navController.popBackStack() })
-            }
+            WorkflowManagementScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.BACKUP) {
-            SwipeBackLayout(
-                enabled = true,
-                onSwipeComplete = { navController.popBackStack() }
-            ) {
-                BackupScreen(onBack = { navController.popBackStack() })
-            }
+            BackupScreen(onBack = { navController.popBackStack() })
         }
     }
 }
