@@ -268,6 +268,7 @@ fun StatEntryScreen(
                     }
                 }
             }
+            } // بستن if (!isEndStage)
 
             // بخش ۲: عملیات شیفت شب (نمایش در END و FULL)
             if (!isStartStage) {
