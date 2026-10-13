@@ -18,7 +18,7 @@ import com.damdarangha.moghayerat.data.db.entity.WorkflowEntity
         DailyStatEntity::class,
         StatHistoryEntity::class
     ],
-    version = 5,  // افزایش نسخه برای فیلد laboratoryTotal
+    version = 6,  // افزایش نسخه برای فیلدهای مغایرت شیفت شب
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

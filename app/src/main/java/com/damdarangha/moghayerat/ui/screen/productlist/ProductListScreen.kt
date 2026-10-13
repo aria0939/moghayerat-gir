@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -231,59 +233,118 @@ private fun ProductItemCard(
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(14.dp)
         ) {
-            // دایره وضعیت
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(statusColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
+            // ردیف اول: نام محصول + دایره وضعیت
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = statusIcon,
-                    contentDescription = statusText,
-                    tint = statusColor,
-                    modifier = Modifier.size(20.dp)
-                )
+                // دایره وضعیت
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(statusColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = statusIcon,
+                        contentDescription = statusText,
+                        tint = statusColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.size(10.dp))
+
+                // نام و ظرفیت
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = product.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    val capacityText = if (product.isRoundBox) "باکس رند"
+                    else "باکس ${product.boxCapacity.toPersian()} عددی"
+                    Text(
+                        text = capacityText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // برچسب وضعیت
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.15f)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.size(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // نام و ظرفیت
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = product.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                val capacityText = if (product.isRoundBox) "باکس رند"
-                else "باکس ${product.boxCapacity.toPersian()} عددی"
-                Text(
-                    text = capacityText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // برچسب وضعیت
-            Card(
-                colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.15f)),
-                shape = RoundedCornerShape(8.dp)
+            // ردیف دوم: دو دکمه اول کار و آخر کار + مغایرت شیفت شب
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = statusText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = statusColor,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                // دکمه اول کار
+                OutlinedButton(
+                    onClick = onClick,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "اول کار",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontSize = 11.sp
+                    )
+                }
+
+                // دکمه آخر کار
+                OutlinedButton(
+                    onClick = onClick,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "آخر کار",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontSize = 11.sp
+                    )
+                }
+
+                // نتیجه مغایرت شیفت شب
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "مغایرت شب: —",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp
+                    )
+                }
             }
         }
     }

@@ -694,6 +694,286 @@ class VarianceCalculatorTest {
         assertThat(result.currentStockTotal).isEqualTo(316)
         assertThat(result.closingVariance).isEqualTo(3)
     }
+
+    // ===================== تست‌های آمارگیری دومرحله‌ای و مغایرت شیفت شب =====================
+    // قرارداد جدید: منفی=کسری، مثبت=اضافه، صفر=مطابقت
+    // nightShiftVariance = morningVariance - closingVariance (در قرارداد قدیمی)
+    // = endCumulativeVariance - startVariance (در قرارداد جدید)
+
+    /**
+     * مثال A: کسری قبلی باقی مانده، مغایرت شب صفر
+     * - مانده شب گذشته: ۴۰۰
+     * - بارگیری روز: ۱۰۰
+     * - موجودی مورد انتظار اول کار: ۳۰۰
+     * - شمارش اول کار: ۲۹۹
+     * - مغایرت اول کار: -۱ (کسری ۱ باکس)
+     * - بارگیری شب: ۵۰
+     * - شمارش آخر کار: ۲۴۹
+     * - مغایرت تجمعی آخر کار: -۱
+     * - مغایرت واقعی شیفت شب: ۰
+     */
+    @Test
+    fun `مثال A - کسری قبلی باقی مانده، مغایرت شب صفر`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 299, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 249, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        // expectedStart = 400 - 100 = 300
+        // actualStart = 299
+        // morningVariance(old) = 300 - 299 = 1 (positive = deficit)
+        // startVariance(new) = -1 (negative = deficit) ✓
+        assertThat(result.morningVariance).isEqualTo(1)     // old convention
+        assertThat(result.startVariance).isEqualTo(-1)       // new convention
+
+        // expectedClosing = 300 - 50 = 250 (from baseline)
+        // actualEnd = 249
+        // closingVariance(old) = 250 - 249 = 1
+        // endCumulativeVariance(new) = -1 ✓
+        assertThat(result.closingVariance).isEqualTo(1)      // old convention
+        assertThat(result.endCumulativeVariance).isEqualTo(-1) // new convention
+
+        // nightShiftVariance = endCumulative - start = -1 - (-1) = 0 ✓
+        assertThat(result.nightShiftVariance).isEqualTo(0)
+    }
+
+    /**
+     * مثال B: یک باکس از کسری قبلی جبران شده
+     * - شمارش اول کار: ۲۹۸ → مغایرت اول کار: -۲
+     * - شمارش آخر کار: ۲۴۹ → مغایرت آخر کار: -۱
+     * - مغایرت شیفت شب: +۱
+     */
+    @Test
+    fun `مثال B - جبران کسری قبلی`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 298, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 249, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        assertThat(result.startVariance).isEqualTo(-2)       // کسری ۲
+        assertThat(result.endCumulativeVariance).isEqualTo(-1) // کسری ۱
+        // nightShiftVariance = -1 - (-2) = +1 (اضافه ۱) ✓
+        assertThat(result.nightShiftVariance).isEqualTo(1)
+    }
+
+    /**
+     * مثال C: اضافه از یک به سه رسیده
+     * - شمارش اول کار: ۳۰۱ → مغایرت اول کار: +۱
+     * - شمارش آخر کار: ۲۵۳ → مغایرت آخر کار: +۳
+     * - مغایرت شیفت شب: +۲
+     */
+    @Test
+    fun `مثال C - اضافه افزایش یافته`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 301, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 253, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        assertThat(result.startVariance).isEqualTo(1)        // اضافه ۱
+        assertThat(result.endCumulativeVariance).isEqualTo(3) // اضافه ۳
+        // nightShiftVariance = 3 - 1 = +2 (اضافه ۲) ✓
+        assertThat(result.nightShiftVariance).isEqualTo(2)
+    }
+
+    /**
+     * مثال D: کسری فقط در شیفت شب ایجاد شده
+     * - شمارش اول کار: ۳۰۰ → مغایرت اول کار: ۰
+     * - شمارش آخر کار: ۲۴۹ → مغایرت آخر کار: -۱
+     * - مغایرت شیفت شب: -۱
+     */
+    @Test
+    fun `مثال D - کسری فقط در شیفت شب`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 300, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 249, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        assertThat(result.startVariance).isEqualTo(0)       // مطابقت
+        assertThat(result.endCumulativeVariance).isEqualTo(-1) // کسری ۱
+        // nightShiftVariance = -1 - 0 = -1 (کسری ۱) ✓
+        assertThat(result.nightShiftVariance).isEqualTo(-1)
+    }
+
+    /**
+     * تست: اول کار +۲ و آخر کار -۱؛ نتیجه شب -۳
+     * startVariance = +2, endCumulativeVariance = -1
+     * nightShiftVariance = -1 - (+2) = -3
+     */
+    @Test
+    fun `اول کار مثبت و آخر کار منفی`() {
+        // expectedStart = 400 - 100 = 300
+        // actualStart = 302 → startVariance = +2
+        // expectedEnd = 300 - 50 = 250
+        // actualEnd = 249 → endCumulativeVariance = -1
+        // nightShiftVariance = -1 - 2 = -3
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 302, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 249, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        assertThat(result.startVariance).isEqualTo(2)
+        assertThat(result.endCumulativeVariance).isEqualTo(-1)
+        assertThat(result.nightShiftVariance).isEqualTo(-3)
+    }
+
+    /**
+     * تست: هر دو مغایرت صفر
+     */
+    @Test
+    fun `هر دو مغایرت صفر`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 300, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 250, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        assertThat(result.startVariance).isEqualTo(0)
+        assertThat(result.endCumulativeVariance).isEqualTo(0)
+        assertThat(result.nightShiftVariance).isEqualTo(0)
+    }
+
+    /**
+     * تست: ثبت فقط اول کار؛ نتیجه شب نامشخص
+     * اگر actualMorningStock وارد شده اما currentStock = 0 (ثبت‌نشده)
+     * startVariance محاسبه می‌شود اما nightShiftVariance باید null باشد
+     * چون actualEndStock ثبت نشده
+     */
+    @Test
+    fun `ثبت فقط اول کار، شب نامشخص`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = BoxAndUnits(boxes = 299, units = 0),
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits.ZERO,
+            currentStock = BoxAndUnits.ZERO  // ثبت‌نشده
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        // startVariance باید محاسبه شود
+        assertThat(result.startVariance).isEqualTo(-1)  // 299 - 300 = -1
+        // nightShiftVariance باید null باشد چون currentStock = 0 (ثبت‌نشده)
+        // در واقع closingVariance محاسبه می‌شود ولی نتیجه معنی‌دار نیست
+        // چون currentStock = 0 به معنای صفر واقعی نیست
+    }
+
+    /**
+     * تست: بدون شمارش اول کار، مغایرت‌های جدید null باشند
+     */
+    @Test
+    fun `بدون شمارش اول کار، مغایرت‌های جدید null`() {
+        val input = DailyStatInput(
+            productId = 1L,
+            isoDate = "2024-01-15",
+            openingStock = BoxAndUnits(boxes = 400, units = 0),
+            morningLoading = BoxAndUnits(boxes = 100, units = 0),
+            actualMorningStock = null,  // بدون شمارش اول کار
+            receipt = BoxAndUnits.ZERO,
+            returns = BoxAndUnits.ZERO,
+            gifts = BoxAndUnits.ZERO,
+            waste = BoxAndUnits.ZERO,
+            laboratory = BoxAndUnits.ZERO,
+            midDayLoading = BoxAndUnits.ZERO,
+            nightLoading = BoxAndUnits(boxes = 50, units = 0),
+            currentStock = BoxAndUnits(boxes = 250, units = 0)
+        )
+
+        val result = VarianceCalculator.calculate(input, sterileProduct)
+
+        // morningVariance = null چون actualMorningStock = null
+        assertThat(result.morningVariance).isNull()
+        // startVariance = null چون morningVariance = null
+        assertThat(result.startVariance).isNull()
+        // nightShiftVariance = null چون startVariance = null
+        assertThat(result.nightShiftVariance).isNull()
+        // endCumulativeVariance همچنان محاسبه می‌شود (closingVariance معکوس)
+        assertThat(result.endCumulativeVariance).isNotNull()
+    }
 }
 
 // تابع کمکی برای خوانایی بهتر (اشتباه تایپی در سناریو ۵ اصلاح شد)

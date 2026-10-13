@@ -149,6 +149,23 @@ object VarianceCalculator {
         // مغایرت پایان روز = موجودی مورد انتظار - مانده واقعی
         val closingVariance = safeSubtract(expectedClosingStockTotal, currentStockTotal)
 
+        // ===== مغایرت‌های جدید (قرارداد جدید: منفی=کسری، مثبت=اضافه) =====
+        // startVariance = actualStartStock - expectedStartStock
+        // در قرارداد قدیمی morningVariance = expected - actual
+        // پس startVariance = -morningVariance
+        val startVariance: Int? = morningVariance?.let { safeNegate(it) }
+
+        // endCumulativeVariance = actualEndStock - expectedEndFromBaseline
+        // در قرارداد قدیمی closingVariance = expected - actual
+        // پس endCumulativeVariance = -closingVariance
+        val endCumulativeVariance: Int? = safeNegate(closingVariance)
+
+        // nightShiftVariance = endCumulativeVariance - startVariance
+        // = (-closingVariance) - (-morningVariance) = morningVariance - closingVariance
+        val nightShiftVariance: Int? = if (startVariance != null && endCumulativeVariance != null) {
+            safeSubtract(endCumulativeVariance, startVariance)
+        } else null
+
         return VarianceResult(
             openingStockTotal = openingStockTotal,
             morningLoadingTotal = morningLoadingTotal,
@@ -164,7 +181,10 @@ object VarianceCalculator {
             morningVariance = morningVariance,
             expectedClosingStockTotal = expectedClosingStockTotal,
             currentStockTotal = currentStockTotal,
-            closingVariance = closingVariance
+            closingVariance = closingVariance,
+            startVariance = startVariance,
+            endCumulativeVariance = endCumulativeVariance,
+            nightShiftVariance = nightShiftVariance
         )
     }
 
@@ -210,5 +230,13 @@ object VarianceCalculator {
             throw IllegalStateException("سرریز عددی در تفریق: $a - $b")
         }
         return a - b
+    }
+
+    /**
+     * negate امن برای جلوگیری از سرریز Int.MIN_VALUE.
+     */
+    private fun safeNegate(a: Int): Int {
+        if (a == Int.MIN_VALUE) return 0
+        return -a
     }
 }

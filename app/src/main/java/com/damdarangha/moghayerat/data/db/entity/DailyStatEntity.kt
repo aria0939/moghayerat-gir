@@ -49,8 +49,12 @@ data class DailyStatEntity(
     val morningVariance: Int?,
     val expectedClosingStockTotal: Int,
     val closingVariance: Int,
+    // مغایرت‌های جدید (قرارداد جدید: منفی=کسری، مثبت=اضافه)
+    val startVariance: Int? = null,               // مغایرت اول کار
+    val endCumulativeVariance: Int? = null,       // مغایرت تجمعی آخر کار
+    val nightShiftVariance: Int? = null,            // مغایرت واقعی شیفت شب
     // وضعیت
-    val isFinalized: Boolean = false,  // آیا آمار نهایی شده است
+    val isFinalized: Boolean = false,
     val notes: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

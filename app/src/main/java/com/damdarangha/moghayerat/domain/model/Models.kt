@@ -107,7 +107,11 @@ data class VarianceResult(
     val morningVariance: Int?,             // مغایرت اول کار (در صورت ورود مانده واقعی صبح)
     val expectedClosingStockTotal: Int,    // موجودی مورد انتظار پایان روز
     val currentStockTotal: Int,            // موجودی واقعی پایان روز به عدد کل
-    val closingVariance: Int               // مغایرت پایان روز (مثبت=کسری، منفی=اضافه)
+    val closingVariance: Int,              // مغایرت پایان روز (قدیمی: مثبت=کسری، منفی=اضافه)
+    // ===== مغایرت‌های جدید (قرارداد جدید: منفی=کسری، مثبت=اضافه، صفر=مطابقت) =====
+    val startVariance: Int?,               // مغایرت اول کار (actual - expected)
+    val endCumulativeVariance: Int?,       // مغایرت تجمعی آخر کار (actual - expected)
+    val nightShiftVariance: Int?            // مغایرت واقعی شیفت شب (endCumulative - start)
 ) {
     /**
      * آیا مغایرت پایان روز صفر است؟
