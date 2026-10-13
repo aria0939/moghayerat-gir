@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.damdarangha.moghayerat.MoghayeratApplication
+import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.domain.model.StatStatus
 import com.damdarangha.moghayerat.util.JalaliDateConverter
@@ -17,12 +18,26 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * داده آمار هر محصول برای نمایش در کارت.
+ */
+data class ProductStatInfo(
+    val status: StatStatus,
+    val startVariance: Int?,
+    val endCumulativeVariance: Int?,
+    val nightShiftVariance: Int?
+)
+
 data class ProductListUiState(
     val workflowName: String = "",
     val products: List<Product> = emptyList(),
     val statStatuses: Map<Long, StatStatus> = emptyMap(),
+    val statInfos: Map<Long, ProductStatInfo> = emptyMap(),
     val searchQuery: String = "",
     val todayStatsCount: Int = 0,
+    val startCount: Int = 0,
+    val endCount: Int = 0,
+    val shiftReviewEnabled: Boolean = false,
     val isLoading: Boolean = true
 )
 
@@ -32,23 +47,51 @@ class ProductListViewModel(
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
-    private val _statStatuses = MutableStateFlow<Map<Long, StatStatus>>(emptyMap())
+    private val _statInfos = MutableStateFlow<Map<Long, ProductStatInfo>>(emptyMap())
     private val _workflowName = MutableStateFlow("")
+    private val _shiftReviewEnabled = MutableStateFlow(false)
 
     val uiState: StateFlow<ProductListUiState> = combine(
         app.productRepository.observeActiveProductsByWorkflow(workflowId),
         _searchQuery,
-        _statStatuses,
-        _workflowName
-    ) { products, query, statuses, wfName ->
+        _statInfos,
+        _workflowName,
+        _shiftReviewEnabled
+    ) { products, query, infos, wfName, shiftReview ->
         val filtered = if (query.isBlank()) products
         else products.filter { it.name.contains(query, ignoreCase = true) }
+
+        val statuses = infos.mapValues { it.value.status }
+        val startCount = infos.count { it.value.status != StatStatus.NOT_REGISTERED }
+        val endCount = infos.count {
+            it.value.status == StatStatus.FINALIZED ||
+            it.value.status == StatStatus.HAS_VARIANCE ||
+            it.value.status == StatStatus.REGISTERED
+        }
+
+        // اگر بررسی پایان شیفت فعال است، مرتب‌سازی کن
+        val sortedProducts = if (shiftReview) {
+            filtered.sortedByDescending { product ->
+                val info = infos[product.id]
+                when {
+                    info == null || info.status == StatStatus.NOT_REGISTERED -> 0
+                    info.nightShiftVariance != null && info.nightShiftVariance != 0 -> 3
+                    info.status == StatStatus.DRAFT -> 2
+                    else -> 1
+                }
+            }
+        } else filtered
+
         ProductListUiState(
             workflowName = wfName,
-            products = filtered,
+            products = sortedProducts,
             statStatuses = statuses,
+            statInfos = infos,
             searchQuery = query,
-            todayStatsCount = statuses.count { it.value != StatStatus.NOT_REGISTERED },
+            todayStatsCount = startCount,
+            startCount = startCount,
+            endCount = endCount,
+            shiftReviewEnabled = shiftReview,
             isLoading = false
         )
     }.stateIn(
@@ -69,17 +112,9 @@ class ProductListViewModel(
         }
     }
 
-    /**
-     * بارگذاری وضعیت آمار محصولات.
-     * با استفاده از first() اطمینان حاصل می‌کنیم که فقط اولین مقدار را می‌گیریم
-     * و سپس با observeStatsForDate به‌صورت reactive به تغییرات گوش می‌دهیم.
-     */
     private fun loadStatStatuses() {
         viewModelScope.launch {
             val today = JalaliDateConverter.todayIso()
-            // به‌روزرسانی اولیه
-            refreshStatuses(today)
-            // گوش دادن به تغییرات آمار روزانه برای به‌روزرسانی خودکار
             app.dailyStatRepository.observeStatsForDate(today).collect { _ ->
                 refreshStatuses(today)
             }
@@ -88,22 +123,28 @@ class ProductListViewModel(
 
     private suspend fun refreshStatuses(today: String) {
         val products = app.productRepository.observeActiveProductsByWorkflow(workflowId).first()
-        val statuses = mutableMapOf<Long, StatStatus>()
+        val infos = mutableMapOf<Long, ProductStatInfo>()
         products.forEach { product ->
             val stat = app.dailyStatRepository.getStat(product.id, today)
-            statuses[product.id] = when {
-                stat == null -> StatStatus.NOT_REGISTERED
-                stat.isFinalized -> StatStatus.FINALIZED
-                stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
-                else -> StatStatus.REGISTERED
+            infos[product.id] = if (stat == null) {
+                ProductStatInfo(StatStatus.NOT_REGISTERED, null, null, null)
+            } else {
+                val status = when {
+                    stat.isFinalized -> StatStatus.FINALIZED
+                    stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
+                    else -> StatStatus.REGISTERED
+                }
+                ProductStatInfo(
+                    status = status,
+                    startVariance = stat.startVariance,
+                    endCumulativeVariance = stat.endCumulativeVariance,
+                    nightShiftVariance = stat.nightShiftVariance
+                )
             }
         }
-        _statStatuses.value = statuses
+        _statInfos.value = infos
     }
 
-    /**
-     * به‌روزرسانی دستی وضعیت‌ها - وقتی کاربر از صفحه ثبت آمار برمی‌گردد صدا زده می‌شود.
-     */
     fun refreshStatStatuses() {
         viewModelScope.launch {
             val today = JalaliDateConverter.todayIso()
@@ -113,6 +154,10 @@ class ProductListViewModel(
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    fun toggleShiftReview() {
+        _shiftReviewEnabled.value = !_shiftReviewEnabled.value
     }
 
     companion object {

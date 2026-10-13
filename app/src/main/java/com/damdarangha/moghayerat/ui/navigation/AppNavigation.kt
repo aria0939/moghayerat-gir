@@ -27,7 +27,7 @@ object Routes {
     const val WELCOME = "welcome"
     const val HOME = "home"
     const val PRODUCT_LIST = "product_list/{workflowId}"
-    const val STAT_ENTRY = "stat_entry/{productId}/{isoDate}"
+    const val STAT_ENTRY = "stat_entry/{productId}/{isoDate}/{stage}"
     const val REPORTS = "reports"
     const val HISTORY = "history"
     const val SETTINGS = "settings"
@@ -36,7 +36,7 @@ object Routes {
     const val BACKUP = "backup"
 
     fun productList(workflowId: Long) = "product_list/$workflowId"
-    fun statEntry(productId: Long, isoDate: String) = "stat_entry/$productId/$isoDate"
+    fun statEntry(productId: Long, isoDate: String, stage: String = "FULL") = "stat_entry/$productId/$isoDate/$stage"
 }
 
 @Composable
@@ -89,9 +89,9 @@ fun AppNavigation() {
             val workflowId = backStackEntry.arguments?.getLong("workflowId") ?: 0L
             ProductListScreen(
                 workflowId = workflowId,
-                onProductClick = { product ->
+                onProductClick = { product, stage ->
                     val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
-                    navController.navigate(Routes.statEntry(product.id, today))
+                    navController.navigate(Routes.statEntry(product.id, today, stage))
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -101,14 +101,17 @@ fun AppNavigation() {
             route = Routes.STAT_ENTRY,
             arguments = listOf(
                 navArgument("productId") { type = NavType.LongType },
-                navArgument("isoDate") { type = NavType.StringType }
+                navArgument("isoDate") { type = NavType.StringType },
+                navArgument("stage") { type = NavType.StringType; defaultValue = "FULL" }
             )
         ) { backStackEntry ->
             val productId = backStackEntry.arguments?.getLong("productId") ?: 0L
             val isoDate = backStackEntry.arguments?.getString("isoDate") ?: ""
+            val stage = backStackEntry.arguments?.getString("stage") ?: "FULL"
             StatEntryScreen(
                 productId = productId,
                 isoDate = isoDate,
+                stage = stage,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -134,7 +137,7 @@ fun AppNavigation() {
         composable(Routes.HISTORY) {
             HistoryScreen(
                 onStatClick = { statId, productId, isoDate ->
-                    navController.navigate(Routes.statEntry(productId, isoDate))
+                    navController.navigate(Routes.statEntry(productId, isoDate, "FULL"))
                 },
                 onBack = { navController.popBackStack() }
             )

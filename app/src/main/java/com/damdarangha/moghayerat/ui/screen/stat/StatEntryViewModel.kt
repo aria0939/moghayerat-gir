@@ -82,6 +82,58 @@ class StatEntryViewModel(
     private val _uiState = MutableStateFlow(StatEntryUiState(isoDate = isoDate))
     val uiState: StateFlow<StatEntryUiState> = _uiState.asStateFlow()
 
+    // ذخیره خودکار با debounce
+    private var autoSaveJob: kotlinx.coroutines.Job? = null
+    private val autoSaveDelay = 2000L  // ۲ ثانیه
+
+    /**
+     * آغاز ذخیره خودکار با debounce.
+     * هر بار که فیلدی تغییر می‌کند، تایمر ریست می‌شود.
+     * اگر ۲ ثانیه تغییری نباشد، ذخیره انجام می‌شود.
+     */
+    private fun scheduleAutoSave() {
+        autoSaveJob?.cancel()
+        autoSaveJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(autoSaveDelay)
+            // فقط اگر محصول بارگذاری شده و نهایی نشده
+            val state = _uiState.value
+            if (state.product != null && !state.isFinalized && !state.isSaving) {
+                try {
+                    saveDraftSilent()
+                } catch (_: Exception) {
+                    // خطای ذخیره خودکار بی‌صدا نادیده گرفته می‌شود
+                }
+            }
+        }
+    }
+
+    /**
+     * ذخیره پیش‌نویس بدون نمایش پیام.
+     */
+    private suspend fun saveDraftSilent() {
+        val state = _uiState.value
+        val product = state.product ?: return
+        val actualMorning = if (state.hasActualMorningStock) state.actualMorningStock else null
+        val input = DailyStatInput(
+            productId = product.id,
+            isoDate = state.isoDate,
+            openingStock = state.openingStock,
+            morningLoading = state.morningLoading,
+            actualMorningStock = actualMorning,
+            receipt = state.receipt,
+            returns = state.returns,
+            gifts = state.gifts,
+            waste = state.waste,
+            laboratory = state.laboratory,
+            midDayLoading = state.midDayLoading,
+            nightLoading = state.nightLoading,
+            currentStock = state.currentStock,
+            notes = state.notes
+        )
+        val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+        _uiState.update { it.copy(statId = savedId) }
+    }
+
     init {
         loadInitialData()
     }
@@ -232,6 +284,9 @@ class StatEntryViewModel(
         val state = _uiState.value
         val product = state.product ?: return
         val result = state.varianceResult ?: return
+
+        // ذخیره خودکار با debounce
+        scheduleAutoSave()
 
         // هشدار: بارگیری از موجودی قابل دسترس بیشتر شد
         val availableBeforeMorning = state.openingStock.let {

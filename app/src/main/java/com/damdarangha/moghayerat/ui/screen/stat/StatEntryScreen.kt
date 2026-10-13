@@ -71,11 +71,14 @@ import com.damdarangha.moghayerat.ui.components.VarianceResultCard
 fun StatEntryScreen(
     productId: Long,
     isoDate: String,
+    stage: String = "FULL",
     onBack: () -> Unit,
     viewModel: StatEntryViewModel = viewModel(
         factory = StatEntryViewModel.factory(MoghayeratApplication.instance, productId, isoDate)
     )
 ) {
+    val isStartStage = stage == "START"
+    val isEndStage = stage == "END"
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -156,8 +159,53 @@ fun StatEntryScreen(
             // اطلاعات محصول
             ProductInfoCard(state = state)
 
-            // بخش ۱: اطلاعات موجودی
-            SectionHeader(title = "بخش ۱: اطلاعات موجودی")
+            // اگر مرحله END است، خلاصه اول کار را نمایش بده
+            if (isEndStage && state.hasActualMorningStock) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "خلاصه اول کار",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        state.varianceResult?.let { result ->
+                            val startVar = result.startVariance
+                            val startText = when {
+                                startVar == null -> "—"
+                                startVar == 0 -> "مطابقت (۰)"
+                                startVar > 0 -> "اضافه ${startVar.toPersian()}"
+                                else -> "کسری ${(-startVar).toPersian()}"
+                            }
+                            Text(
+                                text = "شمارش واقعی اول کار: ${result.actualMorningStockTotal?.toPersian() ?: "—"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "مغایرت اول کار: $startText",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (startVar != null && startVar != 0)
+                                    MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // بخش ۱: اطلاعات موجودی (نمایش در START و FULL)
+            if (!isEndStage) {
+                SectionHeader(title = if (isStartStage) "بخش ۱: تحویل انبار (اول کار)" else "بخش ۱: اطلاعات موجودی")
 
             BoxUnitInput(
                 label = "۱. مانده شب گذشته",
@@ -221,8 +269,9 @@ fun StatEntryScreen(
                 }
             }
 
-            // بخش ۲: عملیات روزانه
-            SectionHeader(title = "بخش ۲: عملیات روزانه")
+            // بخش ۲: عملیات شیفت شب (نمایش در END و FULL)
+            if (!isStartStage) {
+            SectionHeader(title = if (isEndStage) "بخش ۲: عملیات شیفت شب (آخر کار)" else "بخش ۲: عملیات روزانه")
 
             BoxUnitInput(
                 label = "۵. رسید انبار",
@@ -272,7 +321,11 @@ fun StatEntryScreen(
                 enabled = !state.isFinalized
             )
 
-            // بخش ۳: موجودی پایان روز
+            // بستن بخش ۲ (if !isStartStage)
+            }
+
+            // بخش ۳: موجودی پایان روز (نمایش در END و FULL)
+            if (!isStartStage) {
             SectionHeader(title = "بخش ۳: موجودی پایان روز")
 
             BoxUnitInput(
@@ -282,6 +335,9 @@ fun StatEntryScreen(
                 onValueChange = viewModel::updateCurrentStock,
                 enabled = !state.isFinalized
             )
+
+            // بستن بخش ۳ (if !isStartStage)
+            }
 
             // بخش ۴: نتیجه مغایرت‌گیری
             SectionHeader(title = "بخش ۴: نتیجه مغایرت‌گیری")

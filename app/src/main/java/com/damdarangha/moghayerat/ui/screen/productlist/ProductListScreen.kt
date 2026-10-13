@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -71,7 +72,7 @@ import androidx.compose.foundation.layout.statusBars
 @Composable
 fun ProductListScreen(
     workflowId: Long,
-    onProductClick: (Product) -> Unit,
+    onProductClick: (Product, String) -> Unit,  // product + stage ("START" یا "END")
     onBack: () -> Unit,
     viewModel: ProductListViewModel = viewModel(
         factory = ProductListViewModel.factory(MoghayeratApplication.instance, workflowId)
@@ -114,7 +115,7 @@ fun ProductListScreen(
         ) {
             // ===== کارت آمار =====
             val total = state.products.size
-            val registered = state.todayStatsCount
+            val registered = state.startCount
             val remaining = (total - registered).coerceAtLeast(0)
             val progress = if (total > 0) registered.toFloat() / total else 0f
 
@@ -131,7 +132,8 @@ fun ProductListScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         StatBox("کل محصولات", total)
-                        StatBox("ثبت‌شده", registered)
+                        StatBox("اول کار", state.startCount)
+                        StatBox("آخر کار", state.endCount)
                         StatBox("باقی‌مانده", remaining)
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -151,6 +153,25 @@ fun ProductListScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // دکمه بررسی پایان شیفت
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "بررسی پایان شیفت",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Switch(
+                    checked = state.shiftReviewEnabled,
+                    onCheckedChange = { viewModel.toggleShiftReview() }
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -183,10 +204,12 @@ fun ProductListScreen(
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.products, key = { it.id }) { product ->
+                        val statInfo = state.statInfos[product.id]
                         ProductItemCard(
                             product = product,
-                            statStatus = state.statStatuses[product.id] ?: StatStatus.NOT_REGISTERED,
-                            onClick = { onProductClick(product) }
+                            statInfo = statInfo,
+                            onStartClick = { onProductClick(product, "START") },
+                            onEndClick = { onProductClick(product, "END") }
                         )
                     }
                 }
@@ -215,10 +238,12 @@ private fun StatBox(label: String, value: Int) {
 @Composable
 private fun ProductItemCard(
     product: Product,
-    statStatus: StatStatus,
-    onClick: () -> Unit
+    statInfo: ProductStatInfo?,
+    onStartClick: () -> Unit,
+    onEndClick: () -> Unit
 ) {
-    val (statusColor, statusIcon, statusText) = when (statStatus) {
+    val status = statInfo?.status ?: StatStatus.NOT_REGISTERED
+    val (statusColor, statusIcon, statusText) = when (status) {
         StatStatus.NOT_REGISTERED -> Triple(Color(0xFF9CA3AF), Icons.Default.Add, "ثبت‌نشده")
         StatStatus.DRAFT -> Triple(Color(0xFFFFBC4D), Icons.Default.Edit, "پیش‌نویس")
         StatStatus.REGISTERED -> Triple(Color(0xFF4CAF50), Icons.Default.CheckCircle, "ثبت‌شده")
@@ -226,9 +251,41 @@ private fun ProductItemCard(
         StatStatus.FINALIZED -> Triple(MaterialTheme.colorScheme.primary, Icons.Default.Lock, "نهایی‌شده")
     }
 
+    // رنگ مغایرت شیفت شب
+    val nightVariance = statInfo?.nightShiftVariance
+    val nightColor = when {
+        nightVariance == null -> Color(0xFF9CA3AF)  // خاکستری - نامشخص
+        nightVariance == 0 -> Color(0xFF4CAF50)     // سبز - مطابقت
+        nightVariance < 0 -> Color(0xFFEF5350)     // قرمز - کسری
+        else -> Color(0xFF42A5F5)                   // آبی - اضافه
+    }
+    val nightText = when {
+        nightVariance == null -> "—"
+        nightVariance == 0 -> "۰"
+        nightVariance > 0 -> "+${nightVariance.toPersian()}"
+        else -> "${nightVariance.toPersian()}"
+    }
+
+    // متن مغایرت اول کار
+    val startVariance = statInfo?.startVariance
+    val startText = when {
+        startVariance == null -> "اول کار"
+        startVariance == 0 -> "۰"
+        startVariance > 0 -> "+${startVariance.toPersian()}"
+        else -> "${startVariance.toPersian()}"
+    }
+
+    // متن مغایرت آخر کار
+    val endVariance = statInfo?.endCumulativeVariance
+    val endText = when {
+        endVariance == null -> "آخر کار"
+        endVariance == 0 -> "۰"
+        endVariance > 0 -> "+${endVariance.toPersian()}"
+        else -> "${endVariance.toPersian()}"
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(12.dp)
@@ -236,17 +293,16 @@ private fun ProductItemCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(12.dp)
         ) {
-            // ردیف اول: نام محصول + دایره وضعیت
+            // ردیف اول: آیکون وضعیت + نام محصول + برچسب وضعیت
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // دایره وضعیت
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(statusColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
@@ -255,94 +311,98 @@ private fun ProductItemCard(
                         imageVector = statusIcon,
                         contentDescription = statusText,
                         tint = statusColor,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.size(10.dp))
+                Spacer(modifier = Modifier.size(8.dp))
 
-                // نام و ظرفیت
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = product.name,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 14.sp
                     )
                     val capacityText = if (product.isRoundBox) "باکس رند"
                     else "باکس ${product.boxCapacity.toPersian()} عددی"
                     Text(
                         text = capacityText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp
                     )
                 }
 
-                // برچسب وضعیت
                 Card(
                     colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.15f)),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = statusText,
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // ردیف دوم: دو دکمه اول کار و آخر کار + مغایرت شیفت شب
+            // ردیف دوم: اول کار | آخر کار | مغایرت شب
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // دکمه اول کار
                 OutlinedButton(
-                    onClick = onClick,
+                    onClick = onStartClick,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "اول کار",
+                        text = startText,
                         style = MaterialTheme.typography.labelMedium,
-                        fontSize = 11.sp
+                        fontSize = 11.sp,
+                        fontWeight = if (startVariance != null) FontWeight.Bold else FontWeight.Normal
                     )
                 }
 
                 // دکمه آخر کار
                 OutlinedButton(
-                    onClick = onClick,
+                    onClick = onEndClick,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "آخر کار",
+                        text = endText,
                         style = MaterialTheme.typography.labelMedium,
-                        fontSize = 11.sp
+                        fontSize = 11.sp,
+                        fontWeight = if (endVariance != null) FontWeight.Bold else FontWeight.Normal
                     )
                 }
 
-                // نتیجه مغایرت شیفت شب
+                // نتیجه مغایرت شیفت شب - مهم‌ترین عدد
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(nightColor.copy(alpha = 0.15f))
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "مغایرت شب: —",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp
+                        text = nightText,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = nightColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
                     )
                 }
             }
