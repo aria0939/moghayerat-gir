@@ -20,3 +20,4 @@ upload/
 tools/
 .env
 *.log
+tool-results/
