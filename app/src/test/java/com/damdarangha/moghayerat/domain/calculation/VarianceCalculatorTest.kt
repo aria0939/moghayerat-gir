@@ -24,6 +24,16 @@ class VarianceCalculatorTest {
         boxCapacity = 27
     )
 
+    // محصول با ظرفیت باکس ۱ برای تست‌های مغایرت شیفت شب
+    // (هر باکس = ۱ عدد، پس مقدار باکس و عدد یکی هستند)
+    private val unitProduct = Product(
+        id = 10L,
+        name = "محصول تستی",
+        group = ProductGroup.STERILE,
+        packagingType = PackagingType.STERILE,
+        boxCapacity = 1
+    )
+
     // محصول ماست باکسی با ظرفیت ۴
     private val tubProduct = Product(
         id = 2L,
@@ -730,7 +740,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 249, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         // expectedStart = 400 - 100 = 300
         // actualStart = 299
@@ -774,7 +784,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 249, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         assertThat(result.startVariance).isEqualTo(-2)       // کسری ۲
         assertThat(result.endCumulativeVariance).isEqualTo(-1) // کسری ۱
@@ -806,7 +816,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 253, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         assertThat(result.startVariance).isEqualTo(1)        // اضافه ۱
         assertThat(result.endCumulativeVariance).isEqualTo(3) // اضافه ۳
@@ -838,7 +848,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 249, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         assertThat(result.startVariance).isEqualTo(0)       // مطابقت
         assertThat(result.endCumulativeVariance).isEqualTo(-1) // کسری ۱
@@ -874,7 +884,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 249, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         assertThat(result.startVariance).isEqualTo(2)
         assertThat(result.endCumulativeVariance).isEqualTo(-1)
@@ -902,7 +912,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 250, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         assertThat(result.startVariance).isEqualTo(0)
         assertThat(result.endCumulativeVariance).isEqualTo(0)
@@ -933,7 +943,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits.ZERO  // ثبت‌نشده
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         // startVariance باید محاسبه شود
         assertThat(result.startVariance).isEqualTo(-1)  // 299 - 300 = -1
@@ -963,7 +973,7 @@ class VarianceCalculatorTest {
             currentStock = BoxAndUnits(boxes = 250, units = 0)
         )
 
-        val result = VarianceCalculator.calculate(input, sterileProduct)
+        val result = VarianceCalculator.calculate(input, unitProduct)
 
         // morningVariance = null چون actualMorningStock = null
         assertThat(result.morningVariance).isNull()
