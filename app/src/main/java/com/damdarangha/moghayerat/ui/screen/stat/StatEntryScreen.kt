@@ -244,76 +244,76 @@ fun StatEntryScreen(
                 }
             }
 
-            // ===== نمایش فیلدهای آخر کار (فقط در END یا FULL) =====
+            // ===== بخش ۲: عملیات روزانه - در هر سه مرحله (START, END, FULL) =====
+            // این فیلدها در طول روز وارد می‌شوند و در هر دو مرحله اول کار و آخر کار قابل ویرایش هستند.
+            SectionHeader(title = "بخش ۲: عملیات روزانه")
+
+            BoxUnitInput(
+                label = "۵. رسید انبار",
+                value = state.receipt,
+                product = product,
+                onValueChange = viewModel::updateReceipt,
+                enabled = !state.isFinalized  // فعال در همه مراحل
+            )
+
+            BoxUnitInput(
+                label = "۶. برگشت به انبار",
+                value = state.returns,
+                product = product,
+                onValueChange = viewModel::updateReturns,
+                enabled = !state.isFinalized
+            )
+
+            BoxUnitInput(
+                label = "۷. میان روز",
+                value = state.midDayLoading,
+                product = product,
+                onValueChange = viewModel::updateMidDayLoading,
+                enabled = !state.isFinalized
+            )
+
+            BoxUnitInput(
+                label = "۸. هدایا",
+                value = state.gifts,
+                product = product,
+                onValueChange = viewModel::updateGifts,
+                enabled = !state.isFinalized
+            )
+
+            BoxUnitInput(
+                label = "۹. ضایعات",
+                value = state.waste,
+                product = product,
+                onValueChange = viewModel::updateWaste,
+                enabled = !state.isFinalized
+            )
+
+            BoxUnitInput(
+                label = "۱۰. آزمایشگاه",
+                value = state.laboratory,
+                product = product,
+                onValueChange = viewModel::updateLaboratory,
+                enabled = !state.isFinalized
+            )
+
+            // ===== بخش ۳: بارگیری شب و شمارش آخر کار - فقط در END یا FULL =====
             if (isEndStage || !isStartStage) {
-                // بخش ۲: عملیات روزانه
-                SectionHeader(title = "بخش ۲: عملیات روزانه")
-
-                BoxUnitInput(
-                    label = "۵. رسید انبار",
-                    value = state.receipt,
-                    product = product,
-                    onValueChange = viewModel::updateReceipt,
-                    enabled = !state.isFinalized && !isStartStage
-                )
-
-                BoxUnitInput(
-                    label = "۶. برگشت به انبار",
-                    value = state.returns,
-                    product = product,
-                    onValueChange = viewModel::updateReturns,
-                    enabled = !state.isFinalized && !isStartStage
-                )
-
-                BoxUnitInput(
-                    label = "۷. میان روز",
-                    value = state.midDayLoading,
-                    product = product,
-                    onValueChange = viewModel::updateMidDayLoading,
-                    enabled = !state.isFinalized && !isStartStage
-                )
-
-                BoxUnitInput(
-                    label = "۸. هدایا",
-                    value = state.gifts,
-                    product = product,
-                    onValueChange = viewModel::updateGifts,
-                    enabled = !state.isFinalized && !isStartStage
-                )
-
-                BoxUnitInput(
-                    label = "۹. ضایعات",
-                    value = state.waste,
-                    product = product,
-                    onValueChange = viewModel::updateWaste,
-                    enabled = !state.isFinalized && !isStartStage
-                )
-
-                BoxUnitInput(
-                    label = "۱۰. آزمایشگاه",
-                    value = state.laboratory,
-                    product = product,
-                    onValueChange = viewModel::updateLaboratory,
-                    enabled = !state.isFinalized && !isStartStage
-                )
+                SectionHeader(title = "بخش ۳: بارگیری شب و شمارش آخر کار")
 
                 BoxUnitInput(
                     label = "۱۲. بارگیری شب",
                     value = state.nightLoading,
                     product = product,
                     onValueChange = viewModel::updateNightLoading,
-                    enabled = !state.isFinalized && !isStartStage
+                    enabled = !state.isFinalized && !isStartStage  // در START غیرفعال
                 )
-
-                // بخش ۳: موجودی پایان روز
-                SectionHeader(title = "بخش ۳: موجودی پایان روز (آخر کار)")
 
                 BoxUnitInput(
                     label = "۱۱. مانده واقعی حال حاضر",
                     value = state.currentStock ?: BoxAndUnits.ZERO,
                     product = product,
                     onValueChange = viewModel::updateCurrentStock,
-                    enabled = !state.isFinalized && !isStartStage
+                    enabled = !state.isFinalized && !isStartStage  // در START غیرفعال
                 )
             }
 

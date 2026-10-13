@@ -177,20 +177,22 @@ class DailyStatRepository(
         val existing = dailyStatDao.getStat(input.productId, input.isoDate)
         val jalaliDate = JalaliDateConverter.gregorianToJalaliString(input.isoDate)
 
-        // محاسبه کامل برای استخراج مقادیر اول کار
+        // محاسبه کامل برای استخراج مقادیر اول کار و عملیات روزانه
         val fullResult = VarianceCalculator.calculate(input, product)
 
         // حفظ داده‌های آخر کار از رکورد موجود (در صورت وجود)
+        // نکته: عملیات روزانه (receipt, returns, gifts, waste, lab, midDay) از input استفاده می‌کنند
+        // زیرا در START نیز قابل ویرایش هستند. فقط nightLoading و currentStock حفظ می‌شوند.
         val currentStockTotal: Int? = existing?.currentStockTotal
         val nightLoadingTotal: Int = existing?.nightLoadingTotal ?: fullResult.nightLoadingTotal
-        val receiptTotal: Int = existing?.receiptTotal ?: fullResult.receiptTotal
-        val returnsTotal: Int = existing?.returnsTotal ?: fullResult.returnsTotal
-        val giftsTotal: Int = existing?.giftsTotal ?: fullResult.giftsTotal
-        val wasteTotal: Int = existing?.wasteTotal ?: fullResult.wasteTotal
-        val laboratoryTotal: Int = existing?.laboratoryTotal ?: fullResult.laboratoryTotal
-        val midDayLoadingTotal: Int = existing?.midDayLoadingTotal ?: fullResult.midDayLoadingTotal
+        val receiptTotal: Int = fullResult.receiptTotal
+        val returnsTotal: Int = fullResult.returnsTotal
+        val giftsTotal: Int = fullResult.giftsTotal
+        val wasteTotal: Int = fullResult.wasteTotal
+        val laboratoryTotal: Int = fullResult.laboratoryTotal
+        val midDayLoadingTotal: Int = fullResult.midDayLoadingTotal
 
-        // محاسبه دوباره expectedClosingStock بر اساس openingStock جدید + داده‌های آخر کار موجود
+        // محاسبه دوباره expectedClosingStock بر اساس openingStock جدید + عملیات روزانه + nightLoading موجود
         // expected = opening + receipt + returns - morning - midDay - night - gifts - waste - lab
         val expectedClosingStockTotal = (
             fullResult.openingStockTotal +
