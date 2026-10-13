@@ -46,7 +46,7 @@ public final class AppDatabase_Impl extends AppDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(7) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(8) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `workflows` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `displayOrder` INTEGER NOT NULL, `isActive` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)");
@@ -54,11 +54,11 @@ public final class AppDatabase_Impl extends AppDatabase {
         db.execSQL("CREATE TABLE IF NOT EXISTS `products` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workflowId` INTEGER NOT NULL, `name` TEXT NOT NULL, `group` TEXT NOT NULL, `packagingType` TEXT NOT NULL, `boxCapacity` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `isActive` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, FOREIGN KEY(`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )");
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_products_workflowId_name` ON `products` (`workflowId`, `name`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_products_workflowId` ON `products` (`workflowId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `daily_stats` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `productId` INTEGER NOT NULL, `isoDate` TEXT NOT NULL, `jalaliDate` TEXT NOT NULL, `openingStockTotal` INTEGER NOT NULL, `morningLoadingTotal` INTEGER NOT NULL, `actualMorningStockTotal` INTEGER, `receiptTotal` INTEGER NOT NULL, `returnsTotal` INTEGER NOT NULL, `giftsTotal` INTEGER NOT NULL, `wasteTotal` INTEGER NOT NULL, `laboratoryTotal` INTEGER NOT NULL, `midDayLoadingTotal` INTEGER NOT NULL, `nightLoadingTotal` INTEGER NOT NULL, `currentStockTotal` INTEGER, `expectedMorningStockTotal` INTEGER NOT NULL, `morningVariance` INTEGER, `expectedClosingStockTotal` INTEGER NOT NULL, `closingVariance` INTEGER NOT NULL, `startVariance` INTEGER, `endCumulativeVariance` INTEGER, `nightShiftVariance` INTEGER, `isFinalized` INTEGER NOT NULL, `notes` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, FOREIGN KEY(`productId`) REFERENCES `products`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `daily_stats` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `productId` INTEGER NOT NULL, `isoDate` TEXT NOT NULL, `jalaliDate` TEXT NOT NULL, `openingStockTotal` INTEGER NOT NULL, `morningLoadingTotal` INTEGER NOT NULL, `actualMorningStockTotal` INTEGER, `receiptTotal` INTEGER NOT NULL, `returnsTotal` INTEGER NOT NULL, `giftsTotal` INTEGER NOT NULL, `wasteTotal` INTEGER NOT NULL, `laboratoryTotal` INTEGER NOT NULL, `midDayLoadingTotal` INTEGER NOT NULL, `dayReceiptTotal` INTEGER NOT NULL, `dayReturnsTotal` INTEGER NOT NULL, `dayGiftsTotal` INTEGER NOT NULL, `dayWasteTotal` INTEGER NOT NULL, `dayLaboratoryTotal` INTEGER NOT NULL, `dayMidDayLoadingTotal` INTEGER NOT NULL, `nightLoadingTotal` INTEGER NOT NULL, `currentStockTotal` INTEGER, `expectedMorningStockTotal` INTEGER NOT NULL, `morningVariance` INTEGER, `expectedClosingStockTotal` INTEGER NOT NULL, `closingVariance` INTEGER NOT NULL, `startVariance` INTEGER, `endCumulativeVariance` INTEGER, `nightShiftVariance` INTEGER, `isFinalized` INTEGER NOT NULL, `notes` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, FOREIGN KEY(`productId`) REFERENCES `products`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )");
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_stats_productId_isoDate` ON `daily_stats` (`productId`, `isoDate`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `stat_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `statId` INTEGER NOT NULL, `productId` INTEGER NOT NULL, `isoDate` TEXT NOT NULL, `changeType` TEXT NOT NULL, `previousValue` TEXT, `newValue` TEXT, `changedAt` INTEGER NOT NULL, `note` TEXT NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '433aad203279e90781c8f91e3848e5e5')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2ae6e24a2bf20f5846bd582873304bd8')");
       }
 
       @Override
@@ -149,7 +149,7 @@ public final class AppDatabase_Impl extends AppDatabase {
                   + " Expected:\n" + _infoProducts + "\n"
                   + " Found:\n" + _existingProducts);
         }
-        final HashMap<String, TableInfo.Column> _columnsDailyStats = new HashMap<String, TableInfo.Column>(26);
+        final HashMap<String, TableInfo.Column> _columnsDailyStats = new HashMap<String, TableInfo.Column>(32);
         _columnsDailyStats.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("productId", new TableInfo.Column("productId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("isoDate", new TableInfo.Column("isoDate", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -163,6 +163,12 @@ public final class AppDatabase_Impl extends AppDatabase {
         _columnsDailyStats.put("wasteTotal", new TableInfo.Column("wasteTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("laboratoryTotal", new TableInfo.Column("laboratoryTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("midDayLoadingTotal", new TableInfo.Column("midDayLoadingTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDailyStats.put("dayReceiptTotal", new TableInfo.Column("dayReceiptTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDailyStats.put("dayReturnsTotal", new TableInfo.Column("dayReturnsTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDailyStats.put("dayGiftsTotal", new TableInfo.Column("dayGiftsTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDailyStats.put("dayWasteTotal", new TableInfo.Column("dayWasteTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDailyStats.put("dayLaboratoryTotal", new TableInfo.Column("dayLaboratoryTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDailyStats.put("dayMidDayLoadingTotal", new TableInfo.Column("dayMidDayLoadingTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("nightLoadingTotal", new TableInfo.Column("nightLoadingTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("currentStockTotal", new TableInfo.Column("currentStockTotal", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDailyStats.put("expectedMorningStockTotal", new TableInfo.Column("expectedMorningStockTotal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -208,7 +214,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "433aad203279e90781c8f91e3848e5e5", "2c9a690e9dbd1da95a830ac89b4e4233");
+    }, "2ae6e24a2bf20f5846bd582873304bd8", "22eeedf270c89d6d54323d5315b55dbd");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

@@ -269,20 +269,37 @@ class StatEntryViewModel(
 
             if (existingStat != null) {
                 // اگر آمار موجود است، مقادیر آن را بارگذاری می‌کنیم
-                // نکته کلیدی: از currentStockTotal != null برای تشخیص hasCurrentStock استفاده می‌کنیم
-                // (نه currentStockTotal > 0) زیرا صفر یک مقدار معتبر برای «ثبت‌شده با مقدار صفر» است.
                 //
-                // نکته در مورد فیلدهای start*: چون در DB فقط یک ستون receiptTotal داریم،
-                // مقدار آن را در هر دو فیلد startReceipt و receipt کپی می‌کنیم. این فقط مقدار اولیه
-                // است؛ وقتی کاربر در START یا END تغییری می‌دهد، فقط فیلد همان مرحله به‌روزرسانی می‌شود
-                // و در فیلد دیگر تغییری ایجاد نمی‌شود.
+                // ساختار ذخیره‌سازی:
+                // - day* Total: فقط مقادیر روز (از مرحله اول کار)
+                // - *Total (مثلاً receiptTotal): کل = روز + شب
+                // - شب = کل - روز (محاسبه می‌شود)
+                //
+                // در فرم اول کار: فیلدهای start* مقادیر روز را نشان می‌دهند
+                // در فرم آخر کار: فیلدهای receipt و ... مقادیر شب را نشان می‌دهند (کل - روز)
                 _uiState.update {
-                    val receiptBU = VarianceCalculator.fromTotalUnits(existingStat.receiptTotal, product)
-                    val returnsBU = VarianceCalculator.fromTotalUnits(existingStat.returnsTotal, product)
-                    val giftsBU = VarianceCalculator.fromTotalUnits(existingStat.giftsTotal, product)
-                    val wasteBU = VarianceCalculator.fromTotalUnits(existingStat.wasteTotal, product)
-                    val laboratoryBU = VarianceCalculator.fromTotalUnits(existingStat.laboratoryTotal, product)
-                    val midDayBU = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product)
+                    val dayReceiptBU = VarianceCalculator.fromTotalUnits(existingStat.dayReceiptTotal, product)
+                    val dayReturnsBU = VarianceCalculator.fromTotalUnits(existingStat.dayReturnsTotal, product)
+                    val dayGiftsBU = VarianceCalculator.fromTotalUnits(existingStat.dayGiftsTotal, product)
+                    val dayWasteBU = VarianceCalculator.fromTotalUnits(existingStat.dayWasteTotal, product)
+                    val dayLabBU = VarianceCalculator.fromTotalUnits(existingStat.dayLaboratoryTotal, product)
+                    val dayMidDayBU = VarianceCalculator.fromTotalUnits(existingStat.dayMidDayLoadingTotal, product)
+
+                    // شب = کل - روز
+                    val nightReceiptTotal = existingStat.receiptTotal - existingStat.dayReceiptTotal
+                    val nightReturnsTotal = existingStat.returnsTotal - existingStat.dayReturnsTotal
+                    val nightGiftsTotal = existingStat.giftsTotal - existingStat.dayGiftsTotal
+                    val nightWasteTotal = existingStat.wasteTotal - existingStat.dayWasteTotal
+                    val nightLabTotal = existingStat.laboratoryTotal - existingStat.dayLaboratoryTotal
+                    val nightMidDayTotal = existingStat.midDayLoadingTotal - existingStat.dayMidDayLoadingTotal
+
+                    val nightReceiptBU = VarianceCalculator.fromTotalUnits(nightReceiptTotal, product)
+                    val nightReturnsBU = VarianceCalculator.fromTotalUnits(nightReturnsTotal, product)
+                    val nightGiftsBU = VarianceCalculator.fromTotalUnits(nightGiftsTotal, product)
+                    val nightWasteBU = VarianceCalculator.fromTotalUnits(nightWasteTotal, product)
+                    val nightLabBU = VarianceCalculator.fromTotalUnits(nightLabTotal, product)
+                    val nightMidDayBU = VarianceCalculator.fromTotalUnits(nightMidDayTotal, product)
+
                     it.copy(
                         product = product,
                         jalaliDate = jalaliDate,
@@ -292,20 +309,20 @@ class StatEntryViewModel(
                             VarianceCalculator.fromTotalUnits(t, product)
                         },
                         hasActualMorningStock = existingStat.actualMorningStockTotal != null,
-                        // عملیات روزانه اول کار (کپی از DB به‌عنوان مقدار اولیه)
-                        startReceipt = receiptBU,
-                        startReturns = returnsBU,
-                        startGifts = giftsBU,
-                        startWaste = wasteBU,
-                        startLaboratory = laboratoryBU,
-                        startMidDayLoading = midDayBU,
-                        // عملیات روزانه آخر کار (همان مقدار DB)
-                        receipt = receiptBU,
-                        returns = returnsBU,
-                        gifts = giftsBU,
-                        waste = wasteBU,
-                        laboratory = laboratoryBU,
-                        midDayLoading = midDayBU,
+                        // عملیات روزانه اول کار — فقط مقادیر روز
+                        startReceipt = dayReceiptBU,
+                        startReturns = dayReturnsBU,
+                        startGifts = dayGiftsBU,
+                        startWaste = dayWasteBU,
+                        startLaboratory = dayLabBU,
+                        startMidDayLoading = dayMidDayBU,
+                        // عملیات روزانه آخر کار — فقط مقادیر شب (کل - روز)
+                        receipt = nightReceiptBU,
+                        returns = nightReturnsBU,
+                        gifts = nightGiftsBU,
+                        waste = nightWasteBU,
+                        laboratory = nightLabBU,
+                        midDayLoading = nightMidDayBU,
                         nightLoading = VarianceCalculator.fromTotalUnits(existingStat.nightLoadingTotal, product),
                         currentStock = existingStat.currentStockTotal?.let { t ->
                             VarianceCalculator.fromTotalUnits(t, product)
@@ -314,7 +331,6 @@ class StatEntryViewModel(
                         notes = existingStat.notes,
                         isFinalized = existingStat.isFinalized,
                         statId = existingStat.id,
-                        // تعیین پرچم‌های ثبت هر مرحله بر اساس داده موجود:
                         endStageSaved = existingStat.currentStockTotal != null,
                         startStageSaved = existingStat.actualMorningStockTotal != null
                             || existingStat.startVariance != null

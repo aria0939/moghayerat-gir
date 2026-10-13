@@ -101,6 +101,13 @@ class DailyStatRepository(
             wasteTotal = result.wasteTotal,
             laboratoryTotal = result.laboratoryTotal,
             midDayLoadingTotal = result.midDayLoadingTotal,
+            // در حالت FULL، مقادیر day* از existing حفظ می‌شوند (یا ۰ اگر رکورد جدید)
+            dayReceiptTotal = existing?.dayReceiptTotal ?: 0,
+            dayReturnsTotal = existing?.dayReturnsTotal ?: 0,
+            dayGiftsTotal = existing?.dayGiftsTotal ?: 0,
+            dayWasteTotal = existing?.dayWasteTotal ?: 0,
+            dayLaboratoryTotal = existing?.dayLaboratoryTotal ?: 0,
+            dayMidDayLoadingTotal = existing?.dayMidDayLoadingTotal ?: 0,
             nightLoadingTotal = result.nightLoadingTotal,
             currentStockTotal = result.currentStockTotal,
             expectedMorningStockTotal = result.expectedMorningStockTotal,
@@ -177,43 +184,55 @@ class DailyStatRepository(
         val existing = dailyStatDao.getStat(input.productId, input.isoDate)
         val jalaliDate = JalaliDateConverter.gregorianToJalaliString(input.isoDate)
 
-        // محاسبه کامل برای استخراج مقادیر اول کار و عملیات روزانه
+        // محاسبه کامل برای استخراج مقادیر اول کار و عملیات روزانه روز
         val fullResult = VarianceCalculator.calculate(input, product)
 
         // حفظ داده‌های آخر کار از رکورد موجود (در صورت وجود)
-        // نکته: عملیات روزانه (receipt, returns, gifts, waste, lab, midDay) از input استفاده می‌کنند
-        // زیرا در START نیز قابل ویرایش هستند. فقط nightLoading و currentStock حفظ می‌شوند.
         val currentStockTotal: Int? = existing?.currentStockTotal
         val nightLoadingTotal: Int = existing?.nightLoadingTotal ?: fullResult.nightLoadingTotal
-        val receiptTotal: Int = fullResult.receiptTotal
-        val returnsTotal: Int = fullResult.returnsTotal
-        val giftsTotal: Int = fullResult.giftsTotal
-        val wasteTotal: Int = fullResult.wasteTotal
-        val laboratoryTotal: Int = fullResult.laboratoryTotal
-        val midDayLoadingTotal: Int = fullResult.midDayLoadingTotal
 
-        // محاسبه دوباره expectedClosingStock بر اساس openingStock جدید + عملیات روزانه + nightLoading موجود
-        // expected = opening + receipt + returns - morning - midDay - night - gifts - waste - lab
+        // عملیات روزانه روز — این مقادیر از input می‌آیند (در START وارد شده‌اند)
+        val dayReceiptTotal: Int = fullResult.receiptTotal
+        val dayReturnsTotal: Int = fullResult.returnsTotal
+        val dayGiftsTotal: Int = fullResult.giftsTotal
+        val dayWasteTotal: Int = fullResult.wasteTotal
+        val dayLaboratoryTotal: Int = fullResult.laboratoryTotal
+        val dayMidDayLoadingTotal: Int = fullResult.midDayLoadingTotal
+
+        // محاسبه مقادیر شب از رکورد موجود
+        // شب = کل - روز (اگر رکورد موجود باشد)
+        val nightReceipt: Int = (existing?.receiptTotal ?: 0) - (existing?.dayReceiptTotal ?: 0)
+        val nightReturns: Int = (existing?.returnsTotal ?: 0) - (existing?.dayReturnsTotal ?: 0)
+        val nightGifts: Int = (existing?.giftsTotal ?: 0) - (existing?.dayGiftsTotal ?: 0)
+        val nightWaste: Int = (existing?.wasteTotal ?: 0) - (existing?.dayWasteTotal ?: 0)
+        val nightLaboratory: Int = (existing?.laboratoryTotal ?: 0) - (existing?.dayLaboratoryTotal ?: 0)
+        val nightMidDay: Int = (existing?.midDayLoadingTotal ?: 0) - (existing?.dayMidDayLoadingTotal ?: 0)
+
+        // کل = روز + شب
+        val totalReceipt = dayReceiptTotal + nightReceipt
+        val totalReturns = dayReturnsTotal + nightReturns
+        val totalGifts = dayGiftsTotal + nightGifts
+        val totalWaste = dayWasteTotal + nightWaste
+        val totalLaboratory = dayLaboratoryTotal + nightLaboratory
+        val totalMidDay = dayMidDayLoadingTotal + nightMidDay
+
+        // محاسبه expectedClosingStock با کل (روز + شب)
         val expectedClosingStockTotal = (
             fullResult.openingStockTotal +
-            receiptTotal + returnsTotal -
+            totalReceipt + totalReturns -
             fullResult.morningLoadingTotal -
-            midDayLoadingTotal - nightLoadingTotal -
-            giftsTotal - wasteTotal - laboratoryTotal
+            totalMidDay - nightLoadingTotal -
+            totalGifts - totalWaste - totalLaboratory
         )
 
-        // محاسبه closingVariance و endCumulativeVariance اگر currentStock داریم
-        // نکته: این مقادیر مجدداً محاسبه می‌شوند چون openingStock (و در نتیجه expected) تغییر کرده
         val closingVariance: Int = if (currentStockTotal != null) {
             expectedClosingStockTotal - currentStockTotal
         } else 0
 
         val endCumulativeVariance: Int? = if (currentStockTotal != null) {
-            // actual - expected (منفی=کسری، مثبت=اضافه)
             currentStockTotal - expectedClosingStockTotal
         } else null
 
-        // محاسبه nightShiftVariance اگر هر دو موجود باشند
         val nightShiftVariance: Int? = if (fullResult.startVariance != null && endCumulativeVariance != null) {
             endCumulativeVariance - fullResult.startVariance
         } else null
@@ -226,12 +245,20 @@ class DailyStatRepository(
             openingStockTotal = fullResult.openingStockTotal,
             morningLoadingTotal = fullResult.morningLoadingTotal,
             actualMorningStockTotal = fullResult.actualMorningStockTotal,
-            receiptTotal = receiptTotal,
-            returnsTotal = returnsTotal,
-            giftsTotal = giftsTotal,
-            wasteTotal = wasteTotal,
-            laboratoryTotal = laboratoryTotal,
-            midDayLoadingTotal = midDayLoadingTotal,
+            // کل = روز + شب
+            receiptTotal = totalReceipt,
+            returnsTotal = totalReturns,
+            giftsTotal = totalGifts,
+            wasteTotal = totalWaste,
+            laboratoryTotal = totalLaboratory,
+            midDayLoadingTotal = totalMidDay,
+            // فقط روز (از input)
+            dayReceiptTotal = dayReceiptTotal,
+            dayReturnsTotal = dayReturnsTotal,
+            dayGiftsTotal = dayGiftsTotal,
+            dayWasteTotal = dayWasteTotal,
+            dayLaboratoryTotal = dayLaboratoryTotal,
+            dayMidDayLoadingTotal = dayMidDayLoadingTotal,
             nightLoadingTotal = nightLoadingTotal,
             currentStockTotal = currentStockTotal,
             expectedMorningStockTotal = fullResult.expectedMorningStockTotal,
@@ -277,10 +304,10 @@ class DailyStatRepository(
         val existing = dailyStatDao.getStat(input.productId, input.isoDate)
         val jalaliDate = JalaliDateConverter.gregorianToJalaliString(input.isoDate)
 
-        // محاسبه کامل برای استخراج مقادیر آخر کار
+        // محاسبه کامل برای استخراج مقادیر شب (از input)
         val fullResult = VarianceCalculator.calculate(input, product)
 
-        // اگر آمار اول کار قبلاً ثبت شده، آن را حفظ می‌کنیم
+        // حفظ داده‌های اول کار از رکورد موجود
         val openingStockTotal: Int = existing?.openingStockTotal ?: fullResult.openingStockTotal
         val morningLoadingTotal: Int = existing?.morningLoadingTotal ?: fullResult.morningLoadingTotal
         val actualMorningStockTotal: Int? = existing?.actualMorningStockTotal ?: fullResult.actualMorningStockTotal
@@ -289,14 +316,37 @@ class DailyStatRepository(
             ?: fullResult.expectedMorningStockTotal
         val morningVariance: Int? = existing?.morningVariance ?: fullResult.morningVariance
 
-        // محاسبه expectedClosingStock بر اساس داده‌های آخر کار + opening قدیمی
-        // expected = opening + receipt + returns - morning - midDay - night - gifts - waste - lab
+        // حفظ مقادیر روز از رکورد موجود
+        val dayReceiptTotal: Int = existing?.dayReceiptTotal ?: 0
+        val dayReturnsTotal: Int = existing?.dayReturnsTotal ?: 0
+        val dayGiftsTotal: Int = existing?.dayGiftsTotal ?: 0
+        val dayWasteTotal: Int = existing?.dayWasteTotal ?: 0
+        val dayLaboratoryTotal: Int = existing?.dayLaboratoryTotal ?: 0
+        val dayMidDayLoadingTotal: Int = existing?.dayMidDayLoadingTotal ?: 0
+
+        // مقادیر شب از input (این مقادیر در فرم آخر کار وارد شده‌اند)
+        val nightReceipt: Int = fullResult.receiptTotal
+        val nightReturns: Int = fullResult.returnsTotal
+        val nightGifts: Int = fullResult.giftsTotal
+        val nightWaste: Int = fullResult.wasteTotal
+        val nightLaboratory: Int = fullResult.laboratoryTotal
+        val nightMidDay: Int = fullResult.midDayLoadingTotal
+
+        // کل = روز + شب
+        val totalReceipt = dayReceiptTotal + nightReceipt
+        val totalReturns = dayReturnsTotal + nightReturns
+        val totalGifts = dayGiftsTotal + nightGifts
+        val totalWaste = dayWasteTotal + nightWaste
+        val totalLaboratory = dayLaboratoryTotal + nightLaboratory
+        val totalMidDay = dayMidDayLoadingTotal + nightMidDay
+
+        // محاسبه expectedClosingStock با کل (روز + شب)
         val expectedClosingStockTotal = (
             openingStockTotal +
-            fullResult.receiptTotal + fullResult.returnsTotal -
+            totalReceipt + totalReturns -
             morningLoadingTotal -
-            fullResult.midDayLoadingTotal - fullResult.nightLoadingTotal -
-            fullResult.giftsTotal - fullResult.wasteTotal - fullResult.laboratoryTotal
+            totalMidDay - fullResult.nightLoadingTotal -
+            totalGifts - totalWaste - totalLaboratory
         )
 
         val currentStockTotal: Int? = fullResult.currentStockTotal
@@ -304,8 +354,6 @@ class DailyStatRepository(
             expectedClosingStockTotal - currentStockTotal
         } else 0
 
-        // محاسبه endCumulativeVariance و nightShiftVariance
-        // قرارداد: منفی=کسری، مثبت=اضافه
         val endCumulativeVariance: Int? = if (currentStockTotal != null) {
             currentStockTotal - expectedClosingStockTotal
         } else null
@@ -322,12 +370,20 @@ class DailyStatRepository(
             openingStockTotal = openingStockTotal,
             morningLoadingTotal = morningLoadingTotal,
             actualMorningStockTotal = actualMorningStockTotal,
-            receiptTotal = fullResult.receiptTotal,
-            returnsTotal = fullResult.returnsTotal,
-            giftsTotal = fullResult.giftsTotal,
-            wasteTotal = fullResult.wasteTotal,
-            laboratoryTotal = fullResult.laboratoryTotal,
-            midDayLoadingTotal = fullResult.midDayLoadingTotal,
+            // کل = روز + شب
+            receiptTotal = totalReceipt,
+            returnsTotal = totalReturns,
+            giftsTotal = totalGifts,
+            wasteTotal = totalWaste,
+            laboratoryTotal = totalLaboratory,
+            midDayLoadingTotal = totalMidDay,
+            // فقط روز (حفظ از رکورد موجود)
+            dayReceiptTotal = dayReceiptTotal,
+            dayReturnsTotal = dayReturnsTotal,
+            dayGiftsTotal = dayGiftsTotal,
+            dayWasteTotal = dayWasteTotal,
+            dayLaboratoryTotal = dayLaboratoryTotal,
+            dayMidDayLoadingTotal = dayMidDayLoadingTotal,
             nightLoadingTotal = fullResult.nightLoadingTotal,
             currentStockTotal = currentStockTotal,
             expectedMorningStockTotal = expectedMorningStockTotal,

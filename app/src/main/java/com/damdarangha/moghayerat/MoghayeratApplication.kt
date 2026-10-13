@@ -31,7 +31,7 @@ class MoghayeratApplication : Application() {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
-            .addMigrations(AppDatabase.MIGRATION_6_7)
+            .addMigrations(AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8)
             // به‌عنوان safety net: اگر کاربر روی نسخه‌ی بسیار قدیمی بود (قبل از v6)،
             // به‌جای crash کردن، دیتابیس را بازسازی می‌کند.
             .fallbackToDestructiveMigration()

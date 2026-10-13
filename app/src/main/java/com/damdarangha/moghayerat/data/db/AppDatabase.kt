@@ -20,7 +20,7 @@ import com.damdarangha.moghayerat.data.db.entity.WorkflowEntity
         DailyStatEntity::class,
         StatHistoryEntity::class
     ],
-    version = 7,  // افزایش نسخه برای nullable شدن currentStockTotal
+    version = 8,  // افزایش نسخه برای ستون‌های عملیات روزانه روز (day*)
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,23 +33,10 @@ abstract class AppDatabase : RoomDatabase() {
         const val DATABASE_NAME = "moghayerat.db"
 
         /**
-         * مهاجرت نسخه ۶ به ۷:
-         *
-         * تغییر currentStockTotal از Int (با پیش‌فرض ۰) به Int? (nullable).
-         *
-         * استراتژی:
-         * - اگر endCumulativeVariance در رکورد قدیمی NOT NULL است، یعنی کاربر شمارش آخر کار را
-         *   ثبت کرده (حتی اگر صفر بوده). پس مقدار currentStockTotal قدیمی (حتی اگر ۰) معتبر است
-         *   و به‌صورت Int در ستون جدید ذخیره می‌شود.
-         * - اگر endCumulativeVariance در رکورد قدیمی NULL است، یعنی شمارش آخر کار ثبت نشده.
-         *   پس currentStockTotal نیز باید NULL باشد.
-         *
-         * این مهاجرت داده‌های کاربر را حفظ می‌کند و در عین حال تفاوت بین
-         * «ثبت‌نشده» و «ثبت‌شده با مقدار صفر» را قابل تشخیص می‌سازد.
+         * مهاجرت نسخه ۶ به ۷: تبدیل currentStockTotal به nullable.
          */
         val MIGRATION_6_7: Migration = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // بازسازی جدول با ستون nullable
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS daily_stats_new (
@@ -83,10 +70,6 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-
-                // کپی داده‌ها با منطق nullable شدن
-                // اگر endCumulativeVariance NOT NULL است، مقدار currentStockTotal قدیمی را نگه می‌داریم
-                // در غیر این صورت NULL می‌گذاریم
                 db.execSQL(
                     """
                     INSERT INTO daily_stats_new (
@@ -108,15 +91,34 @@ abstract class AppDatabase : RoomDatabase() {
                     FROM daily_stats
                     """.trimIndent()
                 )
-
-                // جایگزینی جدول قدیمی با جدول جدید
                 db.execSQL("DROP TABLE IF EXISTS daily_stats")
                 db.execSQL("ALTER TABLE daily_stats_new RENAME TO daily_stats")
-
-                // بازسازی ایندکس‌ها
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS index_daily_stats_productId_isoDate ON daily_stats (productId, isoDate)"
                 )
+            }
+        }
+
+        /**
+         * مهاجرت نسخه ۷ به ۸: اضافه کردن ستون‌های عملیات روزانه روز (day*).
+         *
+         * این ستون‌ها مقادیر عملیات روزانه را که در مرحله اول کار (روز) وارد شده‌اند،
+         * جدا از مقادیر کل (روز + شب) ذخیره می‌کنند.
+         *
+         * ستون‌های جدید:
+         * - dayReceiptTotal, dayReturnsTotal, dayGiftsTotal
+         * - dayWasteTotal, dayLaboratoryTotal, dayMidDayLoadingTotal
+         *
+         * همه با پیش‌فرض ۰ (برای سازگاری با داده قدیمی).
+         */
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE daily_stats ADD COLUMN dayReceiptTotal INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE daily_stats ADD COLUMN dayReturnsTotal INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE daily_stats ADD COLUMN dayGiftsTotal INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE daily_stats ADD COLUMN dayWasteTotal INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE daily_stats ADD COLUMN dayLaboratoryTotal INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE daily_stats ADD COLUMN dayMidDayLoadingTotal INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

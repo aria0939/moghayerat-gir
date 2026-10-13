@@ -36,12 +36,23 @@ data class DailyStatEntity(
     val openingStockTotal: Int,
     val morningLoadingTotal: Int,
     val actualMorningStockTotal: Int?,  // null اگر کاربر وارد نکرده باشد
+    // ===== عملیات روزانه — کل (روز + شب) =====
     val receiptTotal: Int,
     val returnsTotal: Int,              // برگشت به انبار (به موجودی اضافه می‌شود)
     val giftsTotal: Int,
     val wasteTotal: Int,
     val laboratoryTotal: Int,               // آزمایشگاه (از موجودی کم می‌شود)
     val midDayLoadingTotal: Int,        // بارگیری میان روز (از موجودی کم می‌شود)
+    // ===== عملیات روزانه — فقط روز (اول کار) =====
+    // این مقادیر در مرحله اول کار وارد می‌شوند و جدا از مقادیر شب ذخیره می‌شوند.
+    // مقدار شب = کل - روز (محاسبه می‌شود، ذخیره نمی‌شود).
+    val dayReceiptTotal: Int = 0,
+    val dayReturnsTotal: Int = 0,
+    val dayGiftsTotal: Int = 0,
+    val dayWasteTotal: Int = 0,
+    val dayLaboratoryTotal: Int = 0,
+    val dayMidDayLoadingTotal: Int = 0,
+    // ===== فیلدهای شب =====
     val nightLoadingTotal: Int,
     val currentStockTotal: Int? = null,      // null = شمارش آخر کار ثبت‌نشده، Int (شامل 0) = ثبت‌شده
     // مقادیر محاسبه‌شده

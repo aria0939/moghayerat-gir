@@ -52,7 +52,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `daily_stats` (`id`,`productId`,`isoDate`,`jalaliDate`,`openingStockTotal`,`morningLoadingTotal`,`actualMorningStockTotal`,`receiptTotal`,`returnsTotal`,`giftsTotal`,`wasteTotal`,`laboratoryTotal`,`midDayLoadingTotal`,`nightLoadingTotal`,`currentStockTotal`,`expectedMorningStockTotal`,`morningVariance`,`expectedClosingStockTotal`,`closingVariance`,`startVariance`,`endCumulativeVariance`,`nightShiftVariance`,`isFinalized`,`notes`,`createdAt`,`updatedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `daily_stats` (`id`,`productId`,`isoDate`,`jalaliDate`,`openingStockTotal`,`morningLoadingTotal`,`actualMorningStockTotal`,`receiptTotal`,`returnsTotal`,`giftsTotal`,`wasteTotal`,`laboratoryTotal`,`midDayLoadingTotal`,`dayReceiptTotal`,`dayReturnsTotal`,`dayGiftsTotal`,`dayWasteTotal`,`dayLaboratoryTotal`,`dayMidDayLoadingTotal`,`nightLoadingTotal`,`currentStockTotal`,`expectedMorningStockTotal`,`morningVariance`,`expectedClosingStockTotal`,`closingVariance`,`startVariance`,`endCumulativeVariance`,`nightShiftVariance`,`isFinalized`,`notes`,`createdAt`,`updatedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -75,47 +75,53 @@ public final class DailyStatDao_Impl implements DailyStatDao {
         statement.bindLong(11, entity.getWasteTotal());
         statement.bindLong(12, entity.getLaboratoryTotal());
         statement.bindLong(13, entity.getMidDayLoadingTotal());
-        statement.bindLong(14, entity.getNightLoadingTotal());
+        statement.bindLong(14, entity.getDayReceiptTotal());
+        statement.bindLong(15, entity.getDayReturnsTotal());
+        statement.bindLong(16, entity.getDayGiftsTotal());
+        statement.bindLong(17, entity.getDayWasteTotal());
+        statement.bindLong(18, entity.getDayLaboratoryTotal());
+        statement.bindLong(19, entity.getDayMidDayLoadingTotal());
+        statement.bindLong(20, entity.getNightLoadingTotal());
         if (entity.getCurrentStockTotal() == null) {
-          statement.bindNull(15);
-        } else {
-          statement.bindLong(15, entity.getCurrentStockTotal());
-        }
-        statement.bindLong(16, entity.getExpectedMorningStockTotal());
-        if (entity.getMorningVariance() == null) {
-          statement.bindNull(17);
-        } else {
-          statement.bindLong(17, entity.getMorningVariance());
-        }
-        statement.bindLong(18, entity.getExpectedClosingStockTotal());
-        statement.bindLong(19, entity.getClosingVariance());
-        if (entity.getStartVariance() == null) {
-          statement.bindNull(20);
-        } else {
-          statement.bindLong(20, entity.getStartVariance());
-        }
-        if (entity.getEndCumulativeVariance() == null) {
           statement.bindNull(21);
         } else {
-          statement.bindLong(21, entity.getEndCumulativeVariance());
+          statement.bindLong(21, entity.getCurrentStockTotal());
+        }
+        statement.bindLong(22, entity.getExpectedMorningStockTotal());
+        if (entity.getMorningVariance() == null) {
+          statement.bindNull(23);
+        } else {
+          statement.bindLong(23, entity.getMorningVariance());
+        }
+        statement.bindLong(24, entity.getExpectedClosingStockTotal());
+        statement.bindLong(25, entity.getClosingVariance());
+        if (entity.getStartVariance() == null) {
+          statement.bindNull(26);
+        } else {
+          statement.bindLong(26, entity.getStartVariance());
+        }
+        if (entity.getEndCumulativeVariance() == null) {
+          statement.bindNull(27);
+        } else {
+          statement.bindLong(27, entity.getEndCumulativeVariance());
         }
         if (entity.getNightShiftVariance() == null) {
-          statement.bindNull(22);
+          statement.bindNull(28);
         } else {
-          statement.bindLong(22, entity.getNightShiftVariance());
+          statement.bindLong(28, entity.getNightShiftVariance());
         }
         final int _tmp = entity.isFinalized() ? 1 : 0;
-        statement.bindLong(23, _tmp);
-        statement.bindString(24, entity.getNotes());
-        statement.bindLong(25, entity.getCreatedAt());
-        statement.bindLong(26, entity.getUpdatedAt());
+        statement.bindLong(29, _tmp);
+        statement.bindString(30, entity.getNotes());
+        statement.bindLong(31, entity.getCreatedAt());
+        statement.bindLong(32, entity.getUpdatedAt());
       }
     };
     this.__updateAdapterOfDailyStatEntity = new EntityDeletionOrUpdateAdapter<DailyStatEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `daily_stats` SET `id` = ?,`productId` = ?,`isoDate` = ?,`jalaliDate` = ?,`openingStockTotal` = ?,`morningLoadingTotal` = ?,`actualMorningStockTotal` = ?,`receiptTotal` = ?,`returnsTotal` = ?,`giftsTotal` = ?,`wasteTotal` = ?,`laboratoryTotal` = ?,`midDayLoadingTotal` = ?,`nightLoadingTotal` = ?,`currentStockTotal` = ?,`expectedMorningStockTotal` = ?,`morningVariance` = ?,`expectedClosingStockTotal` = ?,`closingVariance` = ?,`startVariance` = ?,`endCumulativeVariance` = ?,`nightShiftVariance` = ?,`isFinalized` = ?,`notes` = ?,`createdAt` = ?,`updatedAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `daily_stats` SET `id` = ?,`productId` = ?,`isoDate` = ?,`jalaliDate` = ?,`openingStockTotal` = ?,`morningLoadingTotal` = ?,`actualMorningStockTotal` = ?,`receiptTotal` = ?,`returnsTotal` = ?,`giftsTotal` = ?,`wasteTotal` = ?,`laboratoryTotal` = ?,`midDayLoadingTotal` = ?,`dayReceiptTotal` = ?,`dayReturnsTotal` = ?,`dayGiftsTotal` = ?,`dayWasteTotal` = ?,`dayLaboratoryTotal` = ?,`dayMidDayLoadingTotal` = ?,`nightLoadingTotal` = ?,`currentStockTotal` = ?,`expectedMorningStockTotal` = ?,`morningVariance` = ?,`expectedClosingStockTotal` = ?,`closingVariance` = ?,`startVariance` = ?,`endCumulativeVariance` = ?,`nightShiftVariance` = ?,`isFinalized` = ?,`notes` = ?,`createdAt` = ?,`updatedAt` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -138,41 +144,47 @@ public final class DailyStatDao_Impl implements DailyStatDao {
         statement.bindLong(11, entity.getWasteTotal());
         statement.bindLong(12, entity.getLaboratoryTotal());
         statement.bindLong(13, entity.getMidDayLoadingTotal());
-        statement.bindLong(14, entity.getNightLoadingTotal());
+        statement.bindLong(14, entity.getDayReceiptTotal());
+        statement.bindLong(15, entity.getDayReturnsTotal());
+        statement.bindLong(16, entity.getDayGiftsTotal());
+        statement.bindLong(17, entity.getDayWasteTotal());
+        statement.bindLong(18, entity.getDayLaboratoryTotal());
+        statement.bindLong(19, entity.getDayMidDayLoadingTotal());
+        statement.bindLong(20, entity.getNightLoadingTotal());
         if (entity.getCurrentStockTotal() == null) {
-          statement.bindNull(15);
-        } else {
-          statement.bindLong(15, entity.getCurrentStockTotal());
-        }
-        statement.bindLong(16, entity.getExpectedMorningStockTotal());
-        if (entity.getMorningVariance() == null) {
-          statement.bindNull(17);
-        } else {
-          statement.bindLong(17, entity.getMorningVariance());
-        }
-        statement.bindLong(18, entity.getExpectedClosingStockTotal());
-        statement.bindLong(19, entity.getClosingVariance());
-        if (entity.getStartVariance() == null) {
-          statement.bindNull(20);
-        } else {
-          statement.bindLong(20, entity.getStartVariance());
-        }
-        if (entity.getEndCumulativeVariance() == null) {
           statement.bindNull(21);
         } else {
-          statement.bindLong(21, entity.getEndCumulativeVariance());
+          statement.bindLong(21, entity.getCurrentStockTotal());
+        }
+        statement.bindLong(22, entity.getExpectedMorningStockTotal());
+        if (entity.getMorningVariance() == null) {
+          statement.bindNull(23);
+        } else {
+          statement.bindLong(23, entity.getMorningVariance());
+        }
+        statement.bindLong(24, entity.getExpectedClosingStockTotal());
+        statement.bindLong(25, entity.getClosingVariance());
+        if (entity.getStartVariance() == null) {
+          statement.bindNull(26);
+        } else {
+          statement.bindLong(26, entity.getStartVariance());
+        }
+        if (entity.getEndCumulativeVariance() == null) {
+          statement.bindNull(27);
+        } else {
+          statement.bindLong(27, entity.getEndCumulativeVariance());
         }
         if (entity.getNightShiftVariance() == null) {
-          statement.bindNull(22);
+          statement.bindNull(28);
         } else {
-          statement.bindLong(22, entity.getNightShiftVariance());
+          statement.bindLong(28, entity.getNightShiftVariance());
         }
         final int _tmp = entity.isFinalized() ? 1 : 0;
-        statement.bindLong(23, _tmp);
-        statement.bindString(24, entity.getNotes());
-        statement.bindLong(25, entity.getCreatedAt());
-        statement.bindLong(26, entity.getUpdatedAt());
-        statement.bindLong(27, entity.getId());
+        statement.bindLong(29, _tmp);
+        statement.bindString(30, entity.getNotes());
+        statement.bindLong(31, entity.getCreatedAt());
+        statement.bindLong(32, entity.getUpdatedAt());
+        statement.bindLong(33, entity.getId());
       }
     };
     this.__preparedStmtOfFinalize = new SharedSQLiteStatement(__db) {
@@ -347,6 +359,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -392,6 +410,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -440,7 +470,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }
@@ -480,6 +510,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -525,6 +561,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -573,7 +621,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }
@@ -615,6 +663,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -661,6 +715,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -709,7 +775,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -752,6 +818,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -798,6 +870,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -846,7 +930,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -893,6 +977,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -938,6 +1028,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -986,7 +1088,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }
@@ -1034,6 +1136,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1079,6 +1187,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -1127,7 +1247,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }
@@ -1172,6 +1292,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1218,6 +1344,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -1266,7 +1404,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1311,6 +1449,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1357,6 +1501,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -1405,7 +1561,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1446,6 +1602,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1492,6 +1654,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -1540,7 +1714,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1581,6 +1755,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1627,6 +1807,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -1675,7 +1867,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1716,6 +1908,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1762,6 +1960,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -1810,7 +2020,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1912,6 +2122,12 @@ public final class DailyStatDao_Impl implements DailyStatDao {
           final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
           final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
           final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
           final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
           final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
           final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
@@ -1958,6 +2174,18 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
             final int _tmpMidDayLoadingTotal;
             _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
             final int _tmpNightLoadingTotal;
             _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
             final Integer _tmpCurrentStockTotal;
@@ -2006,7 +2234,7 @@ public final class DailyStatDao_Impl implements DailyStatDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;

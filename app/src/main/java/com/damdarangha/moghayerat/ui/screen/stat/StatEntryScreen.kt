@@ -362,9 +362,9 @@ fun StatEntryScreen(
             }
 
             // ===== بخش ۲: عملیات روزانه - در هر سه مرحله (START, END, FULL) =====
-            // در START از فیلدهای start* استفاده می‌شود، در END از فیلدهای آخر کار.
-            // این جداسازی باعث می‌شود تغییری که در اول کار داده می‌شود به آخر کار منتقل نشود.
-            SectionHeader(title = "بخش ۲: عملیات روزانه")
+            // در START: مقادیر روز وارد می‌شوند (فیلدهای start*)
+            // در END: مقادیر شب وارد می‌شوند (فیلدهای receipt و ...) — مقادیر روز در پس‌زمینه جمع می‌شوند
+            SectionHeader(title = if (isStartStage) "بخش ۲: عملیات روزانه (روز)" else "بخش ۲: عملیات روزانه (شب)")
 
             // در START از فیلدهای start* استفاده می‌کنیم، در END و FULL از فیلدهای آخر کار
             val (effReceipt, effReturns, effMidDay, effGifts, effWaste, effLab,
