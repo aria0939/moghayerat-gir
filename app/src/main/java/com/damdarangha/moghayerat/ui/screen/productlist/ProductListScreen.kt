@@ -259,30 +259,29 @@ private fun ProductItemCard(
         nightVariance < 0 -> Color(0xFFEF5350)     // قرمز - کسری
         else -> Color(0xFF42A5F5)                   // آبی - اضافه
     }
-    val nightText = when {
-        nightVariance == null -> "—"
-        nightVariance == 0 -> "۰"
-        nightVariance > 0 -> "+${nightVariance.toPersian()}"
-        else -> "${nightVariance.toPersian()}"
-    }
 
-    // متن مغایرت اول کار
+    // متن مغایرت اول کار - با VarianceFormatter
     val startVariance = statInfo?.startVariance
-    val startText = when {
-        startVariance == null -> "اول کار"
-        startVariance == 0 -> "۰"
-        startVariance > 0 -> "+${startVariance.toPersian()}"
-        else -> "${startVariance.toPersian()}"
-    }
+    val startText = if (startVariance != null) {
+        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
+            startVariance, product, isRegistered = true
+        )
+    } else "اول کار"
 
-    // متن مغایرت آخر کار
+    // متن مغایرت آخر کار - با VarianceFormatter
     val endVariance = statInfo?.endCumulativeVariance
-    val endText = when {
-        endVariance == null -> "آخر کار"
-        endVariance == 0 -> "۰"
-        endVariance > 0 -> "+${endVariance.toPersian()}"
-        else -> "${endVariance.toPersian()}"
-    }
+    val endText = if (endVariance != null) {
+        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
+            endVariance, product, isRegistered = true
+        )
+    } else "آخر کار"
+
+    // متن مغایرت شیفت شب - با VarianceFormatter
+    val nightText = if (nightVariance != null) {
+        com.damdarangha.moghayerat.ui.screen.reports.VarianceFormatter.formatVariance(
+            nightVariance, product, isRegistered = true
+        )
+    } else "—"
 
     Card(
         modifier = Modifier.fillMaxWidth(),

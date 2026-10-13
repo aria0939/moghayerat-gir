@@ -77,6 +77,8 @@ fun StatEntryScreen(
         factory = StatEntryViewModel.factory(MoghayeratApplication.instance, productId, isoDate)
     )
 ) {
+    val isStartStage = stage == "START"
+    val isEndStage = stage == "END"
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -102,7 +104,11 @@ fun StatEntryScreen(
                 title = {
                     Column {
                         Text(
-                            text = state.product?.name ?: "آمار",
+                            text = when {
+                                isStartStage -> "اول کار — ${state.product?.name ?: ""}"
+                                isEndStage -> "آخر کار — ${state.product?.name ?: ""}"
+                                else -> state.product?.name ?: "آمار"
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -134,7 +140,14 @@ fun StatEntryScreen(
                     isFinalized = state.isFinalized,
                     isSaving = state.isSaving,
                     onSaveDraft = { viewModel.saveDraft() },
-                    onFinalize = { viewModel.finalizeStat() }
+                    onFinalize = {
+                        if (isStartStage) {
+                            // در مرحله اول کار، نهایی‌سازی فقط اول کار را ثبت می‌کند
+                            viewModel.saveDraft()
+                        } else {
+                            viewModel.finalizeStat()
+                        }
+                    }
                 )
             }
         }
@@ -158,14 +171,14 @@ fun StatEntryScreen(
             ProductInfoCard(state = state)
 
             // بخش ۱: اطلاعات موجودی
-            SectionHeader(title = "بخش ۱: اطلاعات موجودی")
+            SectionHeader(title = if (isStartStage) "بخش ۱: تحویل انبار (اول کار)" else "بخش ۱: اطلاعات موجودی")
 
             BoxUnitInput(
                 label = "۱. مانده شب گذشته",
                 value = state.openingStock,
                 product = product,
                 onValueChange = viewModel::updateOpeningStock,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isEndStage  // در END غیرفعال
             )
 
             BoxUnitInput(
@@ -173,7 +186,7 @@ fun StatEntryScreen(
                 value = state.morningLoading,
                 product = product,
                 onValueChange = viewModel::updateMorningLoading,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isEndStage  // در END غیرفعال
             )
 
             BoxUnitInput(
@@ -181,10 +194,10 @@ fun StatEntryScreen(
                 value = state.nightLoading,
                 product = product,
                 onValueChange = viewModel::updateNightLoading,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage  // در START غیرفعال
             )
 
-            // فیلد اختیاری: مانده واقعی بعد از بارگیری صبح
+            // فیلد شمارش اول کار - در START همیشه فعال، در END فقط نمایش
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -199,15 +212,18 @@ fun StatEntryScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "محاسبه مغایرت اول کار (اختیاری)",
+                            text = "شمارش واقعی اول کار",
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Switch(
-                            checked = state.hasActualMorningStock,
-                            onCheckedChange = viewModel::setHasActualMorningStock,
-                            enabled = !state.isFinalized
-                        )
+                        // در START همیشه روشن، در END غیرفعال
+                        if (isStartStage || !state.hasActualMorningStock) {
+                            Switch(
+                                checked = state.hasActualMorningStock,
+                                onCheckedChange = viewModel::setHasActualMorningStock,
+                                enabled = !state.isFinalized && !isEndStage
+                            )
+                        }
                     }
                     if (state.hasActualMorningStock) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -216,13 +232,13 @@ fun StatEntryScreen(
                             value = state.actualMorningStock ?: BoxAndUnits.ZERO,
                             product = product,
                             onValueChange = viewModel::updateActualMorningStock,
-                            enabled = !state.isFinalized
+                            enabled = !state.isFinalized && !isEndStage  // در END غیرفعال
                         )
                     }
                 }
             }
 
-            // بخش ۲: عملیات روزانه
+            // بخش ۲: عملیات روزانه - در START غیرفعال
             SectionHeader(title = "بخش ۲: عملیات روزانه")
 
             BoxUnitInput(
@@ -230,7 +246,7 @@ fun StatEntryScreen(
                 value = state.receipt,
                 product = product,
                 onValueChange = viewModel::updateReceipt,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage
             )
 
             BoxUnitInput(
@@ -238,7 +254,7 @@ fun StatEntryScreen(
                 value = state.returns,
                 product = product,
                 onValueChange = viewModel::updateReturns,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage
             )
 
             BoxUnitInput(
@@ -246,7 +262,7 @@ fun StatEntryScreen(
                 value = state.midDayLoading,
                 product = product,
                 onValueChange = viewModel::updateMidDayLoading,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage
             )
 
             BoxUnitInput(
@@ -254,7 +270,7 @@ fun StatEntryScreen(
                 value = state.gifts,
                 product = product,
                 onValueChange = viewModel::updateGifts,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage
             )
 
             BoxUnitInput(
@@ -262,7 +278,7 @@ fun StatEntryScreen(
                 value = state.waste,
                 product = product,
                 onValueChange = viewModel::updateWaste,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage
             )
 
             BoxUnitInput(
@@ -270,10 +286,10 @@ fun StatEntryScreen(
                 value = state.laboratory,
                 product = product,
                 onValueChange = viewModel::updateLaboratory,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage
             )
 
-            // بخش ۳: موجودی پایان روز
+            // بخش ۳: موجودی پایان روز - در START غیرفعال
             SectionHeader(title = "بخش ۳: موجودی پایان روز")
 
             BoxUnitInput(
@@ -281,7 +297,7 @@ fun StatEntryScreen(
                 value = state.currentStock ?: BoxAndUnits.ZERO,
                 product = product,
                 onValueChange = viewModel::updateCurrentStock,
-                enabled = !state.isFinalized
+                enabled = !state.isFinalized && !isStartStage  // در START غیرفعال
             )
 
             // بخش ۴: نتیجه مغایرت‌گیری

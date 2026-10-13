@@ -183,6 +183,7 @@ class StatEntryViewModel(
                         midDayLoading = VarianceCalculator.fromTotalUnits(existingStat.midDayLoadingTotal, product),
                         nightLoading = VarianceCalculator.fromTotalUnits(existingStat.nightLoadingTotal, product),
                         currentStock = VarianceCalculator.fromTotalUnits(existingStat.currentStockTotal, product),
+                        hasCurrentStock = existingStat.currentStockTotal > 0 || existingStat.endCumulativeVariance != null,
                         notes = existingStat.notes,
                         isFinalized = existingStat.isFinalized,
                         statId = existingStat.id,
