@@ -132,9 +132,9 @@ fun VarianceResultCard(
             )
             ResultRow(
                 label = "موجودی واقعی پایان روز",
-                value = result.currentStockTotal.toPersianDigits(),
+                value = (result.currentStockTotal ?: 0).toPersianDigits(),
                 product = product,
-                total = result.currentStockTotal,
+                total = result.currentStockTotal ?: 0,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
