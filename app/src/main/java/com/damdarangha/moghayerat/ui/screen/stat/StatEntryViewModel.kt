@@ -511,5 +511,3 @@ class StatEntryViewModel(
             }
     }
 }
-
-private fun Int.absoluteValue(): Int = if (this < 0) -this else this

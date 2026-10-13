@@ -1,0 +1,646 @@
+     1→package com.damdarangha.moghayerat.ui.screen.stat
+     2→
+     3→import androidx.compose.foundation.layout.Arrangement
+     4→import androidx.compose.foundation.layout.Column
+     5→import androidx.compose.foundation.layout.Row
+     6→import androidx.compose.foundation.layout.Spacer
+     7→import androidx.compose.foundation.layout.WindowInsets
+     8→import androidx.compose.foundation.layout.fillMaxSize
+     9→import androidx.compose.foundation.layout.fillMaxWidth
+    10→import androidx.compose.foundation.layout.height
+    11→import androidx.compose.foundation.layout.padding
+    12→import androidx.compose.foundation.layout.statusBars
+    13→import androidx.compose.foundation.rememberScrollState
+    14→import androidx.compose.foundation.shape.RoundedCornerShape
+    15→import androidx.compose.foundation.verticalScroll
+    16→import androidx.compose.material.icons.Icons
+    17→import androidx.compose.material.icons.automirrored.filled.ArrowBack
+    18→import androidx.compose.material.icons.filled.Save
+    19→import androidx.compose.material.icons.filled.CheckCircle
+    20→import androidx.compose.material.icons.filled.Lock
+    21→import androidx.compose.material.icons.filled.LockOpen
+    22→import androidx.compose.material3.AlertDialog
+    23→import androidx.compose.material3.Button
+    24→import androidx.compose.material3.ButtonDefaults
+    25→import androidx.compose.material3.Card
+    26→import androidx.compose.material3.CardDefaults
+    27→import androidx.compose.material3.ExperimentalMaterial3Api
+    28→import androidx.compose.material3.Icon
+    29→import androidx.compose.material3.IconButton
+    30→import androidx.compose.material3.MaterialTheme
+    31→import androidx.compose.material3.OutlinedButton
+    32→import androidx.compose.material3.OutlinedTextField
+    33→import androidx.compose.material3.Scaffold
+    34→import androidx.compose.material3.SnackbarHost
+    35→import androidx.compose.material3.SnackbarHostState
+    36→import androidx.compose.material3.Switch
+    37→import androidx.compose.material3.Text
+    38→import androidx.compose.material3.TopAppBar
+    39→import androidx.compose.runtime.Composable
+    40→import androidx.compose.runtime.LaunchedEffect
+    41→import androidx.compose.runtime.collectAsState
+    42→import androidx.compose.runtime.getValue
+    43→import androidx.compose.runtime.mutableStateOf
+    44→import androidx.compose.runtime.remember
+    45→import androidx.compose.runtime.setValue
+    46→import androidx.compose.ui.Alignment
+    47→import androidx.compose.ui.Modifier
+    48→import androidx.compose.ui.text.font.FontWeight
+    49→import androidx.compose.ui.unit.dp
+    50→import androidx.lifecycle.viewmodel.compose.viewModel
+    51→import com.damdarangha.moghayerat.MoghayeratApplication
+    52→import com.damdarangha.moghayerat.domain.model.BoxAndUnits
+    53→import com.damdarangha.moghayerat.ui.components.BoxUnitInput
+    54→import com.damdarangha.moghayerat.ui.components.LoadingView
+    55→import com.damdarangha.moghayerat.ui.components.VarianceResultCard
+    56→
+    57→/**
+    58→ * صفحه ثبت آمار محصول.
+    59→ *
+    60→ * این صفحه شامل تمام فیلدهای آمار روزانه است و نتیجه مغایرت را به‌صورت زنده نمایش می‌دهد.
+    61→ *
+    62→ * بخش‌ها:
+    63→ * ۱. اطلاعات موجودی (مانده شب گذشته، بارگیری صبح، مانده واقعی بعد از بارگیری صبح)
+    64→ * ۲. عملیات روزانه (رسید، هدایا، ضایعات، بارگیری شب)
+    65→ * ۳. موجودی پایان روز (مانده واقعی حال حاضر)
+    66→ * ۴. نتیجه مغایرت‌گیری (کارت بزرگ)
+    67→ * ۵. دکمه‌های ذخیره و نهایی‌سازی
+    68→ */
+    69→@OptIn(ExperimentalMaterial3Api::class)
+    70→@Composable
+    71→fun StatEntryScreen(
+    72→    productId: Long,
+    73→    isoDate: String,
+    74→    stage: String = "FULL",
+    75→    onBack: () -> Unit,
+    76→    viewModel: StatEntryViewModel = viewModel(
+    77→        factory = StatEntryViewModel.factory(
+    78→            MoghayeratApplication.instance, productId, isoDate, StatEntryStage.fromString(stage)
+    79→        )
+    80→    )
+    81→) {
+    82→    val isStartStage = viewModel.isStartStage
+    83→    val isEndStage = viewModel.isEndStage
+    84→    val state by viewModel.uiState.collectAsState()
+    85→    val snackbarHostState = remember { SnackbarHostState() }
+    86→
+    87→    // نمایش پیام ذخیره
+    88→    LaunchedEffect(state.saveMessage) {
+    89→        state.saveMessage?.let {
+    90→            snackbarHostState.showSnackbar(it)
+    91→            viewModel.clearSaveMessage()
+    92→        }
+    93→    }
+    94→
+    95→    // نمایش هشدار
+    96→    LaunchedEffect(state.showWarning) {
+    97→        state.showWarning?.let {
+    98→            snackbarHostState.showSnackbar(it)
+    99→            viewModel.clearWarning()
+   100→        }
+   101→    }
+   102→
+   103→    Scaffold(
+   104→        topBar = {
+   105→            TopAppBar(
+   106→                title = {
+   107→                    Column {
+   108→                        Text(
+   109→                            text = when {
+   110→                                isStartStage -> "اول کار — ${state.product?.name ?: ""}"
+   111→                                isEndStage -> "آخر کار — ${state.product?.name ?: ""}"
+   112→                                else -> state.product?.name ?: "آمار"
+   113→                            },
+   114→                            style = MaterialTheme.typography.titleMedium,
+   115→                            fontWeight = FontWeight.Bold
+   116→                        )
+   117→                        Text(
+   118→                            text = state.jalaliDate,
+   119→                            style = MaterialTheme.typography.bodySmall
+   120→                        )
+   121→                    }
+   122→                },
+   123→                navigationIcon = {
+   124→                    IconButton(onClick = onBack) {
+   125→                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
+   126→                    }
+   127→                },
+   128→                actions = {
+   129→                    if (state.isFinalized) {
+   130→                        IconButton(onClick = { viewModel.unfinalizeStat() }) {
+   131→                            Icon(Icons.Default.LockOpen, contentDescription = "لغو نهایی")
+   132→                        }
+   133→                    }
+   134→                },
+   135→                windowInsets = WindowInsets.statusBars
+   136→            )
+   137→        },
+   138→        snackbarHost = { SnackbarHost(snackbarHostState) },
+   139→        bottomBar = {
+   140→            if (state.product != null) {
+   141→                val saveLabel = when {
+   142→                    isStartStage -> "ذخیره اول کار"
+   143→                    isEndStage -> "ذخیره آخر کار"
+   144→                    else -> "ذخیره پیش‌نویس"
+   145→                }
+   146→                val finalizeLabel = when {
+   147→                    isStartStage -> "نهایی کردن اول کار"
+   148→                    isEndStage -> "نهایی کردن آخر کار"
+   149→                    else -> "نهایی‌سازی"
+   150→                }
+   151→                BottomActionButtons(
+   152→                    isFinalized = state.isFinalized,
+   153→                    isSaving = state.isSaving,
+   154→                    saveLabel = saveLabel,
+   155→                    finalizeLabel = finalizeLabel,
+   156→                    onSaveDraft = { viewModel.saveDraft() },
+   157→                    onFinalize = {
+   158→                        if (isStartStage) {
+   159→                            // در مرحله اول کار، نهایی‌سازی فقط اول کار را ثبت می‌کند
+   160→                            viewModel.saveDraft()
+   161→                        } else {
+   162→                            viewModel.finalizeStat()
+   163→                        }
+   164→                    }
+   165→                )
+   166→            }
+   167→        }
+   168→    ) { padding ->
+   169→        if (state.isLoading) {
+   170→            LoadingView(modifier = Modifier.padding(padding))
+   171→            return@Scaffold
+   172→        }
+   173→
+   174→        val product = state.product ?: return@Scaffold
+   175→
+   176→        Column(
+   177→            modifier = Modifier
+   178→                .fillMaxSize()
+   179→                .padding(padding)
+   180→                .verticalScroll(rememberScrollState())
+   181→                .padding(16.dp),
+   182→            verticalArrangement = Arrangement.spacedBy(12.dp)
+   183→        ) {
+   184→            // اطلاعات محصول
+   185→            ProductInfoCard(state = state)
+   186→
+   187→            // ===== نمایش فیلدهای اول کار (فقط در START یا FULL) =====
+   188→            if (isStartStage || !isEndStage) {
+   189→                // بخش ۱: اطلاعات موجودی
+   190→                SectionHeader(title = "بخش ۱: تحویل انبار (اول کار)")
+   191→
+   192→                BoxUnitInput(
+   193→                    label = "۱. مانده شب گذشته",
+   194→                    value = state.openingStock,
+   195→                    product = product,
+   196→                    onValueChange = viewModel::updateOpeningStock,
+   197→                    enabled = !state.isFinalized && !isEndStage  // در END غیرفعال
+   198→                )
+   199→
+   200→                BoxUnitInput(
+   201→                    label = "۲. بارگیری شهرستان / بارگیری صبح",
+   202→                    value = state.morningLoading,
+   203→                    product = product,
+   204→                    onValueChange = viewModel::updateMorningLoading,
+   205→                    enabled = !state.isFinalized && !isEndStage  // در END غیرفعال
+   206→                )
+   207→
+   208→                // فیلد شمارش اول کار
+   209→                Card(
+   210→                    modifier = Modifier.fillMaxWidth(),
+   211→                    colors = CardDefaults.cardColors(
+   212→                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+   213→                    ),
+   214→                    elevation = CardDefaults.cardElevation(0.dp)
+   215→                ) {
+   216→                    Column(modifier = Modifier.padding(12.dp)) {
+   217→                        Row(
+   218→                            verticalAlignment = Alignment.CenterVertically,
+   219→                            horizontalArrangement = Arrangement.SpaceBetween,
+   220→                            modifier = Modifier.fillMaxWidth()
+   221→                        ) {
+   222→                            Text(
+   223→                                text = "شمارش واقعی اول کار",
+   224→                                style = MaterialTheme.typography.titleSmall,
+   225→                                color = MaterialTheme.colorScheme.onSurface
+   226→                            )
+   227→                            Switch(
+   228→                                checked = state.hasActualMorningStock,
+   229→                                onCheckedChange = viewModel::setHasActualMorningStock,
+   230→                                enabled = !state.isFinalized && !isEndStage
+   231→                            )
+   232→                        }
+   233→                        if (state.hasActualMorningStock) {
+   234→                            Spacer(modifier = Modifier.height(8.dp))
+   235→                            BoxUnitInput(
+   236→                                label = "۴. مانده واقعی بعد از بارگیری صبح",
+   237→                                value = state.actualMorningStock ?: BoxAndUnits.ZERO,
+   238→                                product = product,
+   239→                                onValueChange = viewModel::updateActualMorningStock,
+   240→                                enabled = !state.isFinalized && !isEndStage
+   241→                            )
+   242→                        }
+   243→                    }
+   244→                }
+   245→            }
+   246→
+   247→            // ===== نمایش فیلدهای آخر کار (فقط در END یا FULL) =====
+   248→            if (isEndStage || !isStartStage) {
+   249→                // بخش ۲: عملیات روزانه
+   250→                SectionHeader(title = "بخش ۲: عملیات روزانه")
+   251→
+   252→                BoxUnitInput(
+   253→                    label = "۵. رسید انبار",
+   254→                    value = state.receipt,
+   255→                    product = product,
+   256→                    onValueChange = viewModel::updateReceipt,
+   257→                    enabled = !state.isFinalized && !isStartStage
+   258→                )
+   259→
+   260→                BoxUnitInput(
+   261→                    label = "۶. برگشت به انبار",
+   262→                    value = state.returns,
+   263→                    product = product,
+   264→                    onValueChange = viewModel::updateReturns,
+   265→                    enabled = !state.isFinalized && !isStartStage
+   266→                )
+   267→
+   268→                BoxUnitInput(
+   269→                    label = "۷. میان روز",
+   270→                    value = state.midDayLoading,
+   271→                    product = product,
+   272→                    onValueChange = viewModel::updateMidDayLoading,
+   273→                    enabled = !state.isFinalized && !isStartStage
+   274→                )
+   275→
+   276→                BoxUnitInput(
+   277→                    label = "۸. هدایا",
+   278→                    value = state.gifts,
+   279→                    product = product,
+   280→                    onValueChange = viewModel::updateGifts,
+   281→                    enabled = !state.isFinalized && !isStartStage
+   282→                )
+   283→
+   284→                BoxUnitInput(
+   285→                    label = "۹. ضایعات",
+   286→                    value = state.waste,
+   287→                    product = product,
+   288→                    onValueChange = viewModel::updateWaste,
+   289→                    enabled = !state.isFinalized && !isStartStage
+   290→                )
+   291→
+   292→                BoxUnitInput(
+   293→                    label = "۱۰. آزمایشگاه",
+   294→                    value = state.laboratory,
+   295→                    product = product,
+   296→                    onValueChange = viewModel::updateLaboratory,
+   297→                    enabled = !state.isFinalized && !isStartStage
+   298→                )
+   299→
+   300→                BoxUnitInput(
+   301→                    label = "۱۲. بارگیری شب",
+   302→                    value = state.nightLoading,
+   303→                    product = product,
+   304→                    onValueChange = viewModel::updateNightLoading,
+   305→                    enabled = !state.isFinalized && !isStartStage
+   306→                )
+   307→
+   308→                // بخش ۳: موجودی پایان روز
+   309→                SectionHeader(title = "بخش ۳: موجودی پایان روز (آخر کار)")
+   310→
+   311→                BoxUnitInput(
+   312→                    label = "۱۱. مانده واقعی حال حاضر",
+   313→                    value = state.currentStock ?: BoxAndUnits.ZERO,
+   314→                    product = product,
+   315→                    onValueChange = viewModel::updateCurrentStock,
+   316→                    enabled = !state.isFinalized && !isStartStage
+   317→                )
+   318→            }
+   319→
+   320→            // بخش ۴: نتیجه مغایرت‌گیری
+   321→            SectionHeader(title = "بخش ۴: نتیجه مغایرت‌گیری")
+   322→
+   323→            // نمایش مغایرت اول کار (اگر ثبت شده)
+   324→            state.varianceResult?.let { result ->
+   325→                // کارت مغایرت اول کار
+   326→                result.startVariance?.let { startVar ->
+   327→                    val startText = when {
+   328→                        startVar == 0 -> "مطابقت (۰)"
+   329→                        startVar > 0 -> "اضافه ${startVar.toPersian()}"
+   330→                        else -> "کسری ${(-startVar).toPersian()}"
+   331→                    }
+   332→                    val startColor = when {
+   333→                        startVar == 0 -> MaterialTheme.colorScheme.primary
+   334→                        startVar > 0 -> MaterialTheme.colorScheme.tertiary
+   335→                        else -> MaterialTheme.colorScheme.error
+   336→                    }
+   337→                    Card(
+   338→                        modifier = Modifier.fillMaxWidth(),
+   339→                        colors = CardDefaults.cardColors(
+   340→                            containerColor = startColor.copy(alpha = 0.1f)
+   341→                        ),
+   342→                        shape = RoundedCornerShape(12.dp)
+   343→                    ) {
+   344→                        Row(
+   345→                            modifier = Modifier
+   346→                                .fillMaxWidth()
+   347→                                .padding(12.dp),
+   348→                            horizontalArrangement = Arrangement.SpaceBetween,
+   349→                            verticalAlignment = Alignment.CenterVertically
+   350→                        ) {
+   351→                            Text(
+   352→                                text = "مغایرت اول کار",
+   353→                                style = MaterialTheme.typography.titleSmall,
+   354→                                fontWeight = FontWeight.Bold
+   355→                            )
+   356→                            Text(
+   357→                                text = startText,
+   358→                                style = MaterialTheme.typography.titleMedium,
+   359→                                fontWeight = FontWeight.Bold,
+   360→                                color = startColor
+   361→                            )
+   362→                        }
+   363→                    }
+   364→                    Spacer(modifier = Modifier.height(8.dp))
+   365→                }
+   366→
+   367→                // کارت مغایرت آخر کار
+   368→                result.endCumulativeVariance?.let { endVar ->
+   369→                    val endText = when {
+   370→                        endVar == 0 -> "مطابقت (۰)"
+   371→                        endVar > 0 -> "اضافه ${endVar.toPersian()}"
+   372→                        else -> "کسری ${(-endVar).toPersian()}"
+   373→                    }
+   374→                    val endColor = when {
+   375→                        endVar == 0 -> MaterialTheme.colorScheme.primary
+   376→                        endVar > 0 -> MaterialTheme.colorScheme.tertiary
+   377→                        else -> MaterialTheme.colorScheme.error
+   378→                    }
+   379→                    Card(
+   380→                        modifier = Modifier.fillMaxWidth(),
+   381→                        colors = CardDefaults.cardColors(
+   382→                            containerColor = endColor.copy(alpha = 0.1f)
+   383→                        ),
+   384→                        shape = RoundedCornerShape(12.dp)
+   385→                    ) {
+   386→                        Row(
+   387→                            modifier = Modifier
+   388→                                .fillMaxWidth()
+   389→                                .padding(12.dp),
+   390→                            horizontalArrangement = Arrangement.SpaceBetween,
+   391→                            verticalAlignment = Alignment.CenterVertically
+   392→                        ) {
+   393→                            Text(
+   394→                                text = "مغایرت آخر کار",
+   395→                                style = MaterialTheme.typography.titleSmall,
+   396→                                fontWeight = FontWeight.Bold
+   397→                            )
+   398→                            Text(
+   399→                                text = endText,
+   400→                                style = MaterialTheme.typography.titleMedium,
+   401→                                fontWeight = FontWeight.Bold,
+   402→                                color = endColor
+   403→                            )
+   404→                        }
+   405→                    }
+   406→                    Spacer(modifier = Modifier.height(8.dp))
+   407→                }
+   408→
+   409→                // کارت مغایرت شیفت شب (مهم‌ترین)
+   410→                result.nightShiftVariance?.let { nightVar ->
+   411→                    val nightText = when {
+   412→                        nightVar == 0 -> "مطابقت (۰)"
+   413→                        nightVar > 0 -> "اضافه ${nightVar.toPersian()}"
+   414→                        else -> "کسری ${(-nightVar).toPersian()}"
+   415→                    }
+   416→                    val nightColor = when {
+   417→                        nightVar == 0 -> MaterialTheme.colorScheme.primary
+   418→                        nightVar > 0 -> MaterialTheme.colorScheme.tertiary
+   419→                        else -> MaterialTheme.colorScheme.error
+   420→                    }
+   421→                    Card(
+   422→                        modifier = Modifier.fillMaxWidth(),
+   423→                        colors = CardDefaults.cardColors(
+   424→                            containerColor = nightColor.copy(alpha = 0.15f)
+   425→                        ),
+   426→                        shape = RoundedCornerShape(12.dp),
+   427→                        elevation = CardDefaults.cardElevation(2.dp)
+   428→                    ) {
+   429→                        Column(
+   430→                            modifier = Modifier
+   431→                                .fillMaxWidth()
+   432→                                .padding(16.dp),
+   433→                            horizontalAlignment = Alignment.CenterHorizontally
+   434→                        ) {
+   435→                            Text(
+   436→                                text = "مغایرت واقعی شیفت شب",
+   437→                                style = MaterialTheme.typography.titleMedium,
+   438→                                fontWeight = FontWeight.Bold,
+   439→                                color = nightColor
+   440→                            )
+   441→                            Spacer(modifier = Modifier.height(8.dp))
+   442→                            Text(
+   443→                                text = nightText,
+   444→                                style = MaterialTheme.typography.headlineMedium,
+   445→                                fontWeight = FontWeight.ExtraBold,
+   446→                                color = nightColor
+   447→                            )
+   448→                        }
+   449→                    }
+   450→                    Spacer(modifier = Modifier.height(8.dp))
+   451→                }
+   452→
+   453→                // کارت کامل نتیجه
+   454→                VarianceResultCard(result = result, product = product)
+   455→            }
+   456→
+   457→            // توضیحات
+   458→            SectionHeader(title = "توضیحات")
+   459→            OutlinedTextField(
+   460→                value = state.notes,
+   461→                onValueChange = viewModel::updateNotes,
+   462→                modifier = Modifier.fillMaxWidth(),
+   463→                placeholder = { Text("توضیحات اختیاری (مثلاً علت کسری یا ضایعات)") },
+   464→                minLines = 2,
+   465→                maxLines = 4,
+   466→                enabled = !state.isFinalized
+   467→            )
+   468→
+   469→            Spacer(modifier = Modifier.height(80.dp))
+   470→        }
+   471→    }
+   472→}
+   473→
+   474→@Composable
+   475→private fun SectionHeader(title: String) {
+   476→    Text(
+   477→        text = title,
+   478→        style = MaterialTheme.typography.titleMedium,
+   479→        fontWeight = FontWeight.Bold,
+   480→        color = MaterialTheme.colorScheme.primary,
+   481→        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+   482→    )
+   483→}
+   484→
+   485→@Composable
+   486→private fun ProductInfoCard(state: StatEntryUiState) {
+   487→    val product = state.product ?: return
+   488→    Card(
+   489→        modifier = Modifier.fillMaxWidth(),
+   490→        colors = CardDefaults.cardColors(
+   491→            containerColor = MaterialTheme.colorScheme.primaryContainer
+   492→        ),
+   493→        shape = RoundedCornerShape(12.dp)
+   494→    ) {
+   495→        Column(modifier = Modifier.padding(12.dp)) {
+   496→            Row(
+   497→                modifier = Modifier.fillMaxWidth(),
+   498→                horizontalArrangement = Arrangement.SpaceBetween
+   499→            ) {
+   500→                Text(
+   501→                    text = "گروه محصول:",
+   502→                    style = MaterialTheme.typography.bodySmall,
+   503→                    color = MaterialTheme.colorScheme.onPrimaryContainer
+   504→                )
+   505→                Text(
+   506→                    text = product.group.displayName,
+   507→                    style = MaterialTheme.typography.bodySmall,
+   508→                    fontWeight = FontWeight.Medium,
+   509→                    color = MaterialTheme.colorScheme.onPrimaryContainer
+   510→                )
+   511→            }
+   512→            Spacer(modifier = Modifier.height(4.dp))
+   513→            Row(
+   514→                modifier = Modifier.fillMaxWidth(),
+   515→                horizontalArrangement = Arrangement.SpaceBetween
+   516→            ) {
+   517→                Text(
+   518→                    text = "ظرفیت باکس:",
+   519→                    style = MaterialTheme.typography.bodySmall,
+   520→                    color = MaterialTheme.colorScheme.onPrimaryContainer
+   521→                )
+   522→                Text(
+   523→                    text = if (product.isRoundBox) "باکس رند"
+   524→                    else "${product.boxCapacity.toPersian()} عدد",
+   525→                    style = MaterialTheme.typography.bodySmall,
+   526→                    fontWeight = FontWeight.Medium,
+   527→                    color = MaterialTheme.colorScheme.onPrimaryContainer
+   528→                )
+   529→            }
+   530→            Spacer(modifier = Modifier.height(4.dp))
+   531→            Row(
+   532→                modifier = Modifier.fillMaxWidth(),
+   533→                horizontalArrangement = Arrangement.SpaceBetween
+   534→            ) {
+   535→                Text(
+   536→                    text = "تاریخ:",
+   537→                    style = MaterialTheme.typography.bodySmall,
+   538→                    color = MaterialTheme.colorScheme.onPrimaryContainer
+   539→                )
+   540→                Text(
+   541→                    text = state.jalaliDate,
+   542→                    style = MaterialTheme.typography.bodySmall,
+   543→                    fontWeight = FontWeight.Medium,
+   544→                    color = MaterialTheme.colorScheme.onPrimaryContainer
+   545→                )
+   546→            }
+   547→            if (state.isFinalized) {
+   548→                Spacer(modifier = Modifier.height(8.dp))
+   549→                Card(
+   550→                    colors = CardDefaults.cardColors(
+   551→                        containerColor = MaterialTheme.colorScheme.surface
+   552→                    )
+   553→                ) {
+   554→                    Row(
+   555→                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+   556→                        verticalAlignment = Alignment.CenterVertically
+   557→                    ) {
+   558→                        Icon(
+   559→                            imageVector = Icons.Default.Lock,
+   560→                            contentDescription = null,
+   561→                            tint = MaterialTheme.colorScheme.primary
+   562→                        )
+   563→                        Spacer(modifier = Modifier.padding(end = 4.dp))
+   564→                        Text(
+   565→                            text = "این آمار نهایی شده است. برای ویرایش، ابتدا نهایی‌سازی را لغو کنید.",
+   566→                            style = MaterialTheme.typography.labelSmall,
+   567→                            color = MaterialTheme.colorScheme.primary
+   568→                        )
+   569→                    }
+   570→                }
+   571→            }
+   572→        }
+   573→    }
+   574→}
+   575→
+   576→@Composable
+   577→private fun BottomActionButtons(
+   578→    isFinalized: Boolean,
+   579→    isSaving: Boolean,
+   580→    saveLabel: String = "ذخیره پیش‌نویس",
+   581→    finalizeLabel: String = "نهایی‌سازی",
+   582→    onSaveDraft: () -> Unit,
+   583→    onFinalize: () -> Unit
+   584→) {
+   585→    var showFinalizeDialog by remember { mutableStateOf(false) }
+   586→
+   587→    if (showFinalizeDialog) {
+   588→        AlertDialog(
+   589→            onDismissRequest = { showFinalizeDialog = false },
+   590→            title = { Text("تأیید نهایی‌سازی") },
+   591→            text = {
+   592→                Text("پس از نهایی‌سازی، برای ویرایش آمار باید ابتدا نهایی‌سازی را لغو کنید. آیا مطمئن هستید؟")
+   593→            },
+   594→            confirmButton = {
+   595→                Button(
+   596→                    onClick = {
+   597→                        showFinalizeDialog = false
+   598→                        onFinalize()
+   599→                    }
+   600→                ) { Text("تأیید و نهایی‌سازی") }
+   601→            },
+   602→            dismissButton = {
+   603→                OutlinedButton(onClick = { showFinalizeDialog = false }) {
+   604→                    Text("انصراف")
+   605→                }
+   606→            }
+   607→        )
+   608→    }
+   609→
+   610→    Row(
+   611→        modifier = Modifier
+   612→            .fillMaxWidth()
+   613→            .padding(16.dp),
+   614→        horizontalArrangement = Arrangement.spacedBy(8.dp)
+   615→    ) {
+   616→        OutlinedButton(
+   617→            onClick = onSaveDraft,
+   618→            enabled = !isFinalized && !isSaving,
+   619→            modifier = Modifier.weight(1f)
+   620→        ) {
+   621→            Icon(Icons.Default.Save, contentDescription = null)
+   622→            Spacer(modifier = Modifier.padding(end = 4.dp))
+   623→            Text(saveLabel)
+   624→        }
+   625→        Button(
+   626→            onClick = { showFinalizeDialog = true },
+   627→            enabled = !isFinalized && !isSaving,
+   628→            modifier = Modifier.weight(1f),
+   629→            colors = ButtonDefaults.buttonColors(
+   630→                containerColor = MaterialTheme.colorScheme.primary
+   631→            )
+   632→        ) {
+   633→            Icon(Icons.Default.CheckCircle, contentDescription = null)
+   634→            Spacer(modifier = Modifier.padding(end = 4.dp))
+   635→            Text(finalizeLabel)
+   636→        }
+   637→    }
+   638→}
+   639→
+   640→private fun Int.toPersian(): String {
+   641→    val persianDigits = arrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
+   642→    return this.toString().map { c ->
+   643→        if (c.isDigit()) persianDigits[c - '0'] else c
+   644→    }.joinToString("")
+   645→}
+   646→

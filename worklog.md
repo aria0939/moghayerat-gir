@@ -72,3 +72,22 @@ Stage Summary:
 - **دکمه‌ها stage-aware شدند**: هر دکمه فقط واریانس مرحله خودش را نمایش می‌دهد
 - **شمارش‌ها دقیق**: startCount و endCount مستقل محاسبه می‌شوند
 - **نمایش‌های مناسب**: «ثبت‌نشده»، «ثبت آخر کار نشده»، «ناقص» برای رکوردهای ناتمام
+
+---
+Task ID: fix-stage-separation-review
+Agent: main (Claude Sonnet 4.5)
+Task: بررسی استاتیک کامل و رفع خطاهای نهایی
+
+Work Log:
+- اجرای static code reviewer روی ۱۵ فایل تغییر یافته
+- نتیجه: هیچ خطای compile-blocking پیدا نشد
+- رفع ۴ مورد جزئی:
+  1. `MoghayeratApplication.kt`: اضافه کردن `.fallbackToDestructiveMigration()` به‌عنوان safety net (پس از MIGRATION_6_7) تا اگر کاربر روی نسخه بسیار قدیمی بود، به‌جای crash، دیتابیس بازسازی شود
+  2. `StatEntryViewModel.kt`: حذف کد مرده `private fun Int.absoluteValue()` در انتهای فایل
+  3. `ProductListScreen.kt`: اضافه کردن imports صریح برای `BorderStroke` و `ButtonDefaults` و جایگزینی ارجاعات fully-qualified با ارجاعات مستقیم
+  4. `ReportsViewModel.kt`: رفع race condition بین loadWorkflows و loadToday — اکنون isoDate در init همگام (synchronous) تنظیم می‌شود، قبل از collect شدن workflows
+
+Stage Summary:
+- **بررسی استاتیک تأیید کرد**: هیچ خطای compile-blocking وجود ندارد
+- **تمام تغییرات مورد نیاز اعمال شد**
+- **آماده برای build در Android Studio**

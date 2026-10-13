@@ -32,6 +32,9 @@ class MoghayeratApplication : Application() {
             AppDatabase.DATABASE_NAME
         )
             .addMigrations(AppDatabase.MIGRATION_6_7)
+            // به‌عنوان safety net: اگر کاربر روی نسخه‌ی بسیار قدیمی بود (قبل از v6)،
+            // به‌جای crash کردن، دیتابیس را بازسازی می‌کند.
+            .fallbackToDestructiveMigration()
             .build()
 
         val gson = Gson()
