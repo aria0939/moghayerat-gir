@@ -940,7 +940,7 @@ class VarianceCalculatorTest {
             laboratory = BoxAndUnits.ZERO,
             midDayLoading = BoxAndUnits.ZERO,
             nightLoading = BoxAndUnits.ZERO,
-            currentStock = BoxAndUnits.ZERO  // ثبت‌نشده
+            currentStock = null  // ثبت‌نشده
         )
 
         val result = VarianceCalculator.calculate(input, unitProduct)

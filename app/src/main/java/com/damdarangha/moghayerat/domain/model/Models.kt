@@ -77,7 +77,7 @@ data class DailyStatInput(
     val isoDate: String,
     val openingStock: BoxAndUnits,
     val morningLoading: BoxAndUnits,
-    val actualMorningStock: BoxAndUnits?,
+    val actualMorningStock: BoxAndUnits?,   // شمارش واقعی اول کار (null = ثبت‌نشده)
     val receipt: BoxAndUnits,
     val returns: BoxAndUnits,
     val gifts: BoxAndUnits,
@@ -85,7 +85,7 @@ data class DailyStatInput(
     val laboratory: BoxAndUnits,           // آزمایشگاه (از موجودی کم می‌شود، مثل ضایعات)
     val midDayLoading: BoxAndUnits,
     val nightLoading: BoxAndUnits,
-    val currentStock: BoxAndUnits,
+    val currentStock: BoxAndUnits?,          // شمارش واقعی پایان کار (null = ثبت‌نشده)
     val notes: String = ""
 )
 
@@ -106,7 +106,7 @@ data class VarianceResult(
     val actualMorningStockTotal: Int?,     // موجودی واقعی بعد از بارگیری صبح (در صورت ورود)
     val morningVariance: Int?,             // مغایرت اول کار (در صورت ورود مانده واقعی صبح)
     val expectedClosingStockTotal: Int,    // موجودی مورد انتظار پایان روز
-    val currentStockTotal: Int,            // موجودی واقعی پایان روز به عدد کل
+    val currentStockTotal: Int?,           // موجودی واقعی پایان روز (null = ثبت‌نشده)
     val closingVariance: Int,              // مغایرت پایان روز (قدیمی: مثبت=کسری، منفی=اضافه)
     // ===== مغایرت‌های جدید (قرارداد جدید: منفی=کسری، مثبت=اضافه، صفر=مطابقت) =====
     val startVariance: Int?,               // مغایرت اول کار (actual - expected)

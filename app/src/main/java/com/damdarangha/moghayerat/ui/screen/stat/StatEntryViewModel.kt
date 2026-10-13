@@ -37,7 +37,8 @@ data class StatEntryUiState(
     val laboratory: BoxAndUnits = BoxAndUnits.ZERO,      // آزمایشگاه
     val midDayLoading: BoxAndUnits = BoxAndUnits.ZERO,    // بارگیری میان روز
     val nightLoading: BoxAndUnits = BoxAndUnits.ZERO,
-    val currentStock: BoxAndUnits = BoxAndUnits.ZERO,
+    val currentStock: BoxAndUnits? = null,    // null = شمارش آخر کار ثبت‌نشده
+    val hasCurrentStock: Boolean = false,    // آیا کاربر شمارش آخر کار را انجام داده
     val notes: String = "",
     val isFinalized: Boolean = false,
     val statId: Long? = null,
@@ -66,7 +67,7 @@ data class StatEntryUiState(
                 laboratory = laboratory,
                 midDayLoading = midDayLoading,
                 nightLoading = nightLoading,
-                currentStock = currentStock,
+                currentStock = if (hasCurrentStock) currentStock else null,
                 notes = notes
             )
             return VarianceCalculator.calculate(input, product)
@@ -127,7 +128,7 @@ class StatEntryViewModel(
             laboratory = state.laboratory,
             midDayLoading = state.midDayLoading,
             nightLoading = state.nightLoading,
-            currentStock = state.currentStock,
+            currentStock = if (state.hasCurrentStock) state.currentStock else null,
             notes = state.notes
         )
         val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = false)
@@ -265,7 +266,7 @@ class StatEntryViewModel(
     }
 
     fun updateCurrentStock(value: BoxAndUnits) {
-        _uiState.update { it.copy(currentStock = value) }
+        _uiState.update { it.copy(currentStock = value, hasCurrentStock = true) }
         validateAndUpdate()
     }
 
@@ -334,7 +335,7 @@ class StatEntryViewModel(
                     laboratory = state.laboratory,
             midDayLoading = state.midDayLoading,
             nightLoading = state.nightLoading,
-            currentStock = state.currentStock,
+            currentStock = if (state.hasCurrentStock) state.currentStock else null,
             notes = state.notes
         )
 
@@ -387,7 +388,7 @@ class StatEntryViewModel(
                     laboratory = state.laboratory,
                     midDayLoading = state.midDayLoading,
                     nightLoading = state.nightLoading,
-                    currentStock = state.currentStock,
+                    currentStock = if (state.hasCurrentStock) state.currentStock else null,
                     notes = state.notes
                 )
                 val savedId = app.dailyStatRepository.saveStat(input, product, isFinalized = true)

@@ -278,7 +278,7 @@ fun StatEntryScreen(
 
             BoxUnitInput(
                 label = "۱۱. مانده واقعی حال حاضر",
-                value = state.currentStock,
+                value = state.currentStock ?: BoxAndUnits.ZERO,
                 product = product,
                 onValueChange = viewModel::updateCurrentStock,
                 enabled = !state.isFinalized

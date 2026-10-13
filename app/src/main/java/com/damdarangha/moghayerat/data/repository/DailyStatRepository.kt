@@ -99,7 +99,7 @@ class DailyStatRepository(
             laboratoryTotal = result.laboratoryTotal,
             midDayLoadingTotal = result.midDayLoadingTotal,
             nightLoadingTotal = result.nightLoadingTotal,
-            currentStockTotal = result.currentStockTotal,
+            currentStockTotal = result.currentStockTotal ?: 0,
             expectedMorningStockTotal = result.expectedMorningStockTotal,
             morningVariance = result.morningVariance,
             expectedClosingStockTotal = result.expectedClosingStockTotal,

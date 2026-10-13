@@ -122,7 +122,7 @@ object VarianceCalculator {
         val laboratoryTotal = toTotalUnits(input.laboratory, product)
         val midDayLoadingTotal = toTotalUnits(input.midDayLoading, product)
         val nightLoadingTotal = toTotalUnits(input.nightLoading, product)
-        val currentStockTotal = toTotalUnits(input.currentStock, product)
+        val currentStockTotal = input.currentStock?.let { toTotalUnits(it, product) }  // null اگر ثبت‌نشده
 
         // موجودی مورد انتظار بعد از بارگیری صبح
         val expectedMorningStockTotal = safeSubtract(openingStockTotal, morningLoadingTotal)
@@ -147,21 +147,25 @@ object VarianceCalculator {
             .let { safeSubtract(it, laboratoryTotal) }
 
         // مغایرت پایان روز = موجودی مورد انتظار - مانده واقعی
-        val closingVariance = safeSubtract(expectedClosingStockTotal, currentStockTotal)
+        // فقط اگر currentStock ثبت شده باشد (null = ثبت‌نشده)
+        val closingVariance: Int = if (currentStockTotal != null) {
+            safeSubtract(expectedClosingStockTotal, currentStockTotal)
+        } else {
+            0  // مقدار پیش‌فرض، اما endCumulativeVariance null خواهد بود
+        }
 
         // ===== مغایرت‌های جدید (قرارداد جدید: منفی=کسری، مثبت=اضافه) =====
         // startVariance = actualStartStock - expectedStartStock
-        // در قرارداد قدیمی morningVariance = expected - actual
-        // پس startVariance = -morningVariance
         val startVariance: Int? = morningVariance?.let { safeNegate(it) }
 
         // endCumulativeVariance = actualEndStock - expectedEndFromBaseline
-        // در قرارداد قدیمی closingVariance = expected - actual
-        // پس endCumulativeVariance = -closingVariance
-        val endCumulativeVariance: Int? = safeNegate(closingVariance)
+        // فقط اگر currentStock ثبت شده باشد
+        val endCumulativeVariance: Int? = if (currentStockTotal != null) {
+            safeNegate(closingVariance)
+        } else null
 
         // nightShiftVariance = endCumulativeVariance - startVariance
-        // = (-closingVariance) - (-morningVariance) = morningVariance - closingVariance
+        // فقط اگر هر دو محاسبه شده باشند
         val nightShiftVariance: Int? = if (startVariance != null && endCumulativeVariance != null) {
             safeSubtract(endCumulativeVariance, startVariance)
         } else null

@@ -43,7 +43,7 @@ data class DailyStatEntity(
     val laboratoryTotal: Int,               // آزمایشگاه (از موجودی کم می‌شود)
     val midDayLoadingTotal: Int,        // بارگیری میان روز (از موجودی کم می‌شود)
     val nightLoadingTotal: Int,
-    val currentStockTotal: Int,
+    val currentStockTotal: Int = 0,       // 0 = ثبت‌نشده (برای سازگاری با داده قدیمی)
     // مقادیر محاسبه‌شده
     val expectedMorningStockTotal: Int,
     val morningVariance: Int?,
