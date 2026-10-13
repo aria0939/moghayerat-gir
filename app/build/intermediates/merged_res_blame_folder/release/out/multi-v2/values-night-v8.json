@@ -1,0 +1,45 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.damdarangha.moghayerat.app-mergeReleaseResources-52:/values-night-v8/values-night-v8.xml",
+            "map": [
+                {
+                    "source": "/home/z/my-project/app/src/main/res/values-night/themes.xml",
+                    "from": {
+                        "startLines": "3,11",
+                        "startColumns": "4,4",
+                        "startOffsets": "93,571",
+                        "endLines": "8,16",
+                        "endColumns": "12,12",
+                        "endOffsets": "522,980"
+                    },
+                    "to": {
+                        "startLines": "17,23",
+                        "startColumns": "4,4",
+                        "startOffsets": "835,1265",
+                        "endLines": "22,28",
+                        "endColumns": "12,12",
+                        "endOffsets": "1260,1672"
+                    }
+                },
+                {
+                    "source": "/home/z/my-project/app/src/main/res/values-night/colors.xml",
+                    "from": {
+                        "startLines": "3,4,2,21,22,16,14,13,17,7,19,18,11,10,15",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "112,163,59,789,839,603,517,469,645,253,739,693,414,358,563",
+                        "endColumns": "50,50,52,49,46,41,45,47,47,53,48,45,53,55,39",
+                        "endOffsets": "158,209,107,834,881,640,558,512,688,302,783,734,463,409,598"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "100,151,202,255,305,352,394,440,488,536,590,639,685,739,795",
+                        "endColumns": "50,50,52,49,46,41,45,47,47,53,48,45,53,55,39",
+                        "endOffsets": "146,197,250,300,347,389,435,483,531,585,634,680,734,790,830"
+                    }
+                }
+            ]
+        }
+    ]
+}
