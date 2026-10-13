@@ -77,8 +77,6 @@ fun StatEntryScreen(
         factory = StatEntryViewModel.factory(MoghayeratApplication.instance, productId, isoDate)
     )
 ) {
-    val isStartStage = stage == "START"
-    val isEndStage = stage == "END"
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -159,53 +157,8 @@ fun StatEntryScreen(
             // اطلاعات محصول
             ProductInfoCard(state = state)
 
-            // اگر مرحله END است، خلاصه اول کار را نمایش بده
-            if (isEndStage && state.hasActualMorningStock) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            text = "خلاصه اول کار",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        state.varianceResult?.let { result ->
-                            val startVar = result.startVariance
-                            val startText = when {
-                                startVar == null -> "—"
-                                startVar == 0 -> "مطابقت (۰)"
-                                startVar > 0 -> "اضافه ${startVar.toPersian()}"
-                                else -> "کسری ${(-startVar).toPersian()}"
-                            }
-                            Text(
-                                text = "شمارش واقعی اول کار: ${result.actualMorningStockTotal?.toPersian() ?: "—"}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "مغایرت اول کار: $startText",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = if (startVar != null && startVar != 0)
-                                    MaterialTheme.colorScheme.error
-                                else MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // بخش ۱: اطلاعات موجودی (نمایش در START و FULL)
-            if (!isEndStage) {
-                SectionHeader(title = if (isStartStage) "بخش ۱: تحویل انبار (اول کار)" else "بخش ۱: اطلاعات موجودی")
+            // بخش ۱: اطلاعات موجودی
+            SectionHeader(title = "بخش ۱: اطلاعات موجودی")
 
             BoxUnitInput(
                 label = "۱. مانده شب گذشته",
@@ -268,11 +221,9 @@ fun StatEntryScreen(
                     }
                 }
             }
-            } // بستن if (!isEndStage)
 
-            // بخش ۲: عملیات شیفت شب (نمایش در END و FULL)
-            if (!isStartStage) {
-            SectionHeader(title = if (isEndStage) "بخش ۲: عملیات شیفت شب (آخر کار)" else "بخش ۲: عملیات روزانه")
+            // بخش ۲: عملیات روزانه
+            SectionHeader(title = "بخش ۲: عملیات روزانه")
 
             BoxUnitInput(
                 label = "۵. رسید انبار",
@@ -322,11 +273,7 @@ fun StatEntryScreen(
                 enabled = !state.isFinalized
             )
 
-            // بستن بخش ۲ (if !isStartStage)
-            }
-
-            // بخش ۳: موجودی پایان روز (نمایش در END و FULL)
-            if (!isStartStage) {
+            // بخش ۳: موجودی پایان روز
             SectionHeader(title = "بخش ۳: موجودی پایان روز")
 
             BoxUnitInput(
@@ -337,13 +284,140 @@ fun StatEntryScreen(
                 enabled = !state.isFinalized
             )
 
-            // بستن بخش ۳ (if !isStartStage)
-            }
-
             // بخش ۴: نتیجه مغایرت‌گیری
             SectionHeader(title = "بخش ۴: نتیجه مغایرت‌گیری")
 
+            // نمایش مغایرت اول کار (اگر ثبت شده)
             state.varianceResult?.let { result ->
+                // کارت مغایرت اول کار
+                result.startVariance?.let { startVar ->
+                    val startText = when {
+                        startVar == 0 -> "مطابقت (۰)"
+                        startVar > 0 -> "اضافه ${startVar.toPersian()}"
+                        else -> "کسری ${(-startVar).toPersian()}"
+                    }
+                    val startColor = when {
+                        startVar == 0 -> MaterialTheme.colorScheme.primary
+                        startVar > 0 -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.error
+                    }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = startColor.copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "مغایرت اول کار",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = startText,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = startColor
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // کارت مغایرت آخر کار
+                result.endCumulativeVariance?.let { endVar ->
+                    val endText = when {
+                        endVar == 0 -> "مطابقت (۰)"
+                        endVar > 0 -> "اضافه ${endVar.toPersian()}"
+                        else -> "کسری ${(-endVar).toPersian()}"
+                    }
+                    val endColor = when {
+                        endVar == 0 -> MaterialTheme.colorScheme.primary
+                        endVar > 0 -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.error
+                    }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = endColor.copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "مغایرت آخر کار",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = endText,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = endColor
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // کارت مغایرت شیفت شب (مهم‌ترین)
+                result.nightShiftVariance?.let { nightVar ->
+                    val nightText = when {
+                        nightVar == 0 -> "مطابقت (۰)"
+                        nightVar > 0 -> "اضافه ${nightVar.toPersian()}"
+                        else -> "کسری ${(-nightVar).toPersian()}"
+                    }
+                    val nightColor = when {
+                        nightVar == 0 -> MaterialTheme.colorScheme.primary
+                        nightVar > 0 -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.error
+                    }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = nightColor.copy(alpha = 0.15f)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "مغایرت واقعی شیفت شب",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = nightColor
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = nightText,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = nightColor
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // کارت کامل نتیجه
                 VarianceResultCard(result = result, product = product)
             }
 
