@@ -497,6 +497,146 @@ class StatEntryViewModel(
         }
     }
 
+    /**
+     * ریست کردن فیلدهای مرحله فعلی.
+     *
+     * - در START: فیلدهای اول کار (openingStock، morningLoading، actualMorningStock)
+     *   و فیلدهای عملیات روزانه (receipt، returns، gifts، waste، laboratory، midDayLoading)
+     *   صفر می‌شوند. فیلدهای آخر کار (nightLoading، currentStock) دست‌نخورده می‌مانند.
+     * - در END: فیلدهای آخر کار (nightLoading، currentStock) و فیلدهای عملیات روزانه
+     *   صفر می‌شوند. فیلدهای اول کار دست‌نخورده می‌مانند.
+     * - در FULL: همه فیلدها صفر می‌شوند.
+     *
+     * اگر آمار نهایی شده باشد، ابتدا نهایی‌سازی لغو می‌شود.
+     * سپس مقادیر صفر شده در دیتابیس ذخیره می‌شوند.
+     */
+    fun resetCurrentStage() {
+        val state = _uiState.value
+        val product = state.product ?: return
+        val statId = state.statId
+
+        viewModelScope.launch {
+            // اگر نهایی شده، ابتدا لغو نهایی کن
+            if (state.isFinalized && statId != null) {
+                app.dailyStatRepository.unfinalizeStat(statId)
+            }
+
+            val newState = when (stage) {
+                StatEntryStage.START -> state.copy(
+                    openingStock = BoxAndUnits.ZERO,
+                    morningLoading = BoxAndUnits.ZERO,
+                    actualMorningStock = null,
+                    hasActualMorningStock = false,
+                    receipt = BoxAndUnits.ZERO,
+                    returns = BoxAndUnits.ZERO,
+                    gifts = BoxAndUnits.ZERO,
+                    waste = BoxAndUnits.ZERO,
+                    laboratory = BoxAndUnits.ZERO,
+                    midDayLoading = BoxAndUnits.ZERO,
+                    isFinalized = false,
+                    showWarning = null
+                )
+                StatEntryStage.END -> state.copy(
+                    receipt = BoxAndUnits.ZERO,
+                    returns = BoxAndUnits.ZERO,
+                    gifts = BoxAndUnits.ZERO,
+                    waste = BoxAndUnits.ZERO,
+                    laboratory = BoxAndUnits.ZERO,
+                    midDayLoading = BoxAndUnits.ZERO,
+                    nightLoading = BoxAndUnits.ZERO,
+                    currentStock = null,
+                    hasCurrentStock = false,
+                    isFinalized = false,
+                    showWarning = null
+                )
+                StatEntryStage.FULL -> state.copy(
+                    openingStock = BoxAndUnits.ZERO,
+                    morningLoading = BoxAndUnits.ZERO,
+                    actualMorningStock = null,
+                    hasActualMorningStock = false,
+                    receipt = BoxAndUnits.ZERO,
+                    returns = BoxAndUnits.ZERO,
+                    gifts = BoxAndUnits.ZERO,
+                    waste = BoxAndUnits.ZERO,
+                    laboratory = BoxAndUnits.ZERO,
+                    midDayLoading = BoxAndUnits.ZERO,
+                    nightLoading = BoxAndUnits.ZERO,
+                    currentStock = null,
+                    hasCurrentStock = false,
+                    notes = "",
+                    isFinalized = false,
+                    showWarning = null
+                )
+            }
+            _uiState.value = newState
+
+            // ذخیره در دیتابیس
+            val input = buildInput()
+            val savedId = when (stage) {
+                StatEntryStage.START -> app.dailyStatRepository.saveStartStage(input, product, isFinalized = false)
+                StatEntryStage.END -> app.dailyStatRepository.saveEndStage(input, product, isFinalized = false)
+                StatEntryStage.FULL -> app.dailyStatRepository.saveStat(input, product, isFinalized = false)
+            }
+            _uiState.update {
+                it.copy(
+                    statId = savedId,
+                    startStageSaved = if (stage == StatEntryStage.START) false else it.startStageSaved,
+                    endStageSaved = if (stage == StatEntryStage.END) false else it.endStageSaved,
+                    saveMessage = when (stage) {
+                        StatEntryStage.START -> "فیلدهای اول کار پاک شدند"
+                        StatEntryStage.END -> "فیلدهای آخر کار پاک شدند"
+                        StatEntryStage.FULL -> "همه فیلدها پاک شدند"
+                    }
+                )
+            }
+        }
+    }
+
+    /**
+     * حذف کامل آمار (کل رکورد از دیتابیس).
+     *
+     * این عمل غیرقابل بازگشت است. تمام داده‌های مربوط به این محصول و تاریخ حذف می‌شود
+     * و فرم به حالت اولیه برمی‌گردد.
+     */
+    fun deleteStat() {
+        val state = _uiState.value
+        val statId = state.statId ?: return
+
+        viewModelScope.launch {
+            try {
+                app.dailyStatRepository.deleteStat(statId)
+                _uiState.update {
+                    it.copy(
+                        openingStock = BoxAndUnits.ZERO,
+                        morningLoading = BoxAndUnits.ZERO,
+                        actualMorningStock = null,
+                        hasActualMorningStock = false,
+                        receipt = BoxAndUnits.ZERO,
+                        returns = BoxAndUnits.ZERO,
+                        gifts = BoxAndUnits.ZERO,
+                        waste = BoxAndUnits.ZERO,
+                        laboratory = BoxAndUnits.ZERO,
+                        midDayLoading = BoxAndUnits.ZERO,
+                        nightLoading = BoxAndUnits.ZERO,
+                        currentStock = null,
+                        hasCurrentStock = false,
+                        notes = "",
+                        isFinalized = false,
+                        statId = null,
+                        startStageSaved = false,
+                        endStageSaved = false,
+                        showWarning = null,
+                        saveMessage = "آمار کامل حذف شد"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(saveMessage = "خطا در حذف آمار: ${e.message}")
+                }
+            }
+        }
+    }
+
     fun clearSaveMessage() {
         _uiState.update { it.copy(saveMessage = null) }
     }

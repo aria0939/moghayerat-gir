@@ -65,13 +65,9 @@ class HomeViewModel(
                     val workflowProductIds = workflowProducts.map { it.id }.toSet()
                     val workflowStatsList = allTodayStats.filter { it.productId in workflowProductIds }
 
-                    // شمارش اول کار: رکوردهایی که openingStock یا morningLoading یا actualMorningStock دارند
-                    val startCount = workflowStatsList.count {
-                        it.openingStockTotal > 0 ||
-                        it.morningLoadingTotal > 0 ||
-                        it.actualMorningStockTotal != null
-                    }
-                    // شمارش آخر کار: رکوردهایی که currentStock ثبت شده
+                    // شمارش اول کار: رکوردهایی که اول کار واقعاً ثبت شده (startVariance != null)
+                    val startCount = workflowStatsList.count { it.startVariance != null }
+                    // شمارش آخر کار: رکوردهایی که currentStock ثبت شده (currentStockTotal != null)
                     val endCount = workflowStatsList.count { it.currentStockTotal != null }
                     val registered = workflowStatsList.size
 

@@ -62,9 +62,10 @@ class ProductListViewModel(
         else products.filter { it.name.contains(query, ignoreCase = true) }
 
         val statuses = infos.mapValues { it.value.status }
-        // شمارش اول کار: رکوردهایی که حداقل یکی از فیلدهای اول کار دارند
+        // شمارش اول کار: فقط رکوردهایی که واقعاً اول کار ثبت شده (startVariance != null)
+        // یا حداقل یکی از فیلدهای اول کار مقادیر غیر صفر دارد
         val startCount = infos.count {
-            it.value.startVariance != null || it.value.status != StatStatus.NOT_REGISTERED
+            it.value.startVariance != null
         }
         // شمارش آخر کار: فقط رکوردهایی که currentStock ثبت شده (endCumulativeVariance != null)
         val endCount = infos.count { it.value.endCumulativeVariance != null }

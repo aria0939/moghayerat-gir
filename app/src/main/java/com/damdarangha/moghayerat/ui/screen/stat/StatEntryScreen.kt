@@ -17,13 +17,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +40,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +90,11 @@ fun StatEntryScreen(
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // state برای منوی بیش‌تر و دیالوگ‌های تأیید
+    var showOverflowMenu by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     // نمایش پیام ذخیره
     LaunchedEffect(state.saveMessage) {
         state.saveMessage?.let {
@@ -131,6 +142,49 @@ fun StatEntryScreen(
                             Icon(Icons.Default.LockOpen, contentDescription = "لغو نهایی")
                         }
                     }
+                    // منوی بیش‌تر: ریست / حذف کامل
+                    IconButton(onClick = { showOverflowMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "گزینه‌های بیش‌تر")
+                    }
+                    DropdownMenu(
+                        expanded = showOverflowMenu,
+                        onDismissRequest = { showOverflowMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    when {
+                                        isStartStage -> "پاک‌کردن فیلدهای اول کار"
+                                        isEndStage -> "پاک‌کردن فیلدهای آخر کار"
+                                        else -> "پاک‌کردن همه فیلدها"
+                                    }
+                                )
+                            },
+                            onClick = {
+                                showOverflowMenu = false
+                                showResetDialog = true
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.DeleteSweep, contentDescription = null)
+                            }
+                        )
+                        if (state.statId != null) {
+                            DropdownMenuItem(
+                                text = { Text("حذف کامل آمار") },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showDeleteDialog = true
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            )
+                        }
+                    }
                 },
                 windowInsets = WindowInsets.statusBars
             )
@@ -166,6 +220,69 @@ fun StatEntryScreen(
             }
         }
     ) { padding ->
+        // دیالوگ تأیید ریست مرحله
+        if (showResetDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetDialog = false },
+                title = { Text("تأیید پاک‌کردن فیلدها") },
+                text = {
+                    val msg = when {
+                        isStartStage -> "تمام فیلدهای اول کار و عملیات روزانه صفر خواهند شد. فیلدهای آخر کار (بارگیری شب و مانده واقعی) دست‌نخورده می‌مانند."
+                        isEndStage -> "تمام فیلدهای آخر کار (بارگیری شب، مانده واقعی) و عملیات روزانه صفر خواهند شد. فیلدهای اول کار دست‌نخورده می‌مانند."
+                        else -> "تمام فیلدهای فرم صفر خواهند شد."
+                    }
+                    if (state.isFinalized) {
+                        Text("$msg\n\n⚠️ این آمار نهایی شده است. ابتدا نهایی‌سازی لغو می‌شود، سپس فیلدها پاک می‌شوند.")
+                    } else {
+                        Text(msg)
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showResetDialog = false
+                            viewModel.resetCurrentStage()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) { Text("پاک‌کردن") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetDialog = false }) {
+                        Text("انصراف")
+                    }
+                }
+            )
+        }
+
+        // دیالوگ تأیید حذف کامل
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("تأیید حذف کامل آمار") },
+                text = {
+                    Text("⚠️ این عمل غیرقابل بازگشت است. تمام داده‌های این محصول برای این تاریخ حذف خواهد شد و فرم به حالت اولیه برمی‌گردد.\n\nآیا مطمئن هستید؟")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDeleteDialog = false
+                            viewModel.deleteStat()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) { Text("حذف کامل") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("انصراف")
+                    }
+                }
+            )
+        }
+
         if (state.isLoading) {
             LoadingView(modifier = Modifier.padding(padding))
             return@Scaffold
