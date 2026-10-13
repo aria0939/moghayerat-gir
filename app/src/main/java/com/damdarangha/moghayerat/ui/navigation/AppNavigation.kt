@@ -1,17 +1,34 @@
 package com.damdarangha.moghayerat.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.damdarangha.moghayerat.ui.components.BottomNavBar
+import com.damdarangha.moghayerat.ui.motion.LocalMotionSettings
+import com.damdarangha.moghayerat.ui.motion.SwipeBackLayout
+import com.damdarangha.moghayerat.ui.motion.backwardEnterTransition
+import com.damdarangha.moghayerat.ui.motion.backwardExitTransition
+import com.damdarangha.moghayerat.ui.motion.containerEnterTransition
+import com.damdarangha.moghayerat.ui.motion.containerExitTransition
+import com.damdarangha.moghayerat.ui.motion.containerPopEnterTransition
+import com.damdarangha.moghayerat.ui.motion.containerPopExitTransition
+import com.damdarangha.moghayerat.ui.motion.forwardEnterTransition
+import com.damdarangha.moghayerat.ui.motion.forwardExitTransition
+import com.damdarangha.moghayerat.ui.motion.reducedEnterTransition
+import com.damdarangha.moghayerat.ui.motion.reducedExitTransition
 import com.damdarangha.moghayerat.ui.screen.backup.BackupScreen
 import com.damdarangha.moghayerat.ui.screen.history.HistoryScreen
 import com.damdarangha.moghayerat.ui.screen.home.HomeScreen
@@ -40,10 +57,46 @@ object Routes {
 }
 
 @Composable
+private fun rememberNavTransitionConfig(): NavTransitionConfig {
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val reduced = LocalMotionSettings.current.reducedMotion
+    return NavTransitionConfig(isRtl = isRtl, reducedMotion = reduced)
+}
+
+private data class NavTransitionConfig(
+    val isRtl: Boolean,
+    val reducedMotion: Boolean
+)
+
+private fun AnimatedContentTransitionScope<*>.defaultEnter(cfg: NavTransitionConfig): EnterTransition {
+    return if (cfg.reducedMotion) reducedEnterTransition() else forwardEnterTransition(cfg.isRtl)
+}
+
+private fun AnimatedContentTransitionScope<*>.defaultExit(cfg: NavTransitionConfig): ExitTransition {
+    return if (cfg.reducedMotion) reducedExitTransition() else forwardExitTransition(cfg.isRtl)
+}
+
+private fun AnimatedContentTransitionScope<*>.defaultPopEnter(cfg: NavTransitionConfig): EnterTransition {
+    return if (cfg.reducedMotion) reducedEnterTransition() else backwardEnterTransition(cfg.isRtl)
+}
+
+private fun AnimatedContentTransitionScope<*>.defaultPopExit(cfg: NavTransitionConfig): ExitTransition {
+    return if (cfg.reducedMotion) reducedExitTransition() else backwardExitTransition(cfg.isRtl)
+}
+
+@Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val cfg = rememberNavTransitionConfig()
 
-    NavHost(navController = navController, startDestination = Routes.WELCOME) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.WELCOME,
+        enterTransition = { defaultEnter(cfg) },
+        exitTransition = { defaultExit(cfg) },
+        popEnterTransition = { defaultPopEnter(cfg) },
+        popExitTransition = { defaultPopExit(cfg) }
+    ) {
 
         composable(Routes.WELCOME) {
             WelcomeScreen(
@@ -87,14 +140,19 @@ fun AppNavigation() {
             arguments = listOf(navArgument("workflowId") { type = NavType.LongType })
         ) { backStackEntry ->
             val workflowId = backStackEntry.arguments?.getLong("workflowId") ?: 0L
-            ProductListScreen(
-                workflowId = workflowId,
-                onProductClick = { product, stage ->
-                    val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
-                    navController.navigate(Routes.statEntry(product.id, today, stage))
-                },
-                onBack = { navController.popBackStack() }
-            )
+            SwipeBackLayout(
+                enabled = true,
+                onSwipeComplete = { navController.popBackStack() }
+            ) {
+                ProductListScreen(
+                    workflowId = workflowId,
+                    onProductClick = { product, stage ->
+                        val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
+                        navController.navigate(Routes.statEntry(product.id, today, stage))
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
@@ -103,7 +161,19 @@ fun AppNavigation() {
                 navArgument("productId") { type = NavType.LongType },
                 navArgument("isoDate") { type = NavType.StringType },
                 navArgument("stage") { type = NavType.StringType; defaultValue = "FULL" }
-            )
+            ),
+            enterTransition = {
+                if (cfg.reducedMotion) reducedEnterTransition() else containerEnterTransition()
+            },
+            exitTransition = {
+                if (cfg.reducedMotion) reducedExitTransition() else containerExitTransition()
+            },
+            popEnterTransition = {
+                if (cfg.reducedMotion) reducedEnterTransition() else containerPopEnterTransition()
+            },
+            popExitTransition = {
+                if (cfg.reducedMotion) reducedExitTransition() else containerPopExitTransition()
+            }
         ) { backStackEntry ->
             val productId = backStackEntry.arguments?.getLong("productId") ?: 0L
             val isoDate = backStackEntry.arguments?.getString("isoDate") ?: ""
@@ -135,12 +205,17 @@ fun AppNavigation() {
         }
 
         composable(Routes.HISTORY) {
-            HistoryScreen(
-                onStatClick = { statId, productId, isoDate ->
-                    navController.navigate(Routes.statEntry(productId, isoDate, "FULL"))
-                },
-                onBack = { navController.popBackStack() }
-            )
+            SwipeBackLayout(
+                enabled = true,
+                onSwipeComplete = { navController.popBackStack() }
+            ) {
+                HistoryScreen(
+                    onStatClick = { statId, productId, isoDate ->
+                        navController.navigate(Routes.statEntry(productId, isoDate, "FULL"))
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(Routes.SETTINGS) {
@@ -180,11 +255,21 @@ fun AppNavigation() {
         }
 
         composable(Routes.WORKFLOW_MANAGEMENT) {
-            WorkflowManagementScreen(onBack = { navController.popBackStack() })
+            SwipeBackLayout(
+                enabled = true,
+                onSwipeComplete = { navController.popBackStack() }
+            ) {
+                WorkflowManagementScreen(onBack = { navController.popBackStack() })
+            }
         }
 
         composable(Routes.BACKUP) {
-            BackupScreen(onBack = { navController.popBackStack() })
+            SwipeBackLayout(
+                enabled = true,
+                onSwipeComplete = { navController.popBackStack() }
+            ) {
+                BackupScreen(onBack = { navController.popBackStack() })
+            }
         }
     }
 }

@@ -58,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.domain.model.Product
 import com.damdarangha.moghayerat.domain.model.StatStatus
+import com.damdarangha.moghayerat.ui.motion.pressFeedback
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 
@@ -291,7 +292,9 @@ private fun ProductItemCard(
     val endButtonColor = if (isEndRegistered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressFeedback(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(12.dp)

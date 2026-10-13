@@ -50,7 +50,9 @@ class MainActivity : ComponentActivity() {
 
             MoghayeratTheme(darkTheme = darkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavigation()
+                    com.damdarangha.moghayerat.ui.motion.ProvideMotionSettings {
+                        AppNavigation()
+                    }
                 }
             }
         }
