@@ -342,7 +342,7 @@ class VarianceCalculatorTest {
         val day1Result = VarianceCalculator.calculate(day1Input, sterileProduct)
         // روز بعد: مانده شب گذشته = مانده واقعی روز قبل = ۲۱۸ = ۸ باکس و ۲ عدد
         val day2Opening = VarianceCalculator.fromTotalUnits(
-            day1Result.currentStockTotal,
+            day1Result.currentStockTotal ?: 0,
             sterileProduct
         )
         assertThat(day2Opening.boxes).isEqualTo(8)
