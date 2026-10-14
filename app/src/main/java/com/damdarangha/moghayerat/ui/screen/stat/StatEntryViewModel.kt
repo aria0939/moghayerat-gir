@@ -51,6 +51,7 @@ data class StatEntryUiState(
     val product: Product? = null,
     val isoDate: String = "",
     val jalaliDate: String = "",
+    val stage: StatEntryStage = StatEntryStage.FULL,
     // ===== فیلدهای اول کار =====
     val openingStock: BoxAndUnits = BoxAndUnits.ZERO,
     val morningLoading: BoxAndUnits = BoxAndUnits.ZERO,
@@ -88,25 +89,48 @@ data class StatEntryUiState(
     /**
      * محاسبه زنده نتیجه مغایرت.
      *
-     * نکته: برای مرحله START، فقط فیلدهای اول کار را در نظر می‌گیرد.
-     * برای مرحله END، فقط فیلدهای آخر کار را در نظر می‌گیرد.
+     * نکته مهم: بر اساس مرحله فعلی (stage)، از فیلدهای مناسب استفاده می‌کند:
+     * - در START: از فیلدهای start* (عملیات روزانه روز) استفاده می‌کند.
+     * - در END: از فیلدهای receipt/returns/... (عملیات روزانه شب) استفاده می‌کند.
+     * - در FULL: از فیلدهای receipt/returns/... استفاده می‌کند.
+     *
+     * این برای نمایش زنده‌ی مغایرت در UI ضروری است تا مقادیری که کاربر
+     * در همان لحظه وارد می‌کند در محاسبه لحاظ شوند.
      */
     val varianceResult: VarianceResult?
         get() {
             val product = this.product ?: return null
             val actualMorning = if (hasActualMorningStock) actualMorningStock else null
+
+            // انتخاب فیلدهای عملیات روزانه بر اساس مرحله
+            val (effReceipt, effReturns, effGifts, effWaste, effLaboratory, effMidDayLoading) =
+                when (stage) {
+                    StatEntryStage.START -> SixTuple(
+                        startReceipt, startReturns, startGifts,
+                        startWaste, startLaboratory, startMidDayLoading
+                    )
+                    StatEntryStage.END -> SixTuple(
+                        receipt, returns, gifts,
+                        waste, laboratory, midDayLoading
+                    )
+                    StatEntryStage.FULL -> SixTuple(
+                        receipt, returns, gifts,
+                        waste, laboratory, midDayLoading
+                    )
+                }
+
             val input = DailyStatInput(
                 productId = product.id,
                 isoDate = isoDate,
                 openingStock = openingStock,
                 morningLoading = morningLoading,
                 actualMorningStock = actualMorning,
-                receipt = receipt,
-                returns = returns,
-                gifts = gifts,
-                waste = waste,
-                laboratory = laboratory,
-                midDayLoading = midDayLoading,
+                receipt = effReceipt,
+                returns = effReturns,
+                gifts = effGifts,
+                waste = effWaste,
+                laboratory = effLaboratory,
+                midDayLoading = effMidDayLoading,
                 nightLoading = nightLoading,
                 currentStock = if (hasCurrentStock) currentStock else null,
                 notes = notes
@@ -115,6 +139,12 @@ data class StatEntryUiState(
         }
 }
 
+/** helper برای برگرداندن ۶ مقدار هم‌زمان */
+private data class SixTuple(
+    val a: BoxAndUnits, val b: BoxAndUnits, val c: BoxAndUnits,
+    val d: BoxAndUnits, val e: BoxAndUnits, val f: BoxAndUnits
+)
+
 class StatEntryViewModel(
     private val app: MoghayeratApplication,
     private val productId: Long,
@@ -122,7 +152,7 @@ class StatEntryViewModel(
     val stage: StatEntryStage
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(StatEntryUiState(isoDate = isoDate))
+    private val _uiState = MutableStateFlow(StatEntryUiState(isoDate = isoDate, stage = stage))
     val uiState: StateFlow<StatEntryUiState> = _uiState.asStateFlow()
 
     // ذخیره خودکار با debounce
