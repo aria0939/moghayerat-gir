@@ -88,21 +88,23 @@ object VarianceFormatter {
         val sign = if (variance > 0) "+" else "-"
         val abs = if (variance == Int.MIN_VALUE) 0 else kotlin.math.abs(variance)
 
+        // استفاده از LRM (Left-to-Right Mark) برای اطمینان از اینکه علامت‌های لاتین
+        // (B، '، +، -) در متن RTL به‌درستی نمایش داده می‌شوند و در جای درست قرار می‌گیرند.
         val absStr = if (product.isRoundBox) {
-            "${toPersian(abs)}B"
+            "${toPersian(abs)}B\u200E"
         } else {
             val capacity = if (product.boxCapacity <= 0) 1 else product.boxCapacity
             val boxes = abs / capacity
             val units = abs % capacity
             when {
-                boxes == 0 -> "${toPersian(units)}'"
-                units == 0 -> "${toPersian(boxes)}B"
-                // بدون فاصله اطراف + (مثلاً ۱B+۲')
-                else -> "${toPersian(boxes)}B+${toPersian(units)}'"
+                boxes == 0 -> "${toPersian(units)}'\u200E"
+                units == 0 -> "${toPersian(boxes)}B\u200E"
+                // بدون فاصله اطراف + (مثلاً 1B+2')
+                else -> "${toPersian(boxes)}B+${toPersian(units)}'\u200E"
             }
         }
 
-        // علامت در ابتدا می‌آید با فاصله (مثلاً + ۱B+۲' یا - ۲')
+        // علامت در ابتدا می‌آید با فاصله (مثلاً + 1B+2' یا - 2')
         return "$sign $absStr"
     }
 
