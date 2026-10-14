@@ -103,20 +103,42 @@ data class StatEntryUiState(
             val actualMorning = if (hasActualMorningStock) actualMorningStock else null
 
             // انتخاب فیلدهای عملیات روزانه بر اساس مرحله
+            //
+            // نکته مهم: در END و FULL، باید مجموع روز + شب محاسبه شود.
+            // چون عملیات روزانه‌ای که در اول کار وارد شده‌اند (مثلاً ۱ عدد آزمایشگاه)
+            // تا آخر شب باقی می‌مانند و با عملیات شب (مثلاً ۱ باکس آزمایشگاه) جمع می‌شوند.
+            // پس کل = روز + شب.
             val (effReceipt, effReturns, effGifts, effWaste, effLaboratory, effMidDayLoading) =
                 when (stage) {
                     StatEntryStage.START -> SixTuple(
                         startReceipt, startReturns, startGifts,
                         startWaste, startLaboratory, startMidDayLoading
                     )
-                    StatEntryStage.END -> SixTuple(
-                        receipt, returns, gifts,
-                        waste, laboratory, midDayLoading
-                    )
-                    StatEntryStage.FULL -> SixTuple(
-                        receipt, returns, gifts,
-                        waste, laboratory, midDayLoading
-                    )
+                    StatEntryStage.END -> {
+                        // کل = روز + شب
+                        val calc = com.damdarangha.moghayerat.domain.calculation.VarianceCalculator
+                        SixTuple(
+                            calc.addBoxAndUnits(startReceipt, receipt, product),
+                            calc.addBoxAndUnits(startReturns, returns, product),
+                            calc.addBoxAndUnits(startGifts, gifts, product),
+                            calc.addBoxAndUnits(startWaste, waste, product),
+                            calc.addBoxAndUnits(startLaboratory, laboratory, product),
+                            calc.addBoxAndUnits(startMidDayLoading, midDayLoading, product)
+                        )
+                    }
+                    StatEntryStage.FULL -> {
+                        // در FULL، فیلدهای receipt/returns/... کل هستند (یا فقط شب؟)
+                        // برای امنیت، مجموع روز + شب را استفاده می‌کنیم
+                        val calc = com.damdarangha.moghayerat.domain.calculation.VarianceCalculator
+                        SixTuple(
+                            calc.addBoxAndUnits(startReceipt, receipt, product),
+                            calc.addBoxAndUnits(startReturns, returns, product),
+                            calc.addBoxAndUnits(startGifts, gifts, product),
+                            calc.addBoxAndUnits(startWaste, waste, product),
+                            calc.addBoxAndUnits(startLaboratory, laboratory, product),
+                            calc.addBoxAndUnits(startMidDayLoading, midDayLoading, product)
+                        )
+                    }
                 }
 
             val input = DailyStatInput(

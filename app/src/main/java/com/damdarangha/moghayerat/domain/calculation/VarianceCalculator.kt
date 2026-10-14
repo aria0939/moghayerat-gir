@@ -69,6 +69,22 @@ object VarianceCalculator {
     }
 
     /**
+     * جمع دو BoxAndUnits و تبدیل به فرمت استاندارد.
+     * مثلاً (۱ باکس، ۵ عدد) + (۰ باکس، ۳ عدد) = (۱ باکس، ۸ عدد) برای ظرفیت ۱۰.
+     *
+     * @param a اولین مقدار
+     * @param b دومین مقدار
+     * @param product محصول موردنظر
+     * @return حاصل جمع نرمال‌شده
+     */
+    fun addBoxAndUnits(a: BoxAndUnits, b: BoxAndUnits, product: Product): BoxAndUnits {
+        val totalA = toTotalUnits(a, product)
+        val totalB = toTotalUnits(b, product)
+        val sum = safeAdd(totalA, totalB)
+        return fromTotalUnits(sum, product)
+    }
+
+    /**
      * نرمال‌سازی جفت باکس/عدد.
      * اگر تعداد عدد از ظرفیت باکس بیشتر باشد، به باکس تبدیل می‌شود.
      * مثلاً برای ظرفیت ۲۷: (۲ باکس، ۳۰ عدد) → (۳ باکس، ۳ عدد)

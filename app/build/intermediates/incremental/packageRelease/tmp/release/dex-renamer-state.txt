@@ -1,4 +1,4 @@
-#Wed Oct 14 02:54:01 UTC 2026
+#Wed Oct 14 11:25:49 UTC 2026
 base.0=/home/z/my-project/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
 base.1=/home/z/my-project/app/build/intermediates/dex/release/mergeDexRelease/classes2.dex
 base.2=/home/z/my-project/app/build/intermediates/dex/release/mergeDexRelease/classes3.dex
