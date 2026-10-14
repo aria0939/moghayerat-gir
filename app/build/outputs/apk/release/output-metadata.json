@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 15,
-      "versionName": "2.4.7",
-      "outputFile": "moghayerat-gir-release-2.4.7.apk"
+      "versionCode": 16,
+      "versionName": "2.4.8",
+      "outputFile": "moghayerat-gir-release-2.4.8.apk"
     }
   ],
   "elementType": "File"

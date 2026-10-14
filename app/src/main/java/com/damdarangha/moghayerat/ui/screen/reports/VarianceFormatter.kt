@@ -97,12 +97,13 @@ object VarianceFormatter {
             when {
                 boxes == 0 -> "${toPersian(units)}'"
                 units == 0 -> "${toPersian(boxes)}B"
-                else -> "${toPersian(boxes)}B + ${toPersian(units)}'"
+                // بدون فاصله اطراف + (مثلاً ۱B+۲')
+                else -> "${toPersian(boxes)}B+${toPersian(units)}'"
             }
         }
 
-        // علامت پشت عدد می‌آید (مثلاً ۱B+ یا ۲'-)
-        return "$absStr$sign"
+        // علامت در ابتدا می‌آید با فاصله (مثلاً + ۱B+۲' یا - ۲')
+        return "$sign $absStr"
     }
 
     /**
