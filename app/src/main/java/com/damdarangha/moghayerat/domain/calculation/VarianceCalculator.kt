@@ -124,8 +124,17 @@ object VarianceCalculator {
         val nightLoadingTotal = toTotalUnits(input.nightLoading, product)
         val currentStockTotal = input.currentStock?.let { toTotalUnits(it, product) }  // null اگر ثبت‌نشده
 
-        // موجودی مورد انتظار بعد از بارگیری صبح
-        val expectedMorningStockTotal = safeSubtract(openingStockTotal, morningLoadingTotal)
+        // موجودی مورد انتظار بعد از بارگیری صبح + عملیات روزانه
+        // شامل: رسید، برگشت به انبار، هدایا، ضایعات، آزمایشگاه، بارگیری میان روز
+        // چون این عملیات در مرحله اول کار وارد می‌شوند و روی موجودی صبح تاثیر دارند.
+        // فرمول: مانده شب گذشته + رسید + برگشت به انبار - بارگیری صبح - بارگیری میان روز - هدایا - ضایعات - آزمایشگاه
+        val expectedMorningStockTotal = safeAdd(openingStockTotal, receiptTotal)
+            .let { safeAdd(it, returnsTotal) }
+            .let { safeSubtract(it, morningLoadingTotal) }
+            .let { safeSubtract(it, midDayLoadingTotal) }
+            .let { safeSubtract(it, giftsTotal) }
+            .let { safeSubtract(it, wasteTotal) }
+            .let { safeSubtract(it, laboratoryTotal) }
 
         // در صورت ورود مانده واقعی صبح، مغایرت اول کار را محاسبه می‌کنیم
         val actualMorningStockTotal: Int? = input.actualMorningStock?.let {
@@ -136,15 +145,9 @@ object VarianceCalculator {
         }
 
         // موجودی مورد انتظار پایان روز
-        // = مانده شب گذشته + رسید + برگشت به انبار - بارگیری صبح - بارگیری میان روز - بارگیری شب - هدایا - ضایعات - آزمایشگاه
-        val expectedClosingStockTotal = safeAdd(openingStockTotal, receiptTotal)
-            .let { safeAdd(it, returnsTotal) }
-            .let { safeSubtract(it, morningLoadingTotal) }
-            .let { safeSubtract(it, midDayLoadingTotal) }
-            .let { safeSubtract(it, nightLoadingTotal) }
-            .let { safeSubtract(it, giftsTotal) }
-            .let { safeSubtract(it, wasteTotal) }
-            .let { safeSubtract(it, laboratoryTotal) }
+        // = موجودی مورد انتظار صبح - بارگیری شب
+        // (یعنی کل عملیات روزانه + بارگیری شب)
+        val expectedClosingStockTotal = safeSubtract(expectedMorningStockTotal, nightLoadingTotal)
 
         // مغایرت پایان روز = موجودی مورد انتظار - مانده واقعی
         // فقط اگر currentStock ثبت شده باشد (null = ثبت‌نشده)
