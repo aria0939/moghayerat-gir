@@ -135,11 +135,18 @@ fun AppNavigation() {
             arguments = listOf(navArgument("workflowId") { type = NavType.LongType })
         ) { backStackEntry ->
             val workflowId = backStackEntry.arguments?.getLong("workflowId") ?: 0L
+            val app = com.damdarangha.moghayerat.MoghayeratApplication.instance
             ProductListScreen(
                 workflowId = workflowId,
                 onProductClick = { product, stage ->
-                    val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
-                    navController.navigate(Routes.statEntry(product.id, today, stage))
+                    // استفاده از «تاریخ فعال» برای محصول — اگر آمار غیر نهایی‌شده
+                    // وجود دارد (مثلاً دیروز اول کار ثبت شده ولی آخر کار نه)،
+                    // تاریخ همان آمار استفاده می‌شود تا کاربر ادامه دهد.
+                    // در غیر این صورت، امروز.
+                    val activeDate = kotlinx.coroutines.runBlocking {
+                        app.dailyStatRepository.getActiveDateForProduct(product.id)
+                    }
+                    navController.navigate(Routes.statEntry(product.id, activeDate, stage))
                 },
                 onBack = { navController.popBackStack() }
             )

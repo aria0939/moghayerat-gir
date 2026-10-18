@@ -1,0 +1,110 @@
+[
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-xxhdpi_ic_launcher.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-xxhdpi/ic_launcher.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-xhdpi_ic_launcher.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-xhdpi/ic_launcher.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable-nodpi_splash_logo.png.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable-nodpi/splash_logo.png"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/font_vazirmatn.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/font/vazirmatn.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable_ic_logo.png.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable/ic_logo.png"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable_splash_logo.png.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable/splash_logo.png"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/font_vazirmatn_bold.ttf.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/font/vazirmatn_bold.ttf"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/xml_data_extraction_rules.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-hdpi_ic_launcher_round.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-hdpi/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-mdpi_ic_launcher.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-mdpi/ic_launcher.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/xml_backup_rules.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/xml_file_paths.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/xml/file_paths.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/font_vazirmatn_medium.ttf.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/font/vazirmatn_medium.ttf"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/font_vazirmatn_regular.ttf.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/font/vazirmatn_regular.ttf"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-xxxhdpi_ic_launcher.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-xxxhdpi/ic_launcher.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-hdpi_ic_launcher.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-hdpi/ic_launcher.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-mdpi_ic_launcher_round.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-mdpi/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable_splash_background.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable/splash_background.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable-night_splash_background.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable-night/splash_background.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-xhdpi_ic_launcher_round.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-xhdpi/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable-nodpi_ic_logo.png.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable-nodpi/ic_logo.png"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-xxhdpi_ic_launcher_round.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-xxhdpi/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/mipmap-xxxhdpi_ic_launcher_round.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/mipmap-xxxhdpi/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/font_vazirmatn_semibold.ttf.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/font/vazirmatn_semibold.ttf"
+    },
+    {
+        "merged": "com.damdarangha.moghayerat.app-merged_res-58:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.damdarangha.moghayerat.app-main-60:/drawable/ic_launcher_foreground.xml"
+    }
+]

@@ -2246,6 +2246,269 @@ public final class DailyStatDao_Impl implements DailyStatDao {
     }, $completion);
   }
 
+  @Override
+  public Object getLatestUnfinalizedDate(final Continuation<? super String> $completion) {
+    final String _sql = "\n"
+            + "        SELECT isoDate FROM daily_stats\n"
+            + "        WHERE isFinalized = 0\n"
+            + "        ORDER BY isoDate DESC\n"
+            + "        LIMIT 1\n"
+            + "    ";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<String>() {
+      @Override
+      @Nullable
+      public String call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final String _result;
+          if (_cursor.moveToFirst()) {
+            if (_cursor.isNull(0)) {
+              _result = null;
+            } else {
+              _result = _cursor.getString(0);
+            }
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getLatestStatDate(final Continuation<? super String> $completion) {
+    final String _sql = "\n"
+            + "        SELECT isoDate FROM daily_stats\n"
+            + "        ORDER BY isoDate DESC\n"
+            + "        LIMIT 1\n"
+            + "    ";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<String>() {
+      @Override
+      @Nullable
+      public String call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final String _result;
+          if (_cursor.moveToFirst()) {
+            if (_cursor.isNull(0)) {
+              _result = null;
+            } else {
+              _result = _cursor.getString(0);
+            }
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getLatestStatDateForProduct(final long productId,
+      final Continuation<? super String> $completion) {
+    final String _sql = "\n"
+            + "        SELECT isoDate FROM daily_stats\n"
+            + "        WHERE productId = ?\n"
+            + "        ORDER BY isoDate DESC\n"
+            + "        LIMIT 1\n"
+            + "    ";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, productId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<String>() {
+      @Override
+      @Nullable
+      public String call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final String _result;
+          if (_cursor.moveToFirst()) {
+            if (_cursor.isNull(0)) {
+              _result = null;
+            } else {
+              _result = _cursor.getString(0);
+            }
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getLatestUnfinalizedStatForProduct(final long productId,
+      final Continuation<? super DailyStatEntity> $completion) {
+    final String _sql = "\n"
+            + "        SELECT * FROM daily_stats\n"
+            + "        WHERE productId = ? AND isFinalized = 0\n"
+            + "        ORDER BY isoDate DESC\n"
+            + "        LIMIT 1\n"
+            + "    ";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, productId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<DailyStatEntity>() {
+      @Override
+      @Nullable
+      public DailyStatEntity call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfProductId = CursorUtil.getColumnIndexOrThrow(_cursor, "productId");
+          final int _cursorIndexOfIsoDate = CursorUtil.getColumnIndexOrThrow(_cursor, "isoDate");
+          final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
+          final int _cursorIndexOfOpeningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "openingStockTotal");
+          final int _cursorIndexOfMorningLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "morningLoadingTotal");
+          final int _cursorIndexOfActualMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "actualMorningStockTotal");
+          final int _cursorIndexOfReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "receiptTotal");
+          final int _cursorIndexOfReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "returnsTotal");
+          final int _cursorIndexOfGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "giftsTotal");
+          final int _cursorIndexOfWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "wasteTotal");
+          final int _cursorIndexOfLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "laboratoryTotal");
+          final int _cursorIndexOfMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "midDayLoadingTotal");
+          final int _cursorIndexOfDayReceiptTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReceiptTotal");
+          final int _cursorIndexOfDayReturnsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReturnsTotal");
+          final int _cursorIndexOfDayGiftsTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayGiftsTotal");
+          final int _cursorIndexOfDayWasteTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayWasteTotal");
+          final int _cursorIndexOfDayLaboratoryTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayLaboratoryTotal");
+          final int _cursorIndexOfDayMidDayLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "dayMidDayLoadingTotal");
+          final int _cursorIndexOfNightLoadingTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "nightLoadingTotal");
+          final int _cursorIndexOfCurrentStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStockTotal");
+          final int _cursorIndexOfExpectedMorningStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedMorningStockTotal");
+          final int _cursorIndexOfMorningVariance = CursorUtil.getColumnIndexOrThrow(_cursor, "morningVariance");
+          final int _cursorIndexOfExpectedClosingStockTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "expectedClosingStockTotal");
+          final int _cursorIndexOfClosingVariance = CursorUtil.getColumnIndexOrThrow(_cursor, "closingVariance");
+          final int _cursorIndexOfStartVariance = CursorUtil.getColumnIndexOrThrow(_cursor, "startVariance");
+          final int _cursorIndexOfEndCumulativeVariance = CursorUtil.getColumnIndexOrThrow(_cursor, "endCumulativeVariance");
+          final int _cursorIndexOfNightShiftVariance = CursorUtil.getColumnIndexOrThrow(_cursor, "nightShiftVariance");
+          final int _cursorIndexOfIsFinalized = CursorUtil.getColumnIndexOrThrow(_cursor, "isFinalized");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
+          final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
+          final DailyStatEntity _result;
+          if (_cursor.moveToFirst()) {
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final long _tmpProductId;
+            _tmpProductId = _cursor.getLong(_cursorIndexOfProductId);
+            final String _tmpIsoDate;
+            _tmpIsoDate = _cursor.getString(_cursorIndexOfIsoDate);
+            final String _tmpJalaliDate;
+            _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
+            final int _tmpOpeningStockTotal;
+            _tmpOpeningStockTotal = _cursor.getInt(_cursorIndexOfOpeningStockTotal);
+            final int _tmpMorningLoadingTotal;
+            _tmpMorningLoadingTotal = _cursor.getInt(_cursorIndexOfMorningLoadingTotal);
+            final Integer _tmpActualMorningStockTotal;
+            if (_cursor.isNull(_cursorIndexOfActualMorningStockTotal)) {
+              _tmpActualMorningStockTotal = null;
+            } else {
+              _tmpActualMorningStockTotal = _cursor.getInt(_cursorIndexOfActualMorningStockTotal);
+            }
+            final int _tmpReceiptTotal;
+            _tmpReceiptTotal = _cursor.getInt(_cursorIndexOfReceiptTotal);
+            final int _tmpReturnsTotal;
+            _tmpReturnsTotal = _cursor.getInt(_cursorIndexOfReturnsTotal);
+            final int _tmpGiftsTotal;
+            _tmpGiftsTotal = _cursor.getInt(_cursorIndexOfGiftsTotal);
+            final int _tmpWasteTotal;
+            _tmpWasteTotal = _cursor.getInt(_cursorIndexOfWasteTotal);
+            final int _tmpLaboratoryTotal;
+            _tmpLaboratoryTotal = _cursor.getInt(_cursorIndexOfLaboratoryTotal);
+            final int _tmpMidDayLoadingTotal;
+            _tmpMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfMidDayLoadingTotal);
+            final int _tmpDayReceiptTotal;
+            _tmpDayReceiptTotal = _cursor.getInt(_cursorIndexOfDayReceiptTotal);
+            final int _tmpDayReturnsTotal;
+            _tmpDayReturnsTotal = _cursor.getInt(_cursorIndexOfDayReturnsTotal);
+            final int _tmpDayGiftsTotal;
+            _tmpDayGiftsTotal = _cursor.getInt(_cursorIndexOfDayGiftsTotal);
+            final int _tmpDayWasteTotal;
+            _tmpDayWasteTotal = _cursor.getInt(_cursorIndexOfDayWasteTotal);
+            final int _tmpDayLaboratoryTotal;
+            _tmpDayLaboratoryTotal = _cursor.getInt(_cursorIndexOfDayLaboratoryTotal);
+            final int _tmpDayMidDayLoadingTotal;
+            _tmpDayMidDayLoadingTotal = _cursor.getInt(_cursorIndexOfDayMidDayLoadingTotal);
+            final int _tmpNightLoadingTotal;
+            _tmpNightLoadingTotal = _cursor.getInt(_cursorIndexOfNightLoadingTotal);
+            final Integer _tmpCurrentStockTotal;
+            if (_cursor.isNull(_cursorIndexOfCurrentStockTotal)) {
+              _tmpCurrentStockTotal = null;
+            } else {
+              _tmpCurrentStockTotal = _cursor.getInt(_cursorIndexOfCurrentStockTotal);
+            }
+            final int _tmpExpectedMorningStockTotal;
+            _tmpExpectedMorningStockTotal = _cursor.getInt(_cursorIndexOfExpectedMorningStockTotal);
+            final Integer _tmpMorningVariance;
+            if (_cursor.isNull(_cursorIndexOfMorningVariance)) {
+              _tmpMorningVariance = null;
+            } else {
+              _tmpMorningVariance = _cursor.getInt(_cursorIndexOfMorningVariance);
+            }
+            final int _tmpExpectedClosingStockTotal;
+            _tmpExpectedClosingStockTotal = _cursor.getInt(_cursorIndexOfExpectedClosingStockTotal);
+            final int _tmpClosingVariance;
+            _tmpClosingVariance = _cursor.getInt(_cursorIndexOfClosingVariance);
+            final Integer _tmpStartVariance;
+            if (_cursor.isNull(_cursorIndexOfStartVariance)) {
+              _tmpStartVariance = null;
+            } else {
+              _tmpStartVariance = _cursor.getInt(_cursorIndexOfStartVariance);
+            }
+            final Integer _tmpEndCumulativeVariance;
+            if (_cursor.isNull(_cursorIndexOfEndCumulativeVariance)) {
+              _tmpEndCumulativeVariance = null;
+            } else {
+              _tmpEndCumulativeVariance = _cursor.getInt(_cursorIndexOfEndCumulativeVariance);
+            }
+            final Integer _tmpNightShiftVariance;
+            if (_cursor.isNull(_cursorIndexOfNightShiftVariance)) {
+              _tmpNightShiftVariance = null;
+            } else {
+              _tmpNightShiftVariance = _cursor.getInt(_cursorIndexOfNightShiftVariance);
+            }
+            final boolean _tmpIsFinalized;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsFinalized);
+            _tmpIsFinalized = _tmp != 0;
+            final String _tmpNotes;
+            _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            final long _tmpCreatedAt;
+            _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
+            final long _tmpUpdatedAt;
+            _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
+            _result = new DailyStatEntity(_tmpId,_tmpProductId,_tmpIsoDate,_tmpJalaliDate,_tmpOpeningStockTotal,_tmpMorningLoadingTotal,_tmpActualMorningStockTotal,_tmpReceiptTotal,_tmpReturnsTotal,_tmpGiftsTotal,_tmpWasteTotal,_tmpLaboratoryTotal,_tmpMidDayLoadingTotal,_tmpDayReceiptTotal,_tmpDayReturnsTotal,_tmpDayGiftsTotal,_tmpDayWasteTotal,_tmpDayLaboratoryTotal,_tmpDayMidDayLoadingTotal,_tmpNightLoadingTotal,_tmpCurrentStockTotal,_tmpExpectedMorningStockTotal,_tmpMorningVariance,_tmpExpectedClosingStockTotal,_tmpClosingVariance,_tmpStartVariance,_tmpEndCumulativeVariance,_tmpNightShiftVariance,_tmpIsFinalized,_tmpNotes,_tmpCreatedAt,_tmpUpdatedAt);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
   @NonNull
   public static List<Class<?>> getRequiredConverters() {
     return Collections.emptyList();

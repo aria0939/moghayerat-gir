@@ -87,4 +87,48 @@ interface DailyStatDao {
 
     @Query("SELECT * FROM daily_stats")
     suspend fun getAll(): List<DailyStatEntity>
+
+    /**
+     * دریافت آخرین تاریخی که برای محصولی آمار ثبت شده (فقط غیر نهایی‌شده).
+     * برای تشخیص «تاریخ فعال» — وقتی شیفت از نیمه‌شب عبور می‌کند.
+     */
+    @Query("""
+        SELECT isoDate FROM daily_stats
+        WHERE isFinalized = 0
+        ORDER BY isoDate DESC
+        LIMIT 1
+    """)
+    suspend fun getLatestUnfinalizedDate(): String?
+
+    /**
+     * دریافت آخرین تاریخی که برای محصولی آمار ثبت شده (هر وضعیت).
+     */
+    @Query("""
+        SELECT isoDate FROM daily_stats
+        ORDER BY isoDate DESC
+        LIMIT 1
+    """)
+    suspend fun getLatestStatDate(): String?
+
+    /**
+     * دریافت آخرین تاریخی که برای محصول خاص آمار ثبت شده.
+     */
+    @Query("""
+        SELECT isoDate FROM daily_stats
+        WHERE productId = :productId
+        ORDER BY isoDate DESC
+        LIMIT 1
+    """)
+    suspend fun getLatestStatDateForProduct(productId: Long): String?
+
+    /**
+     * دریافت آخرین آمار غیر نهایی‌شده برای محصول خاص.
+     */
+    @Query("""
+        SELECT * FROM daily_stats
+        WHERE productId = :productId AND isFinalized = 0
+        ORDER BY isoDate DESC
+        LIMIT 1
+    """)
+    suspend fun getLatestUnfinalizedStatForProduct(productId: Long): DailyStatEntity?
 }

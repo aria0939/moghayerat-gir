@@ -45,7 +45,22 @@ class HomeViewModel(
     private fun loadInitialData() {
         viewModelScope.launch {
             val today = JalaliDateConverter.todayJalali()
-            val todayIso = JalaliDateConverter.todayIso()
+            // استفاده از «تاریخ فعال» به‌جای امروز — اگر آمار غیر نهایی‌شده وجود دارد،
+            // تاریخ آن نشان داده می‌شود تا وقتی شیفت از نیمه‌شب عبور می‌کند آمار پاک نشود.
+            val activeIso = app.dailyStatRepository.getActiveDate()
+            val activeJalali = JalaliDateConverter.gregorianToJalaliString(activeIso)
+            val activeJalaliDate = run {
+                val parts = activeIso.split("-")
+                if (parts.size == 3) {
+                    JalaliDateConverter.gregorianToJalali(
+                        parts[0].toInt(),
+                        parts[1].toInt(),
+                        parts[2].toInt()
+                    )
+                } else {
+                    today
+                }
+            }
 
             // جمع‌آوری گردش کارها
             app.workflowRepository.observeActiveWorkflows().collect { workflows ->
@@ -54,20 +69,17 @@ class HomeViewModel(
                 val startCounts = mutableMapOf<Long, Int>()
                 val endCounts = mutableMapOf<Long, Int>()
 
-                // دریافت تمام آمارهای امروز به‌صورت یک‌باره
-                val allTodayStats = app.dailyStatRepository.getStatsForDate(todayIso)
+                // دریافت تمام آمارهای تاریخ فعال به‌صورت یک‌باره
+                val allActiveStats = app.dailyStatRepository.getStatsForDate(activeIso)
 
                 workflows.forEach { workflow ->
                     val total = app.productRepository.countActiveByWorkflow(workflow.id)
-                    // فیلتر آمارهای امروز برای محصولات این گردش کار
                     val workflowProducts = app.productRepository
                         .observeActiveProductsByWorkflow(workflow.id).first()
                     val workflowProductIds = workflowProducts.map { it.id }.toSet()
-                    val workflowStatsList = allTodayStats.filter { it.productId in workflowProductIds }
+                    val workflowStatsList = allActiveStats.filter { it.productId in workflowProductIds }
 
-                    // شمارش اول کار: رکوردهایی که اول کار واقعاً ثبت شده (startVariance != null)
                     val startCount = workflowStatsList.count { it.startVariance != null }
-                    // شمارش آخر کار: رکوردهایی که currentStock ثبت شده (currentStockTotal != null)
                     val endCount = workflowStatsList.count { it.currentStockTotal != null }
                     val registered = workflowStatsList.size
 
@@ -88,8 +100,8 @@ class HomeViewModel(
 
                 _uiState.update {
                     it.copy(
-                        todayJalali = today.toDisplayString(),
-                        todayIso = todayIso,
+                        todayJalali = activeJalaliDate.toDisplayString(),
+                        todayIso = activeIso,
                         workflows = workflowStats,
                         workflowRegisteredCounts = registeredCounts,
                         workflowStartCounts = startCounts,

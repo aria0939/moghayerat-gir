@@ -115,9 +115,11 @@ class ProductListViewModel(
 
     private fun loadStatStatuses() {
         viewModelScope.launch {
-            val today = JalaliDateConverter.todayIso()
-            app.dailyStatRepository.observeStatsForDate(today).collect { _ ->
-                refreshStatuses(today)
+            // استفاده از «تاریخ فعال» — اگر آمار غیر نهایی‌شده وجود دارد،
+            // تاریخ آن استفاده می‌شود تا وقتی شیفت از نیمه‌شب عبور می‌کند آمار پاک نشود.
+            val activeDate = app.dailyStatRepository.getActiveDate()
+            app.dailyStatRepository.observeStatsForDate(activeDate).collect { _ ->
+                refreshStatuses(activeDate)
             }
         }
     }
@@ -130,17 +132,13 @@ class ProductListViewModel(
             infos[product.id] = if (stat == null) {
                 ProductStatInfo(StatStatus.NOT_REGISTERED, null, null, null)
             } else {
-                // تشخیص وضعیت بر اساس داده‌های واقعی ثبت‌شده
                 val hasStartVariance = stat.startVariance != null
                 val hasEndVariance = stat.endCumulativeVariance != null
                 val hasNightVariance = stat.nightShiftVariance != null
                 val status = when {
                     stat.isFinalized -> StatStatus.FINALIZED
-                    // اگر آخر کار ثبت شده و مغایرت غیر صفر دارد
                     hasEndVariance && stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
-                    // اگر اول کار یا آخر کار ثبت شده ولی هنوز نهایی نشده
                     hasStartVariance || hasEndVariance || hasNightVariance -> StatStatus.REGISTERED
-                    // اگر رکورد هست اما هیچ واریانسی ثبت نشده (مثلاً فقط مقادیر صفر)
                     else -> StatStatus.DRAFT
                 }
                 ProductStatInfo(
@@ -156,8 +154,8 @@ class ProductListViewModel(
 
     fun refreshStatStatuses() {
         viewModelScope.launch {
-            val today = JalaliDateConverter.todayIso()
-            refreshStatuses(today)
+            val activeDate = app.dailyStatRepository.getActiveDate()
+            refreshStatuses(activeDate)
         }
     }
 

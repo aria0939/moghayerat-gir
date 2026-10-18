@@ -44,13 +44,13 @@ class ReportsViewModel(
     val uiState: StateFlow<ReportsUiState> = _uiState.asStateFlow()
 
     init {
-        // ابتدا تاریخ امروز را به‌صورت همگام (synchronous) تنظیم می‌کنیم تا از رقابت
-        // (race) بین loadWorkflows و loadToday جلوگیری شود.
-        // اگر selectWorkflow قبل از تنظیم isoDate اجرا شود، با isoDate خالی کار می‌کرد.
-        val today = com.damdarangha.moghayerat.util.JalaliDateConverter.todayIso()
-        val jalali = com.damdarangha.moghayerat.util.JalaliDateConverter.gregorianToJalaliString(today)
-        _uiState.update { it.copy(isoDate = today, jalaliDate = jalali) }
-        loadWorkflows()
+        // استفاده از «تاریخ فعال» — اگر آمار غیر نهایی‌شده وجود دارد، تاریخ آن استفاده می‌شود.
+        viewModelScope.launch {
+            val activeDate = app.dailyStatRepository.getActiveDate()
+            val jalali = com.damdarangha.moghayerat.util.JalaliDateConverter.gregorianToJalaliString(activeDate)
+            _uiState.update { it.copy(isoDate = activeDate, jalaliDate = jalali) }
+            loadWorkflows()
+        }
     }
 
     private fun loadWorkflows() {

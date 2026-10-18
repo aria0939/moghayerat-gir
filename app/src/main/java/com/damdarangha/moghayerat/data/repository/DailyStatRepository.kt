@@ -64,6 +64,41 @@ class DailyStatRepository(
         dailyStatDao.countVarianceStatsForDate(isoDate)
 
     /**
+     * دریافت «تاریخ فعال» — تاریخی که باید آمارها روی آن کار شوند.
+     *
+     * منطق:
+     * ۱. اگر آمار غیر نهایی‌شده‌ای وجود دارد، تاریخ آخرین غیر نهایی‌شده برگردانده می‌شود.
+     *    این برای وقتی است که شیفت از نیمه‌شب عبور کرده ولی هنوز «آخر کار» ثبت نشده.
+     * ۲. در غیر این صورت، امروز برگردانده می‌شود.
+     */
+    suspend fun getActiveDate(): String {
+        val unfinalized = dailyStatDao.getLatestUnfinalizedDate()
+        return unfinalized ?: JalaliDateConverter.todayIso()
+    }
+
+    /**
+     * دریافت آخرین تاریخ آمار برای محصول خاص.
+     */
+    suspend fun getLatestStatDateForProduct(productId: Long): String? =
+        dailyStatDao.getLatestStatDateForProduct(productId)
+
+    /**
+     * دریافت آخرین آمار غیر نهایی‌شده برای محصول خاص.
+     */
+    suspend fun getLatestUnfinalizedStatForProduct(productId: Long): DailyStatEntity? =
+        dailyStatDao.getLatestUnfinalizedStatForProduct(productId)
+
+    /**
+     * دریافت «تاریخ فعال» برای محصول خاص.
+     * اگر محصول آمار غیر نهایی‌شده دارد، تاریخ آن برگردانده می‌شود.
+     * در غیر این صورت، امروز.
+     */
+    suspend fun getActiveDateForProduct(productId: Long): String {
+        val unfinalized = dailyStatDao.getLatestUnfinalizedStatForProduct(productId)
+        return unfinalized?.isoDate ?: JalaliDateConverter.todayIso()
+    }
+
+    /**
      * دریافت آخرین آمار قبل از تاریخ مشخص (برای انتقال مانده).
      */
     suspend fun getLatestStatBeforeDate(productId: Long, referenceDate: String): DailyStatEntity? =
