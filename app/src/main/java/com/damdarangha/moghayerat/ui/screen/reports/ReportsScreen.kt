@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.data.db.entity.DailyStatEntity
@@ -74,7 +75,7 @@ fun ReportsScreen(
         factory = ReportsViewModel.factory(MoghayeratApplication.instance)
     )
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var showPdfDialog by remember { mutableStateOf(false) }
@@ -315,9 +316,13 @@ fun ReportsScreen(
                     )
                 }
             } else {
+                // بهینه‌سازی: Map برای دسترسی O(1) به‌جای linear search
+                val productsById = remember(state.products) {
+                    state.products.associateBy { it.id }
+                }
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.stats, key = { it.id }) { stat ->
-                        val productName = state.products.find { it.id == stat.productId }?.name ?: "نامشخص"
+                        val productName = productsById[stat.productId]?.name ?: "نامشخص"
                         ReportItemCard(stat, productName)
                     }
                 }

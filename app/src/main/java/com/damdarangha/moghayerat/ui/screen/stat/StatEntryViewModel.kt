@@ -651,8 +651,12 @@ class StatEntryViewModel(
     fun unfinalizeStat() {
         val statId = _uiState.value.statId ?: return
         viewModelScope.launch {
-            app.dailyStatRepository.unfinalizeStat(statId)
-            _uiState.update { it.copy(isFinalized = false) }
+            try {
+                app.dailyStatRepository.unfinalizeStat(statId)
+                _uiState.update { it.copy(isFinalized = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(saveMessage = "خطا در لغو نهایی‌سازی: ${e.message}") }
+            }
         }
     }
 

@@ -1,12 +1,18 @@
 package com.damdarangha.moghayerat.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,13 +29,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,11 +61,11 @@ val bottomNavItems = listOf(
 )
 
 /**
- * نوار ناوبری پایین صفحه با گوشه‌های گرد بالا
- * مطابق تصویر مرجع: پس‌زمینه سفید، گوشه‌های گرد، آیکون فعال آبی
- *
- * این پیاده‌سازی از clickable استفاده می‌کند تا مطمئن شویم همه آیتم‌ها
- * به‌درستی کلیک می‌شوند (مشکل NavigationBarItem پیش‌فرض Material3).
+ * نوار ناوبری پایین — طراحی مدرن با:
+ * - انیمیشن scale برای آیکون انتخاب‌شده
+ * - انیمیشن fade برای نشانگر
+ * - افکت ripple برای بازخورد لمسی
+ * - touch target مناسب (حداقل ۴۸dp)
  */
 @Composable
 fun BottomNavBar(
@@ -67,13 +76,13 @@ fun BottomNavBar(
         modifier = Modifier.fillMaxWidth(),
         color = BottomNavBg,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        shadowElevation = 8.dp
+        shadowElevation = 12.dp,
+        tonalElevation = 2.dp
     ) {
-        Row(
+        androidx.compose.foundation.layout.Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 4.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -82,7 +91,8 @@ fun BottomNavBar(
                 BottomNavItemView(
                     item = item,
                     isSelected = isSelected,
-                    onClick = { onNavigate(item.route) }
+                    onClick = { onNavigate(item.route) },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -93,46 +103,62 @@ fun BottomNavBar(
 private fun BottomNavItemView(
     item: BottomNavItem,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val iconScale by animateFloatAsState(
+        targetValue = if (isSelected) 1.15f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+        label = "iconScale"
+    )
+    val contentColor = if (isSelected) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    val bgColor = if (isSelected)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+    else androidx.compose.ui.graphics.Color.Transparent
+
     Column(
-        modifier = Modifier
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(bgColor)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                interactionSource = interactionSource,
+                indication = ripple(bounded = true, color = MaterialTheme.colorScheme.primary),
+                role = Role.Button,
                 onClick = onClick
             )
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = item.icon,
-            contentDescription = item.label,
-            modifier = Modifier.size(24.dp),
-            tint = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            contentDescription = null,
+            modifier = Modifier
+                .size(24.dp)
+                .scale(iconScale),
+            tint = contentColor
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = item.label,
             fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-            color = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = contentColor,
+            maxLines = 1
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        // نشانگر زیر آیکون فعال (خط آبی)
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .width(24.dp)
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        } else {
-            Spacer(modifier = Modifier.height(3.dp))
-        }
+        Spacer(modifier = Modifier.height(3.dp))
+        // نشانگر زیر آیکون فعال — با انیمیشن
+        Box(
+            modifier = Modifier
+                .width(if (isSelected) 24.dp else 12.dp)
+                .height(3.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(
+                    if (isSelected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                )
+        )
     }
 }

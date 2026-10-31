@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -117,7 +117,7 @@ fun VarianceResultCard(
                 }
             }
 
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.padding(vertical = 12.dp),
                 color = cardFg.copy(alpha = 0.2f)
             )
@@ -149,7 +149,7 @@ fun VarianceResultCard(
                 exit = fadeOut()
             ) {
                 Column {
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp),
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                     )
@@ -159,10 +159,12 @@ fun VarianceResultCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
+                    val mv = result.morningVariance
                     val morningStatus = when {
-                        result.morningVariance == 0 -> "مطابقت دارد"
-                        result.morningVariance!! > 0 -> "کسری ${result.morningVariance.toPersianDigits()} عدد"
-                        else -> "اضافه ${(-result.morningVariance).toPersianDigits()} عدد"
+                        mv == null -> ""
+                        mv == 0 -> "مطابقت دارد"
+                        mv > 0 -> "کسری ${mv.toPersianDigits()} عدد"
+                        else -> "اضافه ${(-mv).toPersianDigits()} عدد"
                     }
                     Text(
                         text = morningStatus,

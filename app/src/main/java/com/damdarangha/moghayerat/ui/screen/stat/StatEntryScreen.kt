@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import com.damdarangha.moghayerat.domain.model.BoxAndUnits
@@ -87,7 +88,7 @@ fun StatEntryScreen(
 ) {
     val isStartStage = viewModel.isStartStage
     val isEndStage = viewModel.isEndStage
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // state برای منوی بیش‌تر و دیالوگ‌های تأیید

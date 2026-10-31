@@ -39,11 +39,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.damdarangha.moghayerat.MoghayeratApplication
 import java.io.File
@@ -59,14 +62,38 @@ fun BackupScreen(
         factory = BackupViewModel.factory(MoghayeratApplication.instance)
     )
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    // state برای دیالوگ تأیید حذف
+    var backupToDelete by remember { mutableStateOf<File?>(null) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearMessage()
         }
+    }
+
+    // دیالوگ تأیید حذف پشتیبان
+    backupToDelete?.let { file ->
+        AlertDialog(
+            onDismissRequest = { backupToDelete = null },
+            title = { Text("تأیید حذف پشتیبان") },
+            text = { Text("آیا از حذف این فایل پشتیبان مطمئن هستید؟ این عمل قابل بازگشت است.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteBackup(file)
+                        backupToDelete = null
+                    }
+                ) { Text("حذف", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { backupToDelete = null }) {
+                    Text("انصراف")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -153,7 +180,7 @@ fun BackupScreen(
                             file = file,
                             onRestore = { viewModel.confirmRestore(file) },
                             onShare = { viewModel.shareBackup(file) },
-                            onDelete = { viewModel.deleteBackup(file) }
+                            onDelete = { backupToDelete = file }
                         )
                     }
                 }

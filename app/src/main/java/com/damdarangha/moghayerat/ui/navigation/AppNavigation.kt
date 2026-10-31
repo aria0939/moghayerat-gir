@@ -34,6 +34,7 @@ import com.damdarangha.moghayerat.ui.screen.settings.SettingsScreen
 import com.damdarangha.moghayerat.ui.screen.stat.StatEntryScreen
 import com.damdarangha.moghayerat.ui.screen.welcome.WelcomeScreen
 import com.damdarangha.moghayerat.ui.screen.workflowmanagement.WorkflowManagementScreen
+import kotlinx.coroutines.launch
 
 object Routes {
     const val WELCOME = "welcome"
@@ -136,17 +137,16 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val workflowId = backStackEntry.arguments?.getLong("workflowId") ?: 0L
             val app = com.damdarangha.moghayerat.MoghayeratApplication.instance
+            val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+
             ProductListScreen(
                 workflowId = workflowId,
                 onProductClick = { product, stage ->
-                    // استفاده از «تاریخ فعال» برای محصول — اگر آمار غیر نهایی‌شده
-                    // وجود دارد (مثلاً دیروز اول کار ثبت شده ولی آخر کار نه)،
-                    // تاریخ همان آمار استفاده می‌شود تا کاربر ادامه دهد.
-                    // در غیر این صورت، امروز.
-                    val activeDate = kotlinx.coroutines.runBlocking {
-                        app.dailyStatRepository.getActiveDateForProduct(product.id)
+                    // استفاده از coroutine به‌جای runBlocking (رفع لگ main thread)
+                    coroutineScope.launch {
+                        val activeDate = app.dailyStatRepository.getActiveDateForProduct(product.id)
+                        navController.navigate(Routes.statEntry(product.id, activeDate, stage))
                     }
-                    navController.navigate(Routes.statEntry(product.id, activeDate, stage))
                 },
                 onBack = { navController.popBackStack() }
             )

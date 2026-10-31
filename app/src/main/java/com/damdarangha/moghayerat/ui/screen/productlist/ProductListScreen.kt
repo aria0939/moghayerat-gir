@@ -81,7 +81,7 @@ fun ProductListScreen(
         factory = ProductListViewModel.factory(MoghayeratApplication.instance, workflowId)
     )
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // به‌روزرسانی وضعیت‌ها وقتی کاربر از صفحه ثبت آمار برمی‌گردد
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -116,8 +116,8 @@ fun ProductListScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // ===== کارت آمار =====
-            val total = state.products.size
+            // ===== کارت آمار — از totalProducts (لیست اصلی) استفاده می‌کنیم نه فیلترشده =====
+            val total = state.totalProducts
             val registered = state.startCount
             val remaining = (total - registered).coerceAtLeast(0)
             val progress = if (total > 0) registered.toFloat() / total else 0f

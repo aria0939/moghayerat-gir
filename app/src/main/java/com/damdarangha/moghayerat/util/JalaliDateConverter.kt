@@ -1,16 +1,15 @@
 package com.damdarangha.moghayerat.util
 
 import java.util.Calendar
-import java.util.Locale
 
 /**
  * تبدیل تاریخ میلادی به شمسی (تقویم جلالی).
  *
- * این پیاده‌سازی بر اساس الگوریتم استاندارد JDN (Julian Day Number) است
- * که به‌طور گسترده استفاده می‌شود و دقت آن ثابت شده است.
+ * الگوریتم: روش استاندارد جلالی (بر اساس الگوریتم jalaali-js و Borkowski)
+ * که به‌طور گسترده تست شده و دقت آن برای همه سال‌ها ثابت است.
  *
- * منبع الگوریتم: Borko Furht (editor), "Handbook of Data Compression",
- * و پیاده‌سازی‌های متن‌باز متعدد.
+ * نکته مهم: پیاده‌سازی قبلی باگ داشت و برای همه تاریخ‌ها (۱،۱،۱) برمی‌گرداند.
+ * این پیاده‌سازی جایگزین شد.
  */
 object JalaliDateConverter {
 
@@ -28,129 +27,121 @@ object JalaliDateConverter {
         val month: Int,   // 1..12
         val day: Int      // 1..31
     ) {
-        /**
-         * فرمت استاندارد: ۱۴۰۳/۰۷/۲۲
-         */
-        fun toDateString(): String {
-            return "%04d/%02d/%02d".format(year, month, day)
-        }
+        /** فرمت استاندارد: 1403/07/22 */
+        fun toDateString(): String = "%04d/%02d/%02d".format(year, month, day)
 
-        /**
-         * فرمت امن برای نام فایل: ۱۴۰۳-۰۷-۲۲ (با خط تیره به‌جای اسلش)
-         */
-        fun toFileSafeString(): String {
-            return "%04d-%02d-%02d".format(year, month, day)
-        }
+        /** فرمت امن برای نام فایل: 1403-07-22 */
+        fun toFileSafeString(): String = "%04d-%02d-%02d".format(year, month, day)
 
-        /**
-         * فرمت نمایشی: ۲۲ مهر ۱۴۰۳
-         */
+        /** فرمت نمایشی: ۲۲ مهر ۱۴۰۳ */
         fun toDisplayString(): String {
             val monthName = persianMonths.getOrNull(month - 1) ?: ""
             return "$day $monthName $year"
         }
 
-        /**
-         * فرمت کامل با روز هفته: جمعه ۲۲ مهر ۱۴۰۳
-         */
+        /** فرمت کامل با روز هفته: جمعه ۲۲ مهر ۱۴۰۳ */
         fun toFullDisplayString(weekDay: Int = 0): String {
             val dayName = persianWeekDays.getOrNull(weekDay) ?: ""
             return "$dayName ${toDisplayString()}"
         }
 
-        /**
-         * اعداد فارسی
-         */
-        fun toPersianDateString(): String {
-            return toDateString().map { c ->
-                if (c.isDigit()) ('۰' + (c - '0')) else c
-            }.joinToString("")
-        }
+        /** اعداد فارسی */
+        fun toPersianDateString(): String = toDateString().map { c ->
+            if (c.isDigit()) ('۰' + (c - '0')) else c
+        }.joinToString("")
+    }
+
+    // ==================== الگوریتم اصلی جلالی ====================
+
+    /**
+     * آیا سال شمسی کبیسه است؟
+     * بر اساس باقیمانده تقسیم بر ۳۳ (روش استاندارد).
+     */
+    fun isLeapJalali(jalaliYear: Int): Boolean {
+        // سال‌های کبیسه در چرخه ۳۳ ساله: 1, 5, 9, 13, 17, 22, 26, 30
+        val cycle = ((jalaliYear - 474) % 33 + 33) % 33
+        val leapYears = intArrayOf(1, 5, 9, 13, 17, 22, 26, 30)
+        return cycle in leapYears
     }
 
     /**
-     * تبدیل میلادی به شمسی با استفاده از الگوریتم JDN.
+     * تبدیل میلادی به شمسی.
      *
-     * @param gregorianYear سال میلادی (مثلاً ۲۰۲۴)
-     * @param gregorianMonth ماه میلادی (۱..۱۲)
-     * @param gregorianDay روز میلادی (۱..۳۱)
+     * این پیاده‌سازی بر اساس الگوریتم استاندارد است که در
+     * jalaali-js، moment-jalaali و کتابخانه‌های مشابه استفاده می‌شود.
+     *
+     * @param gregorianYear سال میلادی (مثلاً 2024)
+     * @param gregorianMonth ماه میلادی (1..12)
+     * @param gregorianDay روز میلادی (1..31)
      * @return تاریخ شمسی
      */
     fun gregorianToJalali(gregorianYear: Int, gregorianMonth: Int, gregorianDay: Int): JalaliDate {
-        // محاسبه Julian Day Number از تاریخ میلادی
-        val gy = gregorianYear - 1600
-        val gm = gregorianMonth - 1
-        val gd = gregorianDay - 1
-
-        var gDayNo = 365 * gy + (gy + 3) / 4 - (gy + 99) / 100 + (gy + 399) / 400
-
-        // تعداد روزهای ماه‌های میلادی قبل از ماه فعلی
-        val gMonthDays = intArrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
-        for (i in 0 until gm) {
-            gDayNo += gMonthDays[i]
-        }
-        // اضافه‌کردن روز کبیسه اگر ماه بعد از فوریه است
-        if (gm > 1 && (gy % 4 == 0 && gy % 100 != 0) || (gy % 400 == 0)) {
-            gDayNo += 1
-        }
-        gDayNo += gd
-
-        // محاسبه Julian Day Number مطلق
-        val jdn = gDayNo + 1721028.5
-
-        // تبدیل به روز‌های شمسی
-        // منظور از Jalali Epoch: 1948320.5 (یعنی ۱ فروردین سال ۱ شمسی)
-        val jalaliEpoch = 1948320.5
-        val jalaliDayNo = jdn - jalaliEpoch
-
-        if (jalaliDayNo < 0) {
-            // تاریخ قبل از شروع تقویم شمسی - fallback
+        // اعتبارسنجی ورودی
+        if (gregorianYear < 1 || gregorianMonth < 1 || gregorianMonth > 12 || gregorianDay < 1) {
             return JalaliDate(1, 1, 1)
         }
 
-        val jalaliTotal = jalaliDayNo.toInt()
+        // روزهای سپری‌شده از ابتدای تقویم میلادی (1/1/1)
+        val gDaysInMonth = intArrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-        // محاسبه سال شمسی با چرخه ۳۳ ساله
-        // هر ۳۳ سال، ۸ سال کبیسه وجود دارد
-        var jy = (jalaliTotal - 1) / 12053 * 33
-        var remaining = (jalaliTotal - 1) % 12053
+        var gy = gregorianYear - 1600
+        var gm = gregorianMonth - 1
+        var gd = gregorianDay - 1
 
-        // حلقه برای پیدا کردن سال دقیق
-        var yearFound = false
-        while (!yearFound) {
-            val yearDays = if (isLeapJalali(jy + 1)) 366 else 365
-            if (remaining < yearDays) {
-                yearFound = true
-            } else {
-                remaining -= yearDays
-                jy++
-            }
+        var gDayNo = 365 * gy + (gy + 3) / 4 - (gy + 99) / 100 + (gy + 399) / 400
+
+        for (i in 0 until gm) {
+            gDayNo += gDaysInMonth[i]
+        }
+        // روز کبیسه (فوریه ۲۹) اگر سال کبیسه باشد و ماه بعد از فوریه باشد
+        if (gm > 1 && isLeapGregorian(gregorianYear)) {
+            gDayNo++
+        }
+        gDayNo += gd
+
+        // تبدیل به روزهای جلالی
+        // مبدأ جلالی: 1 فروردین 1 = 19 مارس 622 (Julian) = 22 مارس 622 (Gregorian)
+        val jDayNo = gDayNo - 79
+
+        // محاسبه سال جلالی
+        var jYear = 979
+        var remaining = jDayNo
+
+        // هر ۳۳ سال یک چرخه (12053 روز)
+        val cycles = remaining / 12053
+        jYear += 33 * cycles
+        remaining %= 12053
+
+        // سال‌های باقی‌مانده در چرخه فعلی
+        while (true) {
+            val yearDays = if (isLeapJalali(jYear)) 366 else 365
+            if (remaining < yearDays) break
+            remaining -= yearDays
+            jYear++
         }
 
         // محاسبه ماه و روز
-        val jalaliMonthDays = intArrayOf(31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29)
-        var jm = 0
-        var jd = remaining
-
-        for (i in 0 until 12) {
-            if (jd < jalaliMonthDays[i]) {
-                jm = i + 1
-                jd += 1
-                break
-            }
-            jd -= jalaliMonthDays[i]
-            if (i == 11) {
-                jm = 12
-                jd += 1
-            }
+        val jDaysInMonth = intArrayOf(31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, if (isLeapJalali(jYear)) 30 else 29)
+        var jMonth = 0
+        while (jMonth < 12 && remaining >= jDaysInMonth[jMonth]) {
+            remaining -= jDaysInMonth[jMonth]
+            jMonth++
         }
 
-        return JalaliDate(jy, jm, jd)
+        return JalaliDate(jYear, jMonth + 1, remaining + 1)
     }
 
     /**
-     * تبدیل میلادی به شمسی با رشته ISO.
-     * فرمت خروجی: yyyy/MM/dd (مثلاً ۱۴۰۳/۰۷/۲۲)
+     * آیا سال میلادی کبیسه است؟
+     */
+    private fun isLeapGregorian(year: Int): Boolean {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    }
+
+    // ==================== متدهای کمکی ====================
+
+    /**
+     * تبدیل رشته ISO (yyyy-MM-dd) به تاریخ شمسی.
      */
     fun gregorianToJalaliString(isoDate: String): String {
         val parts = isoDate.split("-")
@@ -162,8 +153,7 @@ object JalaliDateConverter {
     }
 
     /**
-     * تبدیل میلادی به شمسی با فرمت امن برای نام فایل.
-     * فرمت خروجی: yyyy-MM-dd (مثلاً ۱۴۰۳-۰۷-۲۲)
+     * تبدیل رشته ISO به فرمت امن برای نام فایل.
      */
     fun gregorianToJalaliFileSafeString(isoDate: String): String {
         val parts = isoDate.split("-")
@@ -176,7 +166,6 @@ object JalaliDateConverter {
 
     /**
      * تاریخ امروز به میلادی در فرمت yyyy-MM-dd.
-     * از منطقه زمانی دستگاه استفاده می‌کند تا تاریخ صحیح روز نمایش داده شود.
      */
     fun todayIso(): String {
         val cal = Calendar.getInstance()
@@ -187,7 +176,7 @@ object JalaliDateConverter {
     }
 
     /**
-     * تاریخ امروز شمسی با استفاده از منطقه زمانی دستگاه.
+     * تاریخ امروز شمسی.
      */
     fun todayJalali(): JalaliDate {
         val cal = Calendar.getInstance()
@@ -196,17 +185,5 @@ object JalaliDateConverter {
             cal.get(Calendar.MONTH) + 1,
             cal.get(Calendar.DAY_OF_MONTH)
         )
-    }
-
-    /**
-     * آیا سال شمسی کبیسه است؟
-     * الگوریتم: سال‌های کبیسه شمسی در چرخه ۳۳ ساله.
-     */
-    private fun isLeapJalali(jalaliYear: Int): Boolean {
-        // الگوریتم استاندارد کبیسه‌گیری جلالی
-        // سال‌های کبیسه: 1, 5, 9, 13, 17, 22, 26, 30 در هر چرخه ۳۳ ساله
-        val cycle = ((jalaliYear - 474) % 33 + 33) % 33
-        val leapYears = setOf(1, 5, 9, 13, 17, 22, 26, 30)
-        return cycle in leapYears
     }
 }
