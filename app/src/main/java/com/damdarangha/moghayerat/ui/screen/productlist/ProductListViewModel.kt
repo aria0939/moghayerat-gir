@@ -58,14 +58,33 @@ class ProductListViewModel(
         app.productRepository.observeActiveProductsByWorkflow(workflowId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /**
+     * ترکیب دو triple-flow به‌منظور پشتیبانی از ۶ فلو در combine
+     * (kotlinx.coroutines فقط ۵ فلو را در overload تایپ‌شده پشتیبانی می‌کند)
+     */
+    private data class UiA(
+        val products: List<Product>,
+        val query: String,
+        val infos: Map<Long, ProductStatInfo>
+    )
+
+    private data class UiB(
+        val wfName: String,
+        val shiftReview: Boolean,
+        val total: Int
+    )
+
     val uiState: StateFlow<ProductListUiState> = combine(
-        productsFlow,
-        _searchQuery,
-        _statInfos,
-        _workflowName,
-        _shiftReviewEnabled,
-        _totalProducts
-    ) { products, query, infos, wfName, shiftReview, total ->
+        combine(productsFlow, _searchQuery, _statInfos) { p, q, i -> UiA(p, q, i) },
+        combine(_workflowName, _shiftReviewEnabled, _totalProducts) { w, s, t -> UiB(w, s, t) }
+    ) { a, b ->
+        val products = a.products
+        val query = a.query
+        val infos = a.infos
+        val wfName = b.wfName
+        val shiftReview = b.shiftReview
+        val total = b.total
+
         val filtered = if (query.isBlank()) products
         else products.filter { it.name.contains(query, ignoreCase = true) }
 
@@ -136,34 +155,32 @@ class ProductListViewModel(
      * به‌روزرسانی وضعیت‌ها از لیست آمار (بدون N+1 query).
      */
     private fun refreshFromList(stats: List<com.damdarangha.moghayerat.data.db.entity.DailyStatEntity>) {
-        refreshMutex.tryLock {
-            val infos = mutableMapOf<Long, ProductStatInfo>()
-            val statsByProduct = stats.associateBy { it.productId }
+        val infos = mutableMapOf<Long, ProductStatInfo>()
+        val statsByProduct = stats.associateBy { it.productId }
 
-            productsFlow.value.forEach { product ->
-                val stat = statsByProduct[product.id]
-                infos[product.id] = if (stat == null) {
-                    ProductStatInfo(StatStatus.NOT_REGISTERED, null, null, null)
-                } else {
-                    val hasStartVariance = stat.startVariance != null
-                    val hasEndVariance = stat.endCumulativeVariance != null
-                    val hasNightVariance = stat.nightShiftVariance != null
-                    val status = when {
-                        stat.isFinalized -> StatStatus.FINALIZED
-                        hasEndVariance && stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
-                        hasStartVariance || hasEndVariance || hasNightVariance -> StatStatus.REGISTERED
-                        else -> StatStatus.DRAFT
-                    }
-                    ProductStatInfo(
-                        status = status,
-                        startVariance = stat.startVariance,
-                        endCumulativeVariance = stat.endCumulativeVariance,
-                        nightShiftVariance = stat.nightShiftVariance
-                    )
+        productsFlow.value.forEach { product ->
+            val stat = statsByProduct[product.id]
+            infos[product.id] = if (stat == null) {
+                ProductStatInfo(StatStatus.NOT_REGISTERED, null, null, null)
+            } else {
+                val hasStartVariance = stat.startVariance != null
+                val hasEndVariance = stat.endCumulativeVariance != null
+                val hasNightVariance = stat.nightShiftVariance != null
+                val status = when {
+                    stat.isFinalized -> StatStatus.FINALIZED
+                    hasEndVariance && stat.closingVariance != 0 -> StatStatus.HAS_VARIANCE
+                    hasStartVariance || hasEndVariance || hasNightVariance -> StatStatus.REGISTERED
+                    else -> StatStatus.DRAFT
                 }
+                ProductStatInfo(
+                    status = status,
+                    startVariance = stat.startVariance,
+                    endCumulativeVariance = stat.endCumulativeVariance,
+                    nightShiftVariance = stat.nightShiftVariance
+                )
             }
-            _statInfos.value = infos
         }
+        _statInfos.value = infos
     }
 
     fun refreshStatStatuses() {
@@ -175,7 +192,6 @@ class ProductListViewModel(
             }
         }
     }
-
     fun updateSearchQuery(query: String) {
         _searchQuery.update { query }
     }

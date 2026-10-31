@@ -25,11 +25,11 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -124,7 +124,7 @@ private fun BottomNavItemView(
             .background(bgColor)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = true, color = MaterialTheme.colorScheme.primary),
+                indication = LocalIndication.current,
                 role = Role.Button,
                 onClick = onClick
             )
